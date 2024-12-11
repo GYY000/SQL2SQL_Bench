@@ -1,3 +1,5 @@
+import json
+import os.path
 import re
 import subprocess
 
@@ -10,6 +12,8 @@ import psycopg2
 from psycopg2 import Error
 
 import cx_Oracle
+
+from util.tools import get_proj_root_path
 
 mysql_conn_map = {}
 mysql_cursor_map = {}
@@ -185,13 +189,17 @@ def close_pg_connnect(db_name: str):
         print("PostgreSQL connection is closed")
 
 
-def get_type_name_by_oid(conn, oid):
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT typname FROM pg_type WHERE oid = %s;
-        """, (oid,))
-        result = cur.fetchone()
-        return result[0] if result else 'UNKNOWN'
+pg_types = None
+
+def get_type_name_by_oid(oid):
+    global pg_types
+    if pg_types is None:
+        with open(os.path.join(get_proj_root_path(), 'src', 'util', 'pg_types.json'), 'r') as file:
+            pg_types = json.loads(file.read())
+    if str(oid) in pg_types:
+        return pg_types[str(oid)]
+    else:
+        return "UNKNOWN"
 
 
 def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
@@ -207,9 +215,10 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
         cursor.execute(sql)
         res = []
         for column in cursor.description:
+            print(column)
             res.append({
                 "col": column.name,
-                "type": get_type_name_by_oid(connection, column.type_code)
+                "type": get_type_name_by_oid(column.type_code)
             })
         return True, res
     except (Exception, Error) as error:
