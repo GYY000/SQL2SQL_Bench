@@ -1,0 +1,11 @@
+[
+    {
+        "src": {
+            "from_value": "BOOL",
+            "to_type": "INTEGER"
+        },
+        "tgt": {
+
+        }
+    }
+]

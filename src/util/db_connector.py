@@ -57,7 +57,7 @@ def mysql_sql_execute(db_name: str, sql):
     connection = mysql_conn_map[db_name]
     cursor = mysql_cursor_map[db_name]
     try:
-        cursor.execute(sql)
+        cursor.execute(sql.strip(';'))
         rows = cursor.fetchall()
         connection.commit()
         return True, rows
@@ -168,7 +168,7 @@ def pg_sql_execute(db_name: str, sql):
     connection = pg_conn_map[db_name]
     cursor = pg_cursor_map[db_name]
     try:
-        cursor.execute(sql)
+        cursor.execute(sql.strip(';'))
         if cursor.description:
             rows = cursor.fetchall()
         else:

@@ -5,7 +5,7 @@
 # @Time: 2024/12/6 12:59
 from typing import List
 
-from db_connector import *
+from util.db_connector import *
 from util.tools import dialect_judge
 
 
