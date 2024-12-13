@@ -5,7 +5,7 @@
 # @Time: 2024/12/13 10:23
 import os
 
-from util.llm_model import LLMModel
+from model.llm_model import LLMModel
 from util.tools import load_config
 
 config = load_config()

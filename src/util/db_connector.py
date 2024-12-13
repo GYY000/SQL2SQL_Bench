@@ -75,38 +75,18 @@ def close_mysql_connnect(dbname: str):
         print("MySQL connection is closed")
 
 
-def mysql_type_mapping(type_code):
-    type_code_to_name = {
-        0: 'DECIMAL',
-        1: 'TINY',
-        2: 'SHORT',
-        3: 'LONG',
-        4: 'FLOAT',
-        5: 'DOUBLE',
-        6: 'NULL',
-        7: 'TIMESTAMP',
-        8: 'LONGLONG',
-        9: 'INT24',
-        10: 'DATE',
-        11: 'TIME',
-        12: 'DATETIME',
-        13: 'YEAR',
-        14: 'NEWDATE',
-        15: 'VARCHAR',
-        16: 'BIT',
-        245: 'JSON',
-        246: 'NEWDECIMAL',
-        247: 'ENUM',
-        248: 'SET',
-        249: 'TINY_BLOB',
-        250: 'MEDIUM_BLOB',
-        251: 'LONG_BLOB',
-        252: 'BLOB',
-        253: 'VAR_STRING',
-        254: 'STRING',
-        255: 'GEOMETRY'
-    }
-    return type_code_to_name[type_code]
+mysql_types = None
+
+
+def get_mysql_type_by_oid(type_code):
+    global mysql_types
+    if mysql_types is None:
+        with open(os.path.join(get_proj_root_path(), 'src', 'schema', 'mysql_types,json'), 'r') as file:
+            mysql_types = json.loads(file.read())
+    if str(type_code) in mysql_types:
+        return mysql_types[str(type_code)]
+    else:
+        return "UNKNOWN"
 
 
 def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
@@ -126,7 +106,7 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
         for column in cursor.description:
             res.append({
                 "col": column[0],
-                "type": mysql_type_mapping(column[1])
+                "type": get_mysql_type_by_oid(column[1])
             })
         return True, res
     except pymysql.Error as e:
@@ -191,10 +171,11 @@ def close_pg_connnect(db_name: str):
 
 pg_types = None
 
+
 def get_type_name_by_oid(oid):
     global pg_types
     if pg_types is None:
-        with open(os.path.join(get_proj_root_path(), 'src', 'util', 'pg_types.json'), 'r') as file:
+        with open(os.path.join(get_proj_root_path(), 'src', 'schema', 'pg_types.json'), 'r') as file:
             pg_types = json.loads(file.read())
     if str(oid) in pg_types:
         return pg_types[str(oid)]
