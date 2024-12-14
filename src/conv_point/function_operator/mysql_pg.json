@@ -1,0 +1,6 @@
+[
+    {
+        "mysql": "FROM_DAYS([int_value])",
+        "pg": "'0001-01-01'::DATE + ([int_value] - 1)"
+    }
+]

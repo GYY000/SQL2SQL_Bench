@@ -1,5 +1,6 @@
 [
     {
-
+        "oracle": "[select_stmt] START WITH [condition1] CONNECT BY [condition2]",
+        "pg": "WITH RECURSIVE [name] AS ( [select_stmt] FROM WHERE [condition1] UNION ALL SELECT e.employee_id, e.employee_name, e.manager_id, eh.level + 1\n  FROM employees e\n  INNER JOIN employee_hierarchy eh ON e.manager_id = eh.employee_id\n)\nSELECT * FROM employee_hierarchy;"
     }
 ]

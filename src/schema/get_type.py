@@ -20,3 +20,26 @@ def get_type(obj: str, dialect: str, db_name,is_table: bool) -> tuple[bool, list
             return get_oracle_type(obj, db_name, is_table)
         case _:
             assert False
+
+
+def get_usable_cols(sql: str, dialect: str):
+    type = dialect_judge(dialect)
+    match type:
+        case 'mysql':
+            return get_mysql_usable_cols(sql)
+        case 'postgres':
+            return get_pg_usable_cols(sql)
+        case 'oracle':
+            return get_oracle_usable_cols(sql)
+        case _:
+            assert False
+
+def get_mysql_usable_cols(sql):
+    return None
+
+def get_pg_usable_cols(sql):
+    return None
+
+
+def get_oracle_usable_cols(sql):
+    return None
