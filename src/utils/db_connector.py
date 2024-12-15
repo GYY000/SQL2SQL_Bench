@@ -13,7 +13,7 @@ from psycopg2 import Error
 
 import cx_Oracle
 
-from util.tools import get_proj_root_path
+from utils.tools import get_proj_root_path
 
 mysql_conn_map = {}
 mysql_cursor_map = {}

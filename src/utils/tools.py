@@ -5,6 +5,7 @@
 # @Time: 2024/12/9 20:18
 import configparser
 import os
+from typing import List
 
 
 def dialect_judge(dialect: str):
@@ -38,3 +39,37 @@ def load_config(config_file=None):
         "llama3.1_api_base": config.get("API", 'llama3.1_api_base'),
         "llama3.2_api_base": config.get("API", 'llama3.2_api_base'),
     }
+
+
+def self_split(str1: str) -> List[str]:
+    """
+    不会将引号内的空格由于分割
+    """
+    res = []
+    str0 = ''
+    flag = False
+    i = 0
+    while i < len(str1):
+        if str1[i] == '\'':
+            flag = not flag
+            str0 = str0 + str1[i]
+        elif not flag and (str1[i] == ' ' or str1[i] == '\n'):
+            if str0 != '':
+                res.append(str0)
+            str0 = ''
+        else:
+            if str1[i] == '\\':
+                str0 = str0 + str1[i]
+                i = i + 1
+            str0 = str0 + str1[i]
+        i = i + 1
+    if str0 != '':
+        res.append(str0)
+    return res
+
+
+def remove_all_space(ori_str: str):
+    res = ''
+    for ori_sql_slice in ori_str.split():
+        res = res + ori_sql_slice
+    return res

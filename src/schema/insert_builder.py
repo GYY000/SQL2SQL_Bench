@@ -5,7 +5,7 @@
 # @Time: 2024/12/9 20:15
 from typing import List, Dict
 
-from util.tools import dialect_judge
+from utils.tools import dialect_judge
 
 
 def build_insert(src_dialect: str, data: List[Dict], schema: Dict) -> str:

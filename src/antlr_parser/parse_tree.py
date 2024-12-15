@@ -12,7 +12,7 @@ from antlr_parser.mysql_parser.MySqlLexer import MySqlLexer
 from antlr_parser.oracle_parser.PlSqlParser import PlSqlParser
 from antlr_parser.oracle_parser.PlSqlLexer import PlSqlLexer
 
-map_parser = ["pg", "mysql", "sqlite", "oracle"]
+map_parser = ["pg", "mysql", "oracle"]
 
 
 class CustomErrorListener(ErrorListener):

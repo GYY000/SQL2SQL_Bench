@@ -5,8 +5,8 @@
 # @Time: 2024/12/6 12:59
 from typing import List
 
-from util.db_connector import *
-from util.tools import dialect_judge
+from utils.db_connector import *
+from utils.tools import dialect_judge
 
 
 def get_type(obj: str, dialect: str, db_name,is_table: bool) -> tuple[bool, list]:
@@ -35,6 +35,7 @@ def get_usable_cols(sql: str, dialect: str):
             assert False
 
 def get_mysql_usable_cols(sql):
+
     return None
 
 def get_pg_usable_cols(sql):

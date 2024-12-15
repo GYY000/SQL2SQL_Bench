@@ -6,7 +6,7 @@
 import os
 
 from model.llm_model import LLMModel
-from util.tools import load_config
+from utils.tools import load_config
 
 config = load_config()
 dbg = config['dbg']
