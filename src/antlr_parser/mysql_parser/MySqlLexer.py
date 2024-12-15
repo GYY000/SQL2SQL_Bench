@@ -1,4 +1,4 @@
-# Generated from D:/Coding/LLM4DB/antlr_gram/mysql/MySqlLexer.g4 by ANTLR 4.13.1
+# Generated from D://Coding//SQL2SQL_Bench//src//antlr_parser//antlr_def//mysql//MySqlLexer.g4 by ANTLR 4.13.1
 from antlr4 import *
 from io import StringIO
 import sys

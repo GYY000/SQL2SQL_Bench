@@ -6,13 +6,13 @@ from antlr4.error.ErrorListener import ErrorListener
 from antlr_parser.pg_parser.PostgreSQLParser import PostgreSQLParser
 from antlr_parser.pg_parser.PostgreSQLLexer import PostgreSQLLexer
 
-from antlr_parser.mysql_parser.MySqlParser import MySqlParser
-from antlr_parser.mysql_parser.MySqlLexer import MySqlLexer
+from antlr_parser.mysql_parser_bat.MySqlParser import MySqlParser
+from antlr_parser.mysql_parser_bat.MySqlLexer import MySqlLexer
 
 from antlr_parser.oracle_parser.PlSqlParser import PlSqlParser
 from antlr_parser.oracle_parser.PlSqlLexer import PlSqlLexer
 
-map_parser = ["pg", "mysql", "oracle"]
+map_parser = ["postgres", "mysql", "oracle"]
 
 
 class CustomErrorListener(ErrorListener):
@@ -21,7 +21,7 @@ class CustomErrorListener(ErrorListener):
 
 
 def parse_tree(src_sql: str, dialect: str) -> (str, int, int, str):
-    if dialect == 'pg':
+    if dialect == 'postgres':
         return parse_pg_tree(src_sql)
     elif dialect == 'mysql':
         return parse_mysql_tree(src_sql)
@@ -109,6 +109,3 @@ class SelfParseError(Exception):
         self.line = line
         self.column = column
         self.msg = msg
-
-
-parse_oracle_tree('SELECT * FROM a')

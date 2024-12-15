@@ -276,6 +276,21 @@ class TreeNode:
             else:
                 return None, ori_sql[:i + j]
 
+    def get_children_by_value(self, value: str):
+        res = []
+        for child in self.children:
+            if child.value == value:
+                res.append(child)
+        return res
+
+    def get_child_by_value(self, value: str):
+        temp = self.get_children_by_value(value)
+        if len(temp) > 1:
+            raise ValueError("Has more than one children")
+        elif len(temp) == 0:
+            return None
+        return temp[0]
+
     @staticmethod
     def locate_node(root_node, column: int, ori_sql: str):
         # print("column", column)
