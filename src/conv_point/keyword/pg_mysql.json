@@ -1,0 +1,17 @@
+[
+    {
+        "desc": "group by cube",
+        "pg": "",
+        "mysql": ""
+    },
+    {
+        "desc": "group by grouping sets",
+        "pg": "",
+        "mysql": ""
+    },
+    {
+        "desc": "DISTINCT ON",
+        "pg": "SELECT DISTINCT ON (col_list) []  ",
+        "mysql": ""
+    }
+]

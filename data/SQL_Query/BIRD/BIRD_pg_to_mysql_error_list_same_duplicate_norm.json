@@ -1,0 +1,487 @@
+[
+  {
+    "mysql": "SELECT `t1`.`customerid` FROM `customers` AS `t1` INNER JOIN `yearmonth` AS `t2` ON `t1`.`customerid` = `t2`.`customerid` WHERE `t1`.`segment` = 'LAM' AND SUBSTR( `t2`.`date` , 1 , 4 ) = '2012' GROUP BY `t1`.`customerid` ORDER BY SUM( `t2`.`consumption` ) ASC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"customerid\" FROM \"customers\" AS \"t1\" INNER JOIN \"yearmonth\" AS \"t2\" ON \"t1\".\"customerid\" = \"t2\".\"customerid\" WHERE \"t1\".\"segment\" = 'LAM' AND SUBSTR( \"t2\".\"date\" , 1 , 4 ) = '2012' GROUP BY \"t1\".\"customerid\" ORDER BY SUM( \"t2\".\"consumption\" ) ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT SUBSTR( `t2`.`date` , 1 , 4 ) FROM `customers` AS `t1` INNER JOIN `yearmonth` AS `t2` ON `t1`.`customerid` = `t2`.`customerid` WHERE `t1`.`currency` = 'CZK' GROUP BY SUBSTR( `t2`.`date` , 1 , 4 ) ORDER BY SUM( `t2`.`consumption` ) DESC LIMIT 1\n",
+    "pg": "SELECT SUBSTR( \"t2\".\"date\" , 1 , 4 ) FROM \"customers\" AS \"t1\" INNER JOIN \"yearmonth\" AS \"t2\" ON \"t1\".\"customerid\" = \"t2\".\"customerid\" WHERE \"t1\".\"currency\" = 'CZK' GROUP BY SUBSTR( \"t2\".\"date\" , 1 , 4 ) ORDER BY SUM( \"t2\".\"consumption\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT SUBSTR( `t2`.`date` , 5 , 2 ) FROM `customers` AS `t1` INNER JOIN `yearmonth` AS `t2` ON `t1`.`customerid` = `t2`.`customerid` WHERE SUBSTR( `t2`.`date` , 1 , 4 ) = '2013' AND `t1`.`segment` = 'SME' GROUP BY SUBSTR( `t2`.`date` , 5 , 2 ) ORDER BY SUM( `t2`.`consumption` ) DESC LIMIT 1\n",
+    "pg": "SELECT SUBSTR( \"t2\".\"date\" , 5 , 2 ) FROM \"customers\" AS \"t1\" INNER JOIN \"yearmonth\" AS \"t2\" ON \"t1\".\"customerid\" = \"t2\".\"customerid\" WHERE SUBSTR( \"t2\".\"date\" , 1 , 4 ) = '2013' AND \"t1\".\"segment\" = 'SME' GROUP BY SUBSTR( \"t2\".\"date\" , 5 , 2 ) ORDER BY SUM( \"t2\".\"consumption\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t1`.`transactionid` ) FROM `transactions_1k` AS `t1` INNER JOIN `gasstations` AS `t2` ON `t1`.`gasstationid` = `t2`.`gasstationid` WHERE `t2`.`country` = 'CZE' AND DATE_FORMAT( CAST( `t1`.`date` AS DATETIME ) , '%Y' ) >= '2012'\n",
+    "pg": "SELECT COUNT( \"t1\".\"transactionid\" ) FROM \"transactions_1k\" AS \"t1\" INNER JOIN \"gasstations\" AS \"t2\" ON \"t1\".\"gasstationid\" = \"t2\".\"gasstationid\" WHERE \"t2\".\"country\" = 'CZE' AND TO_CHAR( CAST( \"t1\".\"date\" AS TIMESTAMP ) , 'YYYY' ) >= '2012'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) >= '2012'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`event_name` FROM `budget` AS `t1` INNER JOIN `event` AS `t2` ON `t1`.`link_to_event` = `t2`.`event_id` WHERE `t2`.`status` = 'Closed' ORDER BY `t1`.`spent` / `t1`.`amount` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"event_name\" FROM \"budget\" AS \"t1\" INNER JOIN \"event\" AS \"t2\" ON \"t1\".\"link_to_event\" = \"t2\".\"event_id\" WHERE \"t2\".\"status\" = 'Closed' ORDER BY \"t1\".\"spent\" / NULLIF( \"t1\".\"amount\" , 0 ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `source` FROM `income` WHERE `date_received` BETWEEN '2019-09-01' AND '2019-09-30' ORDER BY `source` DESC LIMIT 1\n",
+    "pg": "SELECT \"source\" FROM \"income\" WHERE \"date_received\" BETWEEN '2019-09-01' AND '2019-09-30' ORDER BY \"source\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`event_name` FROM `budget` AS `t1` INNER JOIN `event` AS `t2` ON `t1`.`link_to_event` = `t2`.`event_id` WHERE `t1`.`category` = 'Advertisement' ORDER BY `t1`.`spent` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"event_name\" FROM \"budget\" AS \"t1\" INNER JOIN \"event\" AS \"t2\" ON \"t1\".\"link_to_event\" = \"t2\".\"event_id\" WHERE \"t1\".\"category\" = 'Advertisement' ORDER BY \"t1\".\"spent\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`event_name` FROM `budget` AS `t1` INNER JOIN `event` AS `t2` ON `t2`.`event_id` = `t1`.`link_to_event` WHERE `t1`.`event_status` = 'Closed' AND `t1`.`remaining` < 0 ORDER BY `t1`.`remaining` LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"event_name\" FROM \"budget\" AS \"t1\" INNER JOIN \"event\" AS \"t2\" ON \"t2\".\"event_id\" = \"t1\".\"link_to_event\" WHERE \"t1\".\"event_status\" = 'Closed' AND \"t1\".\"remaining\" < 0 ORDER BY \"t1\".\"remaining\" NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( SUM( CASE WHEN DATE_FORMAT( CAST( `birthday` AS DATETIME ) , '%Y' ) > '1930' THEN 1 ELSE 0 END ) AS DOUBLE ) * 100 / COUNT( * ) FROM `patient` WHERE `sex` = 'F'\n",
+    "pg": "SELECT CAST( SUM( CASE WHEN TO_CHAR( CAST( \"birthday\" AS TIMESTAMP ) , 'YYYY' ) > '1930' THEN 1 ELSE 0 END ) AS REAL ) * 100 / NULLIF( COUNT( * ) , 0 ) FROM \"patient\" WHERE \"sex\" = 'F'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) > '1930' THEN 1 ELSE 0 END ) AS REAL ) * 100 / NULLIF( CO' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( * ) FROM `patient` WHERE DATE_FORMAT( CAST( `description` AS DATETIME ) , '%Y' ) = '1997' AND `sex` = 'F' AND `admission` = '-'\n",
+    "pg": "SELECT COUNT( * ) FROM \"patient\" WHERE TO_CHAR( CAST( \"description\" AS TIMESTAMP ) , 'YYYY' ) = '1997' AND \"sex\" = 'F' AND \"admission\" = '-'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '1997' AND `sex` = 'F' AND `admission` = '-'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( * ) FROM `patient` AS `t1` INNER JOIN `examination` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE `t1`.`sex` = 'F' AND DATE_FORMAT( CAST( `t2`.`examination date` AS DATETIME ) , '%Y' ) = '1997' AND `t2`.`thrombosis` = 1\n",
+    "pg": "SELECT COUNT( * ) FROM \"patient\" AS \"t1\" INNER JOIN \"examination\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE \"t1\".\"sex\" = 'F' AND TO_CHAR( CAST( \"t2\".\"examination date\" AS TIMESTAMP ) , 'YYYY' ) = '1997' AND \"t2\".\"thrombosis\" = 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '1997' AND `t2`.`thrombosis` = 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`symptoms` , `t1`.`diagnosis` FROM `patient` AS `t1` INNER JOIN `examination` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE NOT `t2`.`symptoms` IS NULL ORDER BY `t1`.`birthday` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"symptoms\" , \"t1\".\"diagnosis\" FROM \"patient\" AS \"t1\" INNER JOIN \"examination\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE NOT \"t2\".\"symptoms\" IS NULL ORDER BY \"t1\".\"birthday\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( ( SUM( CASE WHEN `t2`.`date` LIKE '1981-11-%' THEN `t2`.`t-cho` ELSE 0 END ) - SUM( CASE WHEN `t2`.`date` LIKE '1981-12-%' THEN `t2`.`t-cho` ELSE 0 END ) ) AS DOUBLE ) / SUM( CASE WHEN `t2`.`date` LIKE '1981-12-%' THEN `t2`.`t-cho` ELSE 0 END ) FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE `t1`.`birthday` = '1959-02-18'\n",
+    "pg": "SELECT CAST( ( SUM( CASE WHEN \"t2\".\"date\" :: text LIKE '1981-11-%' THEN \"t2\".\"t-cho\" ELSE 0 END ) - SUM( CASE WHEN \"t2\".\"date\" :: text LIKE '1981-12-%' THEN \"t2\".\"t-cho\" ELSE 0 END ) ) AS REAL ) / NULLIF( SUM( CASE WHEN \"t2\".\"date\" :: text LIKE '1981-12-%' THEN \"t2\".\"t-cho\" ELSE 0 END ) , 0 ) FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE \"t1\".\"birthday\" = '1959-02-18'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':: text LIKE '1981-11-%' THEN `t2`.`t-cho` ELSE 0 END ) - SUM( CASE WHEN `t2`.`d' at line 1\")"
+  },
+  {
+    "mysql": "SELECT DISTINCT `t1`.`id` FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE `t1`.`admission` = '-' AND `t2`.`t-bil` < 2.0 AND `t2`.`date` LIKE '1991-10-%'\n",
+    "pg": "SELECT DISTINCT \"t1\".\"id\" FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE \"t1\".\"admission\" = '-' AND \"t2\".\"t-bil\" < 2.0 AND \"t2\".\"date\" :: text LIKE '1991-10-%'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':: text LIKE '1991-10-%'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( SUM( CASE WHEN `sex` = 'F' THEN 1 ELSE 0 END ) AS DOUBLE ) * 100 / COUNT( `id` ) FROM `patient` WHERE `diagnosis` = 'RA' AND DATE_FORMAT( CAST( `birthday` AS DATETIME ) , '%Y' ) = '1980'\n",
+    "pg": "SELECT CAST( SUM( CASE WHEN \"sex\" = 'F' THEN 1 ELSE 0 END ) AS REAL ) * 100 / NULLIF( COUNT( \"id\" ) , 0 ) FROM \"patient\" WHERE \"diagnosis\" = 'RA' AND TO_CHAR( CAST( \"birthday\" AS TIMESTAMP ) , 'YYYY' ) = '1980'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '1980'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( DISTINCT `t1`.`id` ) FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE DATE_FORMAT( CAST( `t1`.`birthday` AS DATETIME ) , '%Y' ) BETWEEN '1936' AND '1956' AND `t1`.`sex` = 'M' AND `t2`.`cpk` >= 250\n",
+    "pg": "SELECT COUNT( DISTINCT \"t1\".\"id\" ) FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE TO_CHAR( CAST( \"t1\".\"birthday\" AS TIMESTAMP ) , 'YYYY' ) BETWEEN '1936' AND '1956' AND \"t1\".\"sex\" = 'M' AND \"t2\".\"cpk\" >= 250\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) BETWEEN '1936' AND '1956' AND `t1`.`sex` = 'M' AND `t2`.`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`id` , `t1`.`sex` FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE `t1`.`diagnosis` = 'SLE' AND `t2`.`hgb` > 10 AND `t2`.`hgb` < 17 ORDER BY `t1`.`birthday` ASC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"id\" , \"t1\".\"sex\" FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE \"t1\".\"diagnosis\" = 'SLE' AND \"t2\".\"hgb\" > 10 AND \"t2\".\"hgb\" < 17 ORDER BY \"t1\".\"birthday\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t1`.`id` ) FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE `t2`.`iga` BETWEEN 80 AND 500 AND DATE_FORMAT( CAST( `t1`.`first date` AS DATETIME ) , '%Y' ) > '1990'\n",
+    "pg": "SELECT COUNT( \"t1\".\"id\" ) FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE \"t2\".\"iga\" BETWEEN 80 AND 500 AND TO_CHAR( CAST( \"t1\".\"first date\" AS TIMESTAMP ) , 'YYYY' ) > '1990'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) > '1990'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`diagnosis` FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE NOT `t2`.`igm` BETWEEN 40 AND 400 GROUP BY `t1`.`diagnosis` ORDER BY COUNT( `t1`.`diagnosis` ) DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"diagnosis\" FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE NOT \"t2\".\"igm\" BETWEEN 40 AND 400 GROUP BY \"t1\".\"diagnosis\" ORDER BY COUNT( \"t1\".\"diagnosis\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( DISTINCT `t1`.`id` ) FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE `t2`.`cre` >= 1.5 AND YEAR( CURDATE( ) ) - YEAR( `t1`.`birthday` ) < 70\n",
+    "pg": "SELECT COUNT( DISTINCT \"t1\".\"id\" ) FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE \"t2\".\"cre\" >= 1.5 AND EXTRACT( YEAR FROM AGE( CURRENT_DATE , \"t1\".\"birthday\" ) ) < 70\n",
+    "mysql_err": "(1305, 'FUNCTION wei_BIRD.AGE does not exist')"
+  },
+  {
+    "mysql": "SELECT `t1`.`birthday` FROM `patient` AS `t1` INNER JOIN `laboratory` AS `t2` ON `t1`.`id` = `t2`.`id` WHERE `t2`.`got` >= 60 ORDER BY `t1`.`birthday` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"birthday\" FROM \"patient\" AS \"t1\" INNER JOIN \"laboratory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"id\" WHERE \"t2\".\"got\" >= 60 ORDER BY \"t1\".\"birthday\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`name` FROM `match` AS `t1` INNER JOIN `league` AS `t2` ON `t1`.`league_id` = `t2`.`id` WHERE `t1`.`season` = '2015/2016' GROUP BY `t2`.`name` ORDER BY SUM( `t1`.`home_team_goal` + `t1`.`away_team_goal` ) DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"name\" FROM \"match\" AS \"t1\" INNER JOIN \"league\" AS \"t2\" ON \"t1\".\"league_id\" = \"t2\".\"id\" WHERE \"t1\".\"season\" = '2015/2016' GROUP BY \"t2\".\"name\" ORDER BY SUM( \"t1\".\"home_team_goal\" + \"t1\".\"away_team_goal\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`buildupplayspeed` FROM `team_attributes` AS `t1` INNER JOIN `team` AS `t2` ON `t1`.`team_api_id` = `t2`.`team_api_id` ORDER BY `t1`.`buildupplayspeed` ASC LIMIT 4\n",
+    "pg": "SELECT \"t1\".\"buildupplayspeed\" FROM \"team_attributes\" AS \"t1\" INNER JOIN \"team\" AS \"t2\" ON \"t1\".\"team_api_id\" = \"t2\".\"team_api_id\" ORDER BY \"t1\".\"buildupplayspeed\" ASC NULLS FIRST LIMIT 4\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 4' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`name` FROM `match` AS `t1` INNER JOIN `league` AS `t2` ON `t1`.`league_id` = `t2`.`id` WHERE `t1`.`season` = '2015/2016' AND `t1`.`home_team_goal` = `t1`.`away_team_goal` GROUP BY `t2`.`name` ORDER BY COUNT( `t1`.`id` ) DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"name\" FROM \"match\" AS \"t1\" INNER JOIN \"league\" AS \"t2\" ON \"t1\".\"league_id\" = \"t2\".\"id\" WHERE \"t1\".\"season\" = '2015/2016' AND \"t1\".\"home_team_goal\" = \"t1\".\"away_team_goal\" GROUP BY \"t2\".\"name\" ORDER BY COUNT( \"t1\".\"id\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT DISTINCT YEAR( CURDATE( ) ) - YEAR( `t2`.`birthday` ) AS `age` FROM `player_attributes` AS `t1` INNER JOIN `player` AS `t2` ON `t1`.`player_api_id` = `t2`.`player_api_id` WHERE YEAR( `t1`.`date` ) BETWEEN 2013 AND 2015 AND `t1`.`sprint_speed` >= 97\n",
+    "pg": "SELECT DISTINCT EXTRACT( YEAR FROM AGE( NOW( ) , \"t2\".\"birthday\" :: timestamp ) ) + ( CASE WHEN EXTRACT( MONTH FROM AGE( NOW( ) , \"t2\".\"birthday\" :: timestamp ) ) > 0 OR EXTRACT( DAY FROM AGE( NOW( ) , \"t2\".\"birthday\" :: timestamp ) ) > 0 THEN 1 ELSE 0 END ) AS \"age\" FROM \"player_attributes\" AS \"t1\" INNER JOIN \"player\" AS \"t2\" ON \"t1\".\"player_api_id\" = \"t2\".\"player_api_id\" WHERE EXTRACT( YEAR FROM \"t1\".\"date\" :: date ) BETWEEN 2013 AND 2015 AND \"t1\".\"sprint_speed\" >= 97\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':: timestamp ) ) + ( CASE WHEN EXTRACT( MONTH FROM AGE( NOW( ) , `t2`.`birthday`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`overall_rating` FROM `player` AS `t1` INNER JOIN `player_attributes` AS `t2` ON `t1`.`player_api_id` = `t2`.`player_api_id` WHERE `t1`.`player_name` = 'Gabriel Tamas' AND DATE_FORMAT( CAST( `t2`.`date` AS DATETIME ) , '%Y' ) = '2011'\n",
+    "pg": "SELECT \"t2\".\"overall_rating\" FROM \"player\" AS \"t1\" INNER JOIN \"player_attributes\" AS \"t2\" ON \"t1\".\"player_api_id\" = \"t2\".\"player_api_id\" WHERE \"t1\".\"player_name\" = 'Gabriel Tamas' AND TO_CHAR( CAST( \"t2\".\"date\" AS TIMESTAMP ) , 'YYYY' ) = '2011'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '2011'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `player_name` FROM `player` WHERE `player_name` IN ( 'Aaron Lennon' , 'Abdelaziz Barrada' ) ORDER BY `birthday` ASC LIMIT 1\n",
+    "pg": "SELECT \"player_name\" FROM \"player\" WHERE \"player_name\" IN ( 'Aaron Lennon' , 'Abdelaziz Barrada' ) ORDER BY \"birthday\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `player_name` FROM `player` ORDER BY `height` DESC LIMIT 1\n",
+    "pg": "SELECT \"player_name\" FROM \"player\" ORDER BY \"height\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( DISTINCT `t1`.`player_name` ) FROM `player` AS `t1` INNER JOIN `player_attributes` AS `t2` ON `t1`.`player_api_id` = `t2`.`player_api_id` WHERE DATE_FORMAT( CAST( `t1`.`birthday` AS DATETIME ) , '%Y' ) < '1986' AND `t2`.`defensive_work_rate` = 'high'\n",
+    "pg": "SELECT COUNT( DISTINCT \"t1\".\"player_name\" ) FROM \"player\" AS \"t1\" INNER JOIN \"player_attributes\" AS \"t2\" ON \"t1\".\"player_api_id\" = \"t2\".\"player_api_id\" WHERE TO_CHAR( CAST( \"t1\".\"birthday\" AS TIMESTAMP ) , 'YYYY' ) < '1986' AND \"t2\".\"defensive_work_rate\" = 'high'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) < '1986' AND `t2`.`defensive_work_rate` = 'high'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`chancecreationpassing` , `t2`.`chancecreationpassingclass` FROM `team` AS `t1` INNER JOIN `team_attributes` AS `t2` ON `t1`.`team_api_id` = `t2`.`team_api_id` WHERE `t1`.`team_long_name` = 'Ajax' ORDER BY `t2`.`chancecreationpassing` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"chancecreationpassing\" , \"t2\".\"chancecreationpassingclass\" FROM \"team\" AS \"t1\" INNER JOIN \"team_attributes\" AS \"t2\" ON \"t1\".\"team_api_id\" = \"t2\".\"team_api_id\" WHERE \"t1\".\"team_long_name\" = 'Ajax' ORDER BY \"t2\".\"chancecreationpassing\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`player_name` FROM `player` AS `t1` INNER JOIN `player_attributes` AS `t2` ON `t1`.`player_api_id` = `t2`.`player_api_id` WHERE SUBSTR( `t2`.`date` , 1 , 10 ) = '2016-06-23' AND `t2`.`overall_rating` = 77 ORDER BY `t1`.`birthday` ASC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"player_name\" FROM \"player\" AS \"t1\" INNER JOIN \"player_attributes\" AS \"t2\" ON \"t1\".\"player_api_id\" = \"t2\".\"player_api_id\" WHERE SUBSTR( \"t2\".\"date\" , 1 , 10 ) = '2016-06-23' AND \"t2\".\"overall_rating\" = 77 ORDER BY \"t1\".\"birthday\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `id` , `finishing` , `curve` FROM `player_attributes` WHERE `player_api_id` = ( SELECT `player_api_id` FROM `player` ORDER BY `weight` DESC LIMIT 1 ) LIMIT 1\n",
+    "pg": "SELECT \"id\" , \"finishing\" , \"curve\" FROM \"player_attributes\" WHERE \"player_api_id\" = ( SELECT \"player_api_id\" FROM \"player\" ORDER BY \"weight\" DESC NULLS LAST LIMIT 1 ) LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 ) LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`team_long_name` FROM `match` AS `t1` INNER JOIN `team` AS `t2` ON `t1`.`away_team_api_id` = `t2`.`team_api_id` ORDER BY `t1`.`away_team_goal` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"team_long_name\" FROM \"match\" AS \"t1\" INNER JOIN \"team\" AS \"t2\" ON \"t1\".\"away_team_api_id\" = \"t2\".\"team_api_id\" ORDER BY \"t1\".\"away_team_goal\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`driverref` FROM `qualifying` AS `t1` INNER JOIN `drivers` AS `t2` ON `t2`.`driverid` = `t1`.`driverid` WHERE `t1`.`raceid` = 20 ORDER BY `t1`.`q1` DESC LIMIT 5\n",
+    "pg": "SELECT \"t2\".\"driverref\" FROM \"qualifying\" AS \"t1\" INNER JOIN \"drivers\" AS \"t2\" ON \"t2\".\"driverid\" = \"t1\".\"driverid\" WHERE \"t1\".\"raceid\" = 20 ORDER BY \"t1\".\"q1\" DESC NULLS LAST LIMIT 5\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 5' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`forename` , `t1`.`surname` FROM `drivers` AS `t1` INNER JOIN `results` AS `t2` ON `t2`.`driverid` = `t1`.`driverid` WHERE `t2`.`raceid` = 592 AND NOT `t2`.`time` IS NULL AND NOT `t1`.`dob` IS NULL ORDER BY `t1`.`dob` ASC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"forename\" , \"t1\".\"surname\" FROM \"drivers\" AS \"t1\" INNER JOIN \"results\" AS \"t2\" ON \"t2\".\"driverid\" = \"t1\".\"driverid\" WHERE \"t2\".\"raceid\" = 592 AND NOT \"t2\".\"time\" IS NULL AND NOT \"t1\".\"dob\" IS NULL ORDER BY \"t1\".\"dob\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`url` FROM `constructorresults` AS `t1` INNER JOIN `constructors` AS `t2` ON `t2`.`constructorid` = `t1`.`constructorid` WHERE `t1`.`raceid` = 9 ORDER BY `t1`.`points` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"url\" FROM \"constructorresults\" AS \"t1\" INNER JOIN \"constructors\" AS \"t2\" ON \"t2\".\"constructorid\" = \"t1\".\"constructorid\" WHERE \"t1\".\"raceid\" = 9 ORDER BY \"t1\".\"points\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`forename` , `t1`.`surname` FROM `drivers` AS `t1` INNER JOIN `results` AS `t2` ON `t2`.`driverid` = `t1`.`driverid` WHERE `t2`.`raceid` = 872 AND NOT `t2`.`time` IS NULL ORDER BY `t1`.`dob` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"forename\" , \"t1\".\"surname\" FROM \"drivers\" AS \"t1\" INNER JOIN \"results\" AS \"t2\" ON \"t2\".\"driverid\" = \"t1\".\"driverid\" WHERE \"t2\".\"raceid\" = 872 AND NOT \"t2\".\"time\" IS NULL ORDER BY \"t1\".\"dob\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`nationality` FROM `drivers` AS `t1` INNER JOIN `results` AS `t2` ON `t2`.`driverid` = `t1`.`driverid` ORDER BY `t2`.`fastestlapspeed` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"nationality\" FROM \"drivers\" AS \"t1\" INNER JOIN \"results\" AS \"t2\" ON \"t2\".\"driverid\" = \"t1\".\"driverid\" ORDER BY \"t2\".\"fastestlapspeed\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `name` FROM `races` WHERE DATE_FORMAT( CAST( `date` AS DATETIME ) , '%Y' ) = ( SELECT DATE_FORMAT( CAST( `date` AS DATETIME ) , '%Y' ) FROM `races` ORDER BY `date` ASC LIMIT 1 ) AND DATE_FORMAT( CAST( `date` AS DATETIME ) , '%m' ) = ( SELECT DATE_FORMAT( CAST( `date` AS DATETIME ) , '%m' ) FROM `races` ORDER BY `date` ASC LIMIT 1 )\n",
+    "pg": "SELECT \"name\" FROM \"races\" WHERE TO_CHAR( CAST( \"date\" AS TIMESTAMP ) , 'YYYY' ) = ( SELECT TO_CHAR( CAST( \"date\" AS TIMESTAMP ) , 'YYYY' ) FROM \"races\" ORDER BY \"date\" ASC NULLS FIRST LIMIT 1 ) AND TO_CHAR( CAST( \"date\" AS TIMESTAMP ) , 'MM' ) = ( SELECT TO_CHAR( CAST( \"date\" AS TIMESTAMP ) , 'MM' ) FROM \"races\" ORDER BY \"date\" ASC NULLS FIRST LIMIT 1 )\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = ( SELECT TO_CHAR( CAST( `date` AS TIMESTAMP ) , 'YYYY' ' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t3`.`forename` , `t3`.`surname` , `t2`.`points` FROM `races` AS `t1` INNER JOIN `driverstandings` AS `t2` ON `t2`.`raceid` = `t1`.`raceid` INNER JOIN `drivers` AS `t3` ON `t3`.`driverid` = `t2`.`driverid` ORDER BY `t2`.`points` DESC LIMIT 1\n",
+    "pg": "SELECT \"t3\".\"forename\" , \"t3\".\"surname\" , \"t2\".\"points\" FROM \"races\" AS \"t1\" INNER JOIN \"driverstandings\" AS \"t2\" ON \"t2\".\"raceid\" = \"t1\".\"raceid\" INNER JOIN \"drivers\" AS \"t3\" ON \"t3\".\"driverid\" = \"t2\".\"driverid\" ORDER BY \"t2\".\"points\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`milliseconds` , `t1`.`forename` , `t1`.`surname` , `t3`.`name` FROM `drivers` AS `t1` INNER JOIN `laptimes` AS `t2` ON `t1`.`driverid` = `t2`.`driverid` INNER JOIN `races` AS `t3` ON `t2`.`raceid` = `t3`.`raceid` ORDER BY `t2`.`milliseconds` ASC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"milliseconds\" , \"t1\".\"forename\" , \"t1\".\"surname\" , \"t3\".\"name\" FROM \"drivers\" AS \"t1\" INNER JOIN \"laptimes\" AS \"t2\" ON \"t1\".\"driverid\" = \"t2\".\"driverid\" INNER JOIN \"races\" AS \"t3\" ON \"t2\".\"raceid\" = \"t3\".\"raceid\" ORDER BY \"t2\".\"milliseconds\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`forename` , `t1`.`surname` , `t1`.`nationality` , MAX( `t2`.`points` ) FROM `drivers` AS `t1` INNER JOIN `driverstandings` AS `t2` ON `t2`.`driverid` = `t1`.`driverid` WHERE `t2`.`wins` >= 1 GROUP BY `t1`.`forename` , `t1`.`surname` , `t1`.`nationality` ORDER BY COUNT( `t2`.`wins` ) DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"forename\" , \"t1\".\"surname\" , \"t1\".\"nationality\" , MAX( \"t2\".\"points\" ) FROM \"drivers\" AS \"t1\" INNER JOIN \"driverstandings\" AS \"t2\" ON \"t2\".\"driverid\" = \"t1\".\"driverid\" WHERE \"t2\".\"wins\" >= 1 GROUP BY \"t1\".\"forename\" , \"t1\".\"surname\" , \"t1\".\"nationality\" ORDER BY COUNT( \"t2\".\"wins\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`name` , `t1`.`year` FROM `races` AS `t1` INNER JOIN `laptimes` AS `t2` ON `t2`.`raceid` = `t1`.`raceid` INNER JOIN `drivers` AS `t3` ON `t3`.`driverid` = `t2`.`driverid` WHERE `t3`.`forename` = 'Michael' AND `t3`.`surname` = 'Schumacher' ORDER BY `t2`.`milliseconds` ASC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"name\" , \"t1\".\"year\" FROM \"races\" AS \"t1\" INNER JOIN \"laptimes\" AS \"t2\" ON \"t2\".\"raceid\" = \"t1\".\"raceid\" INNER JOIN \"drivers\" AS \"t3\" ON \"t3\".\"driverid\" = \"t2\".\"driverid\" WHERE \"t3\".\"forename\" = 'Michael' AND \"t3\".\"surname\" = 'Schumacher' ORDER BY \"t2\".\"milliseconds\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`name` , `t2`.`points` FROM `races` AS `t1` INNER JOIN `driverstandings` AS `t2` ON `t2`.`raceid` = `t1`.`raceid` INNER JOIN `drivers` AS `t3` ON `t3`.`driverid` = `t2`.`driverid` WHERE `t3`.`forename` = 'Lewis' AND `t3`.`surname` = 'Hamilton' ORDER BY `t1`.`year` ASC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"name\" , \"t2\".\"points\" FROM \"races\" AS \"t1\" INNER JOIN \"driverstandings\" AS \"t2\" ON \"t2\".\"raceid\" = \"t1\".\"raceid\" INNER JOIN \"drivers\" AS \"t3\" ON \"t3\".\"driverid\" = \"t2\".\"driverid\" WHERE \"t3\".\"forename\" = 'Lewis' AND \"t3\".\"surname\" = 'Hamilton' ORDER BY \"t1\".\"year\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `nationality` FROM `drivers` WHERE NOT `dob` IS NULL ORDER BY `dob` ASC LIMIT 1\n",
+    "pg": "SELECT \"nationality\" FROM \"drivers\" WHERE NOT \"dob\" IS NULL ORDER BY \"dob\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`fastestlapspeed` FROM `races` AS `t1` INNER JOIN `results` AS `t2` ON `t2`.`raceid` = `t1`.`raceid` WHERE `t1`.`name` = 'Spanish Grand Prix' AND `t1`.`year` = 2009 AND NOT `t2`.`fastestlapspeed` IS NULL ORDER BY `t2`.`fastestlapspeed` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"fastestlapspeed\" FROM \"races\" AS \"t1\" INNER JOIN \"results\" AS \"t2\" ON \"t2\".\"raceid\" = \"t1\".\"raceid\" WHERE \"t1\".\"name\" = 'Spanish Grand Prix' AND \"t1\".\"year\" = 2009 AND NOT \"t2\".\"fastestlapspeed\" IS NULL ORDER BY \"t2\".\"fastestlapspeed\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( SUM( CASE WHEN DATE_FORMAT( CAST( `t3`.`dob` AS DATETIME ) , '%Y' ) < '1985' AND `t1`.`laps` > 50 THEN 1 ELSE 0 END ) AS DOUBLE ) * 100 / COUNT( * ) FROM `results` AS `t1` INNER JOIN `races` AS `t2` ON `t1`.`raceid` = `t2`.`raceid` INNER JOIN `drivers` AS `t3` ON `t1`.`driverid` = `t3`.`driverid` WHERE `t2`.`year` BETWEEN 2000 AND 2005\n",
+    "pg": "SELECT CAST( SUM( CASE WHEN TO_CHAR( CAST( \"t3\".\"dob\" AS TIMESTAMP ) , 'YYYY' ) < '1985' AND \"t1\".\"laps\" > 50 THEN 1 ELSE 0 END ) AS REAL ) * 100 / NULLIF( COUNT( * ) , 0 ) FROM \"results\" AS \"t1\" INNER JOIN \"races\" AS \"t2\" ON \"t1\".\"raceid\" = \"t2\".\"raceid\" INNER JOIN \"drivers\" AS \"t3\" ON \"t1\".\"driverid\" = \"t3\".\"driverid\" WHERE \"t2\".\"year\" BETWEEN 2000 AND 2005\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) < '1985' AND `t1`.`laps` > 50 THEN 1 ELSE 0 END ) AS REAL' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t1`.`driverid` ) FROM `drivers` AS `t1` INNER JOIN `laptimes` AS `t2` ON `t1`.`driverid` = `t2`.`driverid` WHERE `t1`.`nationality` = 'French' AND ( CAST( SUBSTR( `t2`.`time` , 1 , 2 ) AS SIGNED ) * 60 + CAST( SUBSTR( `t2`.`time` , 4 , 2 ) AS SIGNED ) + CAST( SUBSTR( `t2`.`time` , 7 , 2 ) AS DOUBLE ) / 1000 ) < 120\n",
+    "pg": "SELECT COUNT( \"t1\".\"driverid\" ) FROM \"drivers\" AS \"t1\" INNER JOIN \"laptimes\" AS \"t2\" ON \"t1\".\"driverid\" = \"t2\".\"driverid\" WHERE \"t1\".\"nationality\" = 'French' AND ( EXTRACT( MINUTE FROM \"t2\".\"time\" :: INTERVAL ) * 60 + EXTRACT( SECOND FROM \"t2\".\"time\" :: INTERVAL ) ) < 120\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':: INTERVAL ) * 60 + EXTRACT( SECOND FROM `t2`.`time` :: INTERVAL ) ) < 120' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`driverid` , `t2`.`code` FROM `results` AS `t1` INNER JOIN `drivers` AS `t2` ON `t1`.`driverid` = `t2`.`driverid` WHERE DATE_FORMAT( CAST( `t2`.`dob` AS DATETIME ) , '%Y' ) = '1971' AND NOT `t1`.`fastestlaptime` IS NULL\n",
+    "pg": "SELECT \"t2\".\"driverid\" , \"t2\".\"code\" FROM \"results\" AS \"t1\" INNER JOIN \"drivers\" AS \"t2\" ON \"t1\".\"driverid\" = \"t2\".\"driverid\" WHERE TO_CHAR( CAST( \"t2\".\"dob\" AS TIMESTAMP ) , 'YYYY' ) = '1971' AND NOT \"t1\".\"fastestlaptime\" IS NULL\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '1971' AND NOT `t1`.`fastestlaptime` IS NULL' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t3`.`year` , `t3`.`name` , `t3`.`date` , `t3`.`time` FROM `qualifying` AS `t1` INNER JOIN `drivers` AS `t2` ON `t1`.`driverid` = `t2`.`driverid` INNER JOIN `races` AS `t3` ON `t1`.`raceid` = `t3`.`raceid` WHERE `t1`.`driverid` = ( SELECT `driverid` FROM `drivers` ORDER BY `dob` DESC LIMIT 1 ) ORDER BY `t3`.`date` ASC LIMIT 1\n",
+    "pg": "SELECT \"t3\".\"year\" , \"t3\".\"name\" , \"t3\".\"date\" , \"t3\".\"time\" FROM \"qualifying\" AS \"t1\" INNER JOIN \"drivers\" AS \"t2\" ON \"t1\".\"driverid\" = \"t2\".\"driverid\" INNER JOIN \"races\" AS \"t3\" ON \"t1\".\"raceid\" = \"t3\".\"raceid\" WHERE \"t1\".\"driverid\" = ( SELECT \"driverid\" FROM \"drivers\" ORDER BY \"dob\" DESC NULLS LAST LIMIT 1 ) ORDER BY \"t3\".\"date\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 ) ORDER BY `t3`.`date` ASC NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`forename` , `t2`.`surname` FROM `qualifying` AS `t1` INNER JOIN `drivers` AS `t2` ON `t1`.`driverid` = `t2`.`driverid` INNER JOIN `races` AS `t3` ON `t1`.`raceid` = `t3`.`raceid` WHERE NOT `q3` IS NULL AND `t3`.`year` = 2008 AND `t3`.`circuitid` IN ( SELECT `circuitid` FROM `circuits` WHERE `name` = 'Marina Bay Street Circuit' ) ORDER BY CAST( SUBSTR( `q3` , 1 , INSTR( `q3` , ':' ) - 1 ) AS SIGNED ) * 60 + CAST( SUBSTR( `q3` , INSTR( `q3` , ':' ) + 1 , INSTR( `q3` , '.' ) - INSTR( `q3` , ':' ) - 1 ) AS DOUBLE ) + CAST( SUBSTR( `q3` , INSTR( `q3` , '.' ) + 1 ) AS DOUBLE ) / 1000 ASC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"forename\" , \"t2\".\"surname\" FROM \"qualifying\" AS \"t1\" INNER JOIN \"drivers\" AS \"t2\" ON \"t1\".\"driverid\" = \"t2\".\"driverid\" INNER JOIN \"races\" AS \"t3\" ON \"t1\".\"raceid\" = \"t3\".\"raceid\" WHERE \"q3\" IS NOT NULL AND \"t3\".\"year\" = 2008 AND \"t3\".\"circuitid\" IN ( SELECT \"circuitid\" FROM \"circuits\" WHERE \"name\" = 'Marina Bay Street Circuit' ) ORDER BY CAST( SPLIT_PART( \"q3\" , ':' , 1 ) AS INTEGER ) * 60 + CAST( SPLIT_PART( SPLIT_PART( \"q3\" , ':' , 2 ) , '.' , 1 ) AS REAL ) + CAST( SPLIT_PART( \"q3\" , '.' , 2 ) AS REAL ) / 1000 ASC LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'INTEGER ) * 60 + CAST( SPLIT_PART( SPLIT_PART( `q3` , ':' , 2 ) , '.' , 1 ) AS R' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`forename` , `t1`.`surname` , `t1`.`nationality` , `t3`.`name` FROM `drivers` AS `t1` INNER JOIN `driverstandings` AS `t2` ON `t1`.`driverid` = `t2`.`driverid` INNER JOIN `races` AS `t3` ON `t2`.`raceid` = `t3`.`raceid` ORDER BY `t1`.`dob` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"forename\" , \"t1\".\"surname\" , \"t1\".\"nationality\" , \"t3\".\"name\" FROM \"drivers\" AS \"t1\" INNER JOIN \"driverstandings\" AS \"t2\" ON \"t1\".\"driverid\" = \"t2\".\"driverid\" INNER JOIN \"races\" AS \"t3\" ON \"t2\".\"raceid\" = \"t3\".\"raceid\" WHERE \"t1\".\"dob\" notnull ORDER BY \"t1\".\"dob\" DESC LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'notnull ORDER BY `t1`.`dob` DESC LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t1`.`driverid` ) FROM `results` AS `t1` INNER JOIN `races` AS `t2` ON `t1`.`raceid` = `t2`.`raceid` INNER JOIN `status` AS `t3` ON `t1`.`statusid` = `t3`.`statusid` WHERE `t3`.`statusid` = 3 AND `t2`.`name` = 'Canadian Grand Prix' GROUP BY `t1`.`driverid` ORDER BY COUNT( `t1`.`driverid` ) DESC LIMIT 1\n",
+    "pg": "SELECT COUNT( \"t1\".\"driverid\" ) FROM \"results\" AS \"t1\" INNER JOIN \"races\" AS \"t2\" ON \"t1\".\"raceid\" = \"t2\".\"raceid\" INNER JOIN \"status\" AS \"t3\" ON \"t1\".\"statusid\" = \"t3\".\"statusid\" WHERE \"t3\".\"statusid\" = 3 AND \"t2\".\"name\" = 'Canadian Grand Prix' GROUP BY \"t1\".\"driverid\" ORDER BY COUNT( \"t1\".\"driverid\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "WITH `fastest_lap_times` AS ( SELECT `t1`.`raceid` , `t1`.`fastestlaptime` , ( CAST( SUBSTR( `t1`.`fastestlaptime` , 1 , INSTR( `t1`.`fastestlaptime` , ':' ) - 1 ) AS DOUBLE ) * 60 ) + ( CAST( SUBSTR( `t1`.`fastestlaptime` , INSTR( `t1`.`fastestlaptime` , ':' ) + 1 , INSTR( `t1`.`fastestlaptime` , '.' ) - INSTR( `t1`.`fastestlaptime` , ':' ) - 1 ) AS DOUBLE ) ) + ( CAST( SUBSTR( `t1`.`fastestlaptime` , INSTR( `t1`.`fastestlaptime` , '.' ) + 1 ) AS DOUBLE ) / 1000 ) AS `time_in_seconds` FROM `results` AS `t1` WHERE NOT `t1`.`fastestlaptime` IS NULL ) SELECT `t1`.`fastestlaptime` AS `lap_record` FROM `results` AS `t1` INNER JOIN `races` AS `t2` ON `t1`.`raceid` = `t2`.`raceid` INNER JOIN `circuits` AS `t3` ON `t2`.`circuitid` = `t3`.`circuitid` INNER JOIN ( SELECT MIN( `fastest_lap_times`.`time_in_seconds` ) AS `min_time_in_seconds` FROM `fastest_lap_times` INNER JOIN `races` AS `t2` ON `fastest_lap_times`.`raceid` = `t2`.`raceid` INNER JOIN `circuits` AS `t3` ON `t2`.`circuitid` = `t3`.`circuitid` WHERE `t3`.`country` = 'Italy' ) AS `t4` ON ( CAST( SUBSTR( `t1`.`fastestlaptime` , 1 , INSTR( `t1`.`fastestlaptime` , ':' ) - 1 ) AS DOUBLE ) * 60 ) + ( CAST( SUBSTR( `t1`.`fastestlaptime` , INSTR( `t1`.`fastestlaptime` , ':' ) + 1 , INSTR( `t1`.`fastestlaptime` , '.' ) - INSTR( `t1`.`fastestlaptime` , ':' ) - 1 ) AS DOUBLE ) ) + ( CAST( SUBSTR( `t1`.`fastestlaptime` , INSTR( `t1`.`fastestlaptime` , '.' ) + 1 ) AS DOUBLE ) / 1000 ) = `t4`.`min_time_in_seconds` LIMIT 1\n",
+    "pg": "WITH fastest_lap_times AS ( SELECT \"t1\".\"raceid\" , \"t1\".\"fastestlaptime\" , ( CAST( SPLIT_PART( \"t1\".\"fastestlaptime\" , ':' , 1 ) AS REAL ) * 60 ) + ( CAST( SPLIT_PART( SPLIT_PART( \"t1\".\"fastestlaptime\" , ':' , 2 ) , '.' , 1 ) AS REAL ) ) + ( CAST( SPLIT_PART( \"t1\".\"fastestlaptime\" , '.' , 2 ) AS REAL ) / 1000 ) AS \"time_in_seconds\" FROM \"results\" AS \"t1\" WHERE \"t1\".\"fastestlaptime\" IS NOT NULL ) SELECT \"t1\".\"fastestlaptime\" AS \"lap_record\" FROM \"results\" AS \"t1\" INNER JOIN \"races\" AS \"t2\" ON \"t1\".\"raceid\" = \"t2\".\"raceid\" INNER JOIN \"circuits\" AS \"t3\" ON \"t2\".\"circuitid\" = \"t3\".\"circuitid\" INNER JOIN ( SELECT MIN( \"fastest_lap_times\".\"time_in_seconds\" ) AS \"min_time_in_seconds\" FROM \"fastest_lap_times\" INNER JOIN \"races\" AS \"t2\" ON \"fastest_lap_times\".\"raceid\" = \"t2\".\"raceid\" INNER JOIN \"circuits\" AS \"t3\" ON \"t2\".\"circuitid\" = \"t3\".\"circuitid\" WHERE \"t3\".\"country\" = 'Italy' ) AS \"t4\" ON ( CAST( SPLIT_PART( \"t1\".\"fastestlaptime\" , ':' , 1 ) AS REAL ) * 60 ) + ( CAST( SPLIT_PART( SPLIT_PART( \"t1\".\"fastestlaptime\" , ':' , 2 ) , '.' , 1 ) AS REAL ) ) + ( CAST( SPLIT_PART( \"t1\".\"fastestlaptime\" , '.' , 2 ) AS REAL ) / 1000 ) = \"t4\".\"min_time_in_seconds\" LIMIT 1\n",
+    "mysql_err": "(1305, 'FUNCTION wei_BIRD.SPLIT_PART does not exist')"
+  },
+  {
+    "mysql": "SELECT `t2`.`publisher_name` FROM `superhero` AS `t1` INNER JOIN `publisher` AS `t2` ON `t1`.`publisher_id` = `t2`.`id` INNER JOIN `hero_attribute` AS `t3` ON `t1`.`id` = `t3`.`hero_id` INNER JOIN `attribute` AS `t4` ON `t3`.`attribute_id` = `t4`.`id` WHERE `t4`.`attribute_name` = 'Speed' ORDER BY `t3`.`attribute_value` LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"publisher_name\" FROM \"superhero\" AS \"t1\" INNER JOIN \"publisher\" AS \"t2\" ON \"t1\".\"publisher_id\" = \"t2\".\"id\" INNER JOIN \"hero_attribute\" AS \"t3\" ON \"t1\".\"id\" = \"t3\".\"hero_id\" INNER JOIN \"attribute\" AS \"t4\" ON \"t3\".\"attribute_id\" = \"t4\".\"id\" WHERE \"t4\".\"attribute_name\" = 'Speed' ORDER BY \"t3\".\"attribute_value\" NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`superhero_name` FROM `superhero` AS `t1` INNER JOIN `hero_attribute` AS `t2` ON `t1`.`id` = `t2`.`hero_id` INNER JOIN `attribute` AS `t3` ON `t2`.`attribute_id` = `t3`.`id` WHERE `t3`.`attribute_name` = 'Intelligence' ORDER BY `t2`.`attribute_value` LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"superhero_name\" FROM \"superhero\" AS \"t1\" INNER JOIN \"hero_attribute\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"hero_id\" INNER JOIN \"attribute\" AS \"t3\" ON \"t2\".\"attribute_id\" = \"t3\".\"id\" WHERE \"t3\".\"attribute_name\" = 'Intelligence' ORDER BY \"t2\".\"attribute_value\" NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`full_name` FROM `superhero` AS `t1` INNER JOIN `hero_attribute` AS `t2` ON `t1`.`id` = `t2`.`hero_id` INNER JOIN `attribute` AS `t3` ON `t2`.`attribute_id` = `t3`.`id` WHERE `t3`.`attribute_name` = 'Strength' ORDER BY `t2`.`attribute_value` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"full_name\" FROM \"superhero\" AS \"t1\" INNER JOIN \"hero_attribute\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"hero_id\" INNER JOIN \"attribute\" AS \"t3\" ON \"t2\".\"attribute_id\" = \"t3\".\"id\" WHERE \"t3\".\"attribute_name\" = 'Strength' ORDER BY \"t2\".\"attribute_value\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`superhero_name` FROM `superhero` AS `t1` INNER JOIN `hero_attribute` AS `t2` ON `t1`.`id` = `t2`.`hero_id` INNER JOIN `attribute` AS `t3` ON `t3`.`id` = `t2`.`attribute_id` INNER JOIN `publisher` AS `t4` ON `t4`.`id` = `t1`.`publisher_id` WHERE `t4`.`publisher_name` = 'Dark Horse Comics' AND `t3`.`attribute_name` = 'Durability' ORDER BY `t2`.`attribute_value` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"superhero_name\" FROM \"superhero\" AS \"t1\" INNER JOIN \"hero_attribute\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"hero_id\" INNER JOIN \"attribute\" AS \"t3\" ON \"t3\".\"id\" = \"t2\".\"attribute_id\" INNER JOIN \"publisher\" AS \"t4\" ON \"t4\".\"id\" = \"t1\".\"publisher_id\" WHERE \"t4\".\"publisher_name\" = 'Dark Horse Comics' AND \"t3\".\"attribute_name\" = 'Durability' ORDER BY \"t2\".\"attribute_value\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`superhero_name` FROM `superhero` AS `t1` INNER JOIN `hero_attribute` AS `t2` ON `t1`.`id` = `t2`.`hero_id` INNER JOIN `attribute` AS `t3` ON `t2`.`attribute_id` = `t3`.`id` WHERE `t3`.`attribute_name` = 'Speed' AND `t2`.`attribute_value` = ( SELECT MAX( `attribute_value` ) FROM `hero_attribute` AS `t2b` WHERE `t2b`.`attribute_id` = `t3`.`id` ) LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"superhero_name\" FROM \"superhero\" AS \"t1\" INNER JOIN \"hero_attribute\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"hero_id\" INNER JOIN \"attribute\" AS \"t3\" ON \"t2\".\"attribute_id\" = \"t3\".\"id\" WHERE \"t3\".\"attribute_name\" = 'Speed' ORDER BY \"t2\".\"attribute_value\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`superhero_name` FROM `superhero` AS `t1` INNER JOIN `hero_power` AS `t2` ON `t1`.`id` = `t2`.`hero_id` INNER JOIN `superpower` AS `t3` ON `t2`.`power_id` = `t3`.`id` WHERE `t3`.`power_name` = 'Wind Control' ORDER BY `t1`.`superhero_name`\n",
+    "pg": "SELECT \"t1\".\"superhero_name\" FROM \"superhero\" AS \"t1\" INNER JOIN \"hero_power\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"hero_id\" INNER JOIN \"superpower\" AS \"t3\" ON \"t2\".\"power_id\" = \"t3\".\"id\" WHERE \"t3\".\"power_name\" = 'Wind Control' ORDER BY \"t1\".\"superhero_name\" NULLS FIRST\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( SUM( CASE WHEN DATE_FORMAT( CAST( `date` AS DATETIME ) , '%Y' ) = '2010' THEN 1 ELSE 0 END ) AS DOUBLE ) * 100 / COUNT( `id` ) - CAST( SUM( CASE WHEN DATE_FORMAT( CAST( `date` AS DATETIME ) , '%Y' ) = '2011' THEN 1 ELSE 0 END ) AS DOUBLE ) * 100 / COUNT( `id` ) FROM `badges` WHERE `name` = 'Student'\n",
+    "pg": "SELECT CAST( SUM( CASE WHEN TO_CHAR( CAST( \"date\" AS TIMESTAMP ) , 'YYYY' ) = '2010' THEN 1 ELSE 0 END ) AS REAL ) * 100 / NULLIF( COUNT( \"id\" ) , 0 ) - CAST( SUM( CASE WHEN TO_CHAR( CAST( \"date\" AS TIMESTAMP ) , 'YYYY' ) = '2011' THEN 1 ELSE 0 END ) AS REAL ) * 100 / NULLIF( COUNT( \"id\" ) , 0 ) FROM \"badges\" WHERE \"name\" = 'Student'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '2010' THEN 1 ELSE 0 END ) AS REAL ) * 100 / NULLIF( CO' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( SUM( CASE WHEN DATE_FORMAT( CAST( `creationdate` AS DATETIME ) , '%Y' ) = '2010' THEN 1 ELSE 0 END ) AS DOUBLE ) / SUM( CASE WHEN DATE_FORMAT( CAST( `creationdate` AS DATETIME ) , '%Y' ) = '2011' THEN 1 ELSE 0 END ) FROM `votes`\n",
+    "pg": "SELECT CAST( SUM( CASE WHEN TO_CHAR( CAST( \"creationdate\" AS TIMESTAMP ) , 'YYYY' ) = '2010' THEN 1 ELSE 0 END ) AS REAL ) / NULLIF( SUM( CASE WHEN TO_CHAR( CAST( \"creationdate\" AS TIMESTAMP ) , 'YYYY' ) = '2011' THEN 1 ELSE 0 END ) , 0 ) FROM \"votes\"\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '2010' THEN 1 ELSE 0 END ) AS REAL ) / NULLIF( SUM( CAS' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`postid` FROM `users` AS `t1` INNER JOIN `posthistory` AS `t2` ON `t1`.`id` = `t2`.`userid` INNER JOIN `posts` AS `t3` ON `t2`.`postid` = `t3`.`id` WHERE `t1`.`displayname` = 'slashnick' ORDER BY `t3`.`answercount` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"postid\" FROM \"users\" AS \"t1\" INNER JOIN \"posthistory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"userid\" INNER JOIN \"posts\" AS \"t3\" ON \"t2\".\"postid\" = \"t3\".\"id\" WHERE \"t1\".\"displayname\" = 'slashnick' ORDER BY \"t3\".\"answercount\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`displayname` FROM `users` AS `t1` INNER JOIN `posthistory` AS `t2` ON `t1`.`id` = `t2`.`userid` INNER JOIN `posts` AS `t3` ON `t2`.`postid` = `t3`.`id` WHERE `t1`.`displayname` = 'Harvey Motulsky' OR `t1`.`displayname` = 'Noah Snyder' GROUP BY `t1`.`displayname` ORDER BY SUM( `t3`.`viewcount` ) DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"displayname\" FROM \"users\" AS \"t1\" INNER JOIN \"posthistory\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"userid\" INNER JOIN \"posts\" AS \"t3\" ON \"t2\".\"postid\" = \"t3\".\"id\" WHERE \"t1\".\"displayname\" = 'Harvey Motulsky' OR \"t1\".\"displayname\" = 'Noah Snyder' GROUP BY \"t1\".\"displayname\" ORDER BY SUM( \"t3\".\"viewcount\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( COUNT( `t1`.`id` ) AS DOUBLE ) / 12 FROM `postlinks` AS `t1` INNER JOIN `posts` AS `t2` ON `t1`.`postid` = `t2`.`id` WHERE `t2`.`answercount` <= 2 AND DATE_FORMAT( CAST( `t1`.`creationdate` AS DATETIME ) , '%Y' ) = '2010'\n",
+    "pg": "SELECT CAST( COUNT( \"t1\".\"id\" ) AS REAL ) / NULLIF( 12 , 0 ) FROM \"postlinks\" AS \"t1\" INNER JOIN \"posts\" AS \"t2\" ON \"t1\".\"postid\" = \"t2\".\"id\" WHERE \"t2\".\"answercount\" <= 2 AND TO_CHAR( CAST( \"t1\".\"creationdate\" AS TIMESTAMP ) , 'YYYY' ) = '2010'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '2010'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`creationdate` FROM `users` AS `t1` INNER JOIN `votes` AS `t2` ON `t1`.`id` = `t2`.`userid` WHERE `t1`.`displayname` = 'chl' ORDER BY `t2`.`creationdate` LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"creationdate\" FROM \"users\" AS \"t1\" INNER JOIN \"votes\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"userid\" WHERE \"t1\".\"displayname\" = 'chl' ORDER BY \"t2\".\"creationdate\" NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`id` , `t2`.`title` FROM `users` AS `t1` INNER JOIN `posts` AS `t2` ON `t1`.`id` = `t2`.`owneruserid` WHERE `t1`.`displayname` = 'Harvey Motulsky' ORDER BY `t2`.`viewcount` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"id\" , \"t2\".\"title\" FROM \"users\" AS \"t1\" INNER JOIN \"posts\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"owneruserid\" WHERE \"t1\".\"displayname\" = 'Harvey Motulsky' ORDER BY \"t2\".\"viewcount\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`owneruserid` , `t1`.`displayname` FROM `users` AS `t1` INNER JOIN `posts` AS `t2` ON `t1`.`id` = `t2`.`owneruserid` WHERE DATE_FORMAT( CAST( `t1`.`creationdate` AS DATETIME ) , '%Y' ) = '2010' ORDER BY `t2`.`favoritecount` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"owneruserid\" , \"t1\".\"displayname\" FROM \"users\" AS \"t1\" INNER JOIN \"posts\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"owneruserid\" WHERE TO_CHAR( CAST( \"t1\".\"creationdate\" AS TIMESTAMP ) , 'YYYY' ) = '2010' ORDER BY \"t2\".\"favoritecount\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '2010' ORDER BY `t2`.`favoritecount` DESC NULLS LAST LI' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t2`.`id` ) FROM `posts` AS `t1` INNER JOIN `comments` AS `t2` ON `t1`.`id` = `t2`.`postid` GROUP BY `t1`.`id` ORDER BY `t1`.`score` DESC LIMIT 1\n",
+    "pg": "SELECT COUNT( \"t2\".\"id\" ) FROM \"posts\" AS \"t1\" INNER JOIN \"comments\" AS \"t2\" ON \"t1\".\"id\" = \"t2\".\"postid\" GROUP BY \"t1\".\"id\" ORDER BY \"t1\".\"score\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `text` FROM `comments` WHERE `postid` IN ( SELECT `id` FROM `posts` WHERE `viewcount` BETWEEN 100 AND 150 ) ORDER BY `score` DESC LIMIT 1\n",
+    "pg": "SELECT \"text\" FROM \"comments\" WHERE \"postid\" IN ( SELECT \"id\" FROM \"posts\" WHERE \"viewcount\" BETWEEN 100 AND 150 ) ORDER BY \"score\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `name` FROM `cards` WHERE `name` IN ( 'Serra Angel' , 'Shrine Keeper' ) ORDER BY `convertedmanacost` DESC LIMIT 1\n",
+    "pg": "SELECT \"name\" FROM \"cards\" WHERE \"name\" IN ( 'Serra Angel' , 'Shrine Keeper' ) ORDER BY \"convertedmanacost\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t`.`bond_type` FROM ( SELECT `bond_type` , COUNT( `bond_id` ) FROM `bond` GROUP BY `bond_type` ORDER BY COUNT( `bond_id` ) DESC LIMIT 1 ) AS `t`\n",
+    "pg": "SELECT \"t\".\"bond_type\" FROM ( SELECT \"bond_type\" , COUNT( \"bond_id\" ) FROM \"bond\" GROUP BY \"bond_type\" ORDER BY COUNT( \"bond_id\" ) DESC NULLS LAST LIMIT 1 ) AS \"t\"\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 ) AS `t`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t`.`label` FROM ( SELECT `t2`.`label` , COUNT( `t2`.`molecule_id` ) FROM `atom` AS `t1` INNER JOIN `molecule` AS `t2` ON `t1`.`molecule_id` = `t2`.`molecule_id` WHERE `t1`.`element` = 'h' GROUP BY `t2`.`label` ORDER BY COUNT( `t2`.`molecule_id` ) DESC LIMIT 1 ) AS `t`\n",
+    "pg": "SELECT \"t\".\"label\" FROM ( SELECT \"t2\".\"label\" , COUNT( \"t2\".\"molecule_id\" ) FROM \"atom\" AS \"t1\" INNER JOIN \"molecule\" AS \"t2\" ON \"t1\".\"molecule_id\" = \"t2\".\"molecule_id\" WHERE \"t1\".\"element\" = 'h' GROUP BY \"t2\".\"label\" ORDER BY COUNT( \"t2\".\"molecule_id\" ) DESC NULLS LAST LIMIT 1 ) AS \"t\"\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 ) AS `t`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t`.`element` FROM ( SELECT `t1`.`element` , COUNT( DISTINCT `t1`.`molecule_id` ) FROM `atom` AS `t1` INNER JOIN `molecule` AS `t2` ON `t1`.`molecule_id` = `t2`.`molecule_id` WHERE `t2`.`label` = '-' GROUP BY `t1`.`element` ORDER BY COUNT( DISTINCT `t1`.`molecule_id` ) ASC LIMIT 1 ) AS `t`\n",
+    "pg": "SELECT \"t\".\"element\" FROM ( SELECT \"t1\".\"element\" , COUNT( DISTINCT \"t1\".\"molecule_id\" ) FROM \"atom\" AS \"t1\" INNER JOIN \"molecule\" AS \"t2\" ON \"t1\".\"molecule_id\" = \"t2\".\"molecule_id\" WHERE \"t2\".\"label\" = '-' GROUP BY \"t1\".\"element\" ORDER BY COUNT( DISTINCT \"t1\".\"molecule_id\" ) ASC NULLS FIRST LIMIT 1 ) AS \"t\"\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1 ) AS `t`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT DISTINCT `t`.`element` FROM `atom` AS `t` WHERE `t`.`molecule_id` = 'TR000' ORDER BY `t`.`element` LIMIT 3\n",
+    "pg": "SELECT DISTINCT \"t\".\"element\" FROM \"atom\" AS \"t\" WHERE \"t\".\"molecule_id\" = 'TR000' ORDER BY \"t\".\"element\" NULLS FIRST LIMIT 3\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 3' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t`.`bond_type` FROM ( SELECT `t1`.`bond_type` , COUNT( `t1`.`molecule_id` ) FROM `bond` AS `t1` WHERE `t1`.`molecule_id` = 'TR010' GROUP BY `t1`.`bond_type` ORDER BY COUNT( `t1`.`molecule_id` ) DESC LIMIT 1 ) AS `t`\n",
+    "pg": "SELECT \"t\".\"bond_type\" FROM ( SELECT \"t1\".\"bond_type\" , COUNT( \"t1\".\"molecule_id\" ) FROM \"bond\" AS \"t1\" WHERE \"t1\".\"molecule_id\" = 'TR010' GROUP BY \"t1\".\"bond_type\" ORDER BY COUNT( \"t1\".\"molecule_id\" ) DESC NULLS LAST LIMIT 1 ) AS \"t\"\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 ) AS `t`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT DISTINCT `t2`.`molecule_id` FROM `bond` AS `t1` INNER JOIN `molecule` AS `t2` ON `t1`.`molecule_id` = `t2`.`molecule_id` WHERE `t1`.`bond_type` = '-' AND `t2`.`label` = '-' ORDER BY `t2`.`molecule_id` LIMIT 3\n",
+    "pg": "SELECT DISTINCT \"t2\".\"molecule_id\" FROM \"bond\" AS \"t1\" INNER JOIN \"molecule\" AS \"t2\" ON \"t1\".\"molecule_id\" = \"t2\".\"molecule_id\" WHERE \"t1\".\"bond_type\" = '-' AND \"t2\".\"label\" = '-' ORDER BY \"t2\".\"molecule_id\" NULLS FIRST LIMIT 3\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 3' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`label` FROM `molecule` AS `t1` INNER JOIN ( SELECT `t`.`molecule_id` , COUNT( `t`.`bond_type` ) FROM `bond` AS `t` WHERE `t`.`bond_type` = '=' GROUP BY `t`.`molecule_id` ORDER BY COUNT( `t`.`bond_type` ) DESC LIMIT 1 ) AS `t2` ON `t1`.`molecule_id` = `t2`.`molecule_id`\n",
+    "pg": "SELECT \"t1\".\"label\" FROM \"molecule\" AS \"t1\" INNER JOIN ( SELECT \"t\".\"molecule_id\" , COUNT( \"t\".\"bond_type\" ) FROM \"bond\" AS \"t\" WHERE \"t\".\"bond_type\" = '=' GROUP BY \"t\".\"molecule_id\" ORDER BY COUNT( \"t\".\"bond_type\" ) DESC NULLS LAST LIMIT 1 ) AS \"t2\" ON \"t1\".\"molecule_id\" = \"t2\".\"molecule_id\"\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 ) AS `t2` ON `t1`.`molecule_id` = `t2`.`molecule_id`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`street` , `t2`.`city` , `t2`.`state` , `t2`.`zip` FROM `satscores` AS `t1` INNER JOIN `schools` AS `t2` ON `t1`.`cds` = `t2`.`cdscode` ORDER BY CAST( `t1`.`numge1500` AS DOUBLE ) / `t1`.`numtsttakr` ASC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"street\" , \"t2\".\"city\" , \"t2\".\"state\" , \"t2\".\"zip\" FROM \"satscores\" AS \"t1\" INNER JOIN \"schools\" AS \"t2\" ON \"t1\".\"cds\" = \"t2\".\"cdscode\" ORDER BY CAST( \"t1\".\"numge1500\" AS REAL ) / NULLIF( \"t1\".\"numtsttakr\" , 0 ) ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`admfname1` , `t2`.`admlname1` , `t2`.`admfname2` , `t2`.`admlname2` , `t2`.`admfname3` , `t2`.`admlname3` FROM `satscores` AS `t1` INNER JOIN `schools` AS `t2` ON `t1`.`cds` = `t2`.`cdscode` ORDER BY `t1`.`numge1500` DESC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"admfname1\" , \"t2\".\"admlname1\" , \"t2\".\"admfname2\" , \"t2\".\"admlname2\" , \"t2\".\"admfname3\" , \"t2\".\"admlname3\" FROM \"satscores\" AS \"t1\" INNER JOIN \"schools\" AS \"t2\" ON \"t1\".\"cds\" = \"t2\".\"cdscode\" ORDER BY \"t1\".\"numge1500\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`phone` FROM `satscores` AS `t1` INNER JOIN `schools` AS `t2` ON `t1`.`cds` = `t2`.`cdscode` WHERE `t2`.`district` = 'Fresno Unified' AND NOT `t1`.`avgscrread` IS NULL ORDER BY `t1`.`avgscrread` ASC LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"phone\" FROM \"satscores\" AS \"t1\" INNER JOIN \"schools\" AS \"t2\" ON \"t1\".\"cds\" = \"t2\".\"cdscode\" WHERE \"t2\".\"district\" = 'Fresno Unified' AND NOT \"t1\".\"avgscrread\" IS NULL ORDER BY \"t1\".\"avgscrread\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( SUM( CASE WHEN `doc` = 54 THEN 1 ELSE 0 END ) AS DOUBLE ) / SUM( CASE WHEN `doc` = 52 THEN 1 ELSE 0 END ) FROM `schools` WHERE `statustype` = 'Merged' AND `county` = 'Orange'\n",
+    "pg": "SELECT CAST( SUM( CASE WHEN \"doc\" :: integer = 54 THEN 1 ELSE 0 END ) AS REAL ) / NULLIF( SUM( CASE WHEN \"doc\" :: integer = 52 THEN 1 ELSE 0 END ) , 0 ) FROM \"schools\" WHERE \"statustype\" = 'Merged' AND \"county\" = 'Orange'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':: integer = 54 THEN 1 ELSE 0 END ) AS REAL ) / NULLIF( SUM( CASE WHEN `doc` :: ' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`mailstreet` , `t2`.`school` FROM `satscores` AS `t1` INNER JOIN `schools` AS `t2` ON `t1`.`cds` = `t2`.`cdscode` ORDER BY `t1`.`avgscrmath` DESC LIMIT 1 OFFSET 6\n",
+    "pg": "SELECT \"t2\".\"mailstreet\" , \"t2\".\"school\" FROM \"satscores\" AS \"t1\" INNER JOIN \"schools\" AS \"t2\" ON \"t1\".\"cds\" = \"t2\".\"cdscode\" ORDER BY \"t1\".\"avgscrmath\" DESC NULLS LAST LIMIT 1 OFFSET 6\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 OFFSET 6' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `county` , COUNT( `virtual` ) FROM `schools` WHERE ( `county` = 'San Diego' OR `county` = 'Santa Barbara' ) AND `virtual` = 'F' GROUP BY `county` ORDER BY COUNT( `virtual` ) DESC LIMIT 1\n",
+    "pg": "SELECT \"county\" , COUNT( \"virtual\" ) FROM \"schools\" WHERE ( \"county\" = 'San Diego' OR \"county\" = 'Santa Barbara' ) AND \"virtual\" = 'F' GROUP BY \"county\" ORDER BY COUNT( \"virtual\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `gsoffered` FROM `schools` ORDER BY ABS( `longitude` ) DESC LIMIT 1\n",
+    "pg": "SELECT \"gsoffered\" FROM \"schools\" ORDER BY ABS( \"longitude\" ) DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`admemail1` , `t2`.`admemail2` FROM `frpm` AS `t1` INNER JOIN `schools` AS `t2` ON `t1`.`cdscode` = `t2`.`cdscode` WHERE `t2`.`county` = 'San Bernardino' AND `t2`.`city` = 'San Bernardino' AND `t2`.`doc` = 54 AND DATE_FORMAT( CAST( `t2`.`opendate` AS DATETIME ) , '%Y' ) BETWEEN '2009' AND '2010' AND `t2`.`soc` = 62\n",
+    "pg": "SELECT \"t2\".\"admemail1\" , \"t2\".\"admemail2\" FROM \"frpm\" AS \"t1\" INNER JOIN \"schools\" AS \"t2\" ON \"t1\".\"cdscode\" = \"t2\".\"cdscode\" WHERE \"t2\".\"county\" = 'San Bernardino' AND \"t2\".\"city\" = 'San Bernardino' AND \"t2\".\"doc\" :: integer = 54 AND EXTRACT( YEAR FROM \"t2\".\"opendate\" ) BETWEEN 2009 AND 2010 AND \"t2\".\"soc\" :: integer = 62\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':: integer = 54 AND EXTRACT( YEAR FROM `t2`.`opendate` ) BETWEEN 2009 AND 2010 A' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`account_id` , ( SELECT MAX( `a11` ) - MIN( `a11` ) FROM `district` ) FROM `account` AS `t1` INNER JOIN `district` AS `t2` ON `t1`.`district_id` = `t2`.`district_id` INNER JOIN `disp` AS `t3` ON `t1`.`account_id` = `t3`.`account_id` INNER JOIN `client` AS `t4` ON `t3`.`client_id` = `t4`.`client_id` WHERE `t2`.`district_id` = ( SELECT `district_id` FROM `client` WHERE `gender` = 'F' ORDER BY `birth_date` ASC LIMIT 1 ) ORDER BY `t2`.`a11` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"account_id\" , ( SELECT MAX( \"a11\" ) - MIN( \"a11\" ) FROM \"district\" ) FROM \"account\" AS \"t1\" INNER JOIN \"district\" AS \"t2\" ON \"t1\".\"district_id\" = \"t2\".\"district_id\" INNER JOIN \"disp\" AS \"t3\" ON \"t1\".\"account_id\" = \"t3\".\"account_id\" INNER JOIN \"client\" AS \"t4\" ON \"t3\".\"client_id\" = \"t4\".\"client_id\" WHERE \"t2\".\"district_id\" = ( SELECT \"district_id\" FROM \"client\" WHERE \"gender\" = 'F' ORDER BY \"birth_date\" ASC NULLS FIRST LIMIT 1 ) ORDER BY \"t2\".\"a11\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST LIMIT 1 ) ORDER BY `t2`.`a11` DESC NULLS LAST LIMIT 1' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`account_id` FROM `account` AS `t1` INNER JOIN `disp` AS `t2` ON `t1`.`account_id` = `t2`.`account_id` INNER JOIN `client` AS `t3` ON `t2`.`client_id` = `t3`.`client_id` INNER JOIN `district` AS `t4` ON `t4`.`district_id` = `t1`.`district_id` WHERE `t2`.`client_id` = ( SELECT `client_id` FROM `client` ORDER BY `birth_date` DESC LIMIT 1 ) GROUP BY `t4`.`a11` , `t1`.`account_id`\n",
+    "pg": "SELECT \"t1\".\"account_id\" FROM \"account\" AS \"t1\" INNER JOIN \"disp\" AS \"t2\" ON \"t1\".\"account_id\" = \"t2\".\"account_id\" INNER JOIN \"client\" AS \"t3\" ON \"t2\".\"client_id\" = \"t3\".\"client_id\" INNER JOIN \"district\" AS \"t4\" ON \"t4\".\"district_id\" = \"t1\".\"district_id\" WHERE \"t2\".\"client_id\" = ( SELECT \"client_id\" FROM \"client\" ORDER BY \"birth_date\" DESC NULLS LAST LIMIT 1 ) GROUP BY \"t4\".\"a11\" , \"t1\".\"account_id\"\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 ) GROUP BY `t4`.`a11` , `t1`.`account_id`' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`account_id` FROM `loan` AS `t1` INNER JOIN `account` AS `t2` ON `t1`.`account_id` = `t2`.`account_id` WHERE DATE_FORMAT( CAST( `t1`.`date` AS DATETIME ) , '%Y' ) = '1997' AND `t2`.`frequency` = 'POPLATEK TYDNE' ORDER BY `t1`.`amount` LIMIT 1\n",
+    "pg": "SELECT \"t2\".\"account_id\" FROM \"loan\" AS \"t1\" INNER JOIN \"account\" AS \"t2\" ON \"t1\".\"account_id\" = \"t2\".\"account_id\" WHERE TO_CHAR( CAST( \"t1\".\"date\" AS TIMESTAMP ) , 'YYYY' ) = '1997' AND \"t2\".\"frequency\" = 'POPLATEK TYDNE' ORDER BY \"t1\".\"amount\" NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '1997' AND `t2`.`frequency` = 'POPLATEK TYDNE' ORDER BY' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t1`.`account_id` FROM `loan` AS `t1` INNER JOIN `account` AS `t2` ON `t1`.`account_id` = `t2`.`account_id` WHERE DATE_FORMAT( CAST( `t2`.`date` AS DATETIME ) , '%Y' ) = '1993' AND `t1`.`duration` > 12 ORDER BY `t1`.`amount` DESC LIMIT 1\n",
+    "pg": "SELECT \"t1\".\"account_id\" FROM \"loan\" AS \"t1\" INNER JOIN \"account\" AS \"t2\" ON \"t1\".\"account_id\" = \"t2\".\"account_id\" WHERE TO_CHAR( CAST( \"t2\".\"date\" AS TIMESTAMP ) , 'YYYY' ) = '1993' AND \"t1\".\"duration\" > 12 ORDER BY \"t1\".\"amount\" DESC NULLS LAST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '1993' AND `t1`.`duration` > 12 ORDER BY `t1`.`amount` ' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t2`.`client_id` ) FROM `district` AS `t1` INNER JOIN `client` AS `t2` ON `t1`.`district_id` = `t2`.`district_id` WHERE `t2`.`gender` = 'F' AND DATE_FORMAT( CAST( `t2`.`birth_date` AS DATETIME ) , '%Y' ) < '1950' AND `t1`.`a2` = 'Sokolov'\n",
+    "pg": "SELECT COUNT( \"t2\".\"client_id\" ) FROM \"district\" AS \"t1\" INNER JOIN \"client\" AS \"t2\" ON \"t1\".\"district_id\" = \"t2\".\"district_id\" WHERE \"t2\".\"gender\" = 'F' AND TO_CHAR( CAST( \"t2\".\"birth_date\" AS TIMESTAMP ) , 'YYYY' ) < '1950' AND \"t1\".\"a2\" = 'Sokolov'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) < '1950' AND `t1`.`a2` = 'Sokolov'' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t2`.`a2` , COUNT( `t1`.`client_id` ) FROM `client` AS `t1` INNER JOIN `district` AS `t2` ON `t1`.`district_id` = `t2`.`district_id` WHERE `t1`.`gender` = 'F' GROUP BY `t2`.`district_id` , `t2`.`a2` ORDER BY COUNT( `t1`.`client_id` ) DESC LIMIT 9\n",
+    "pg": "SELECT \"t2\".\"a2\" , COUNT( \"t1\".\"client_id\" ) FROM \"client\" AS \"t1\" INNER JOIN \"district\" AS \"t2\" ON \"t1\".\"district_id\" = \"t2\".\"district_id\" WHERE \"t1\".\"gender\" = 'F' GROUP BY \"t2\".\"district_id\" , \"t2\".\"a2\" ORDER BY COUNT( \"t1\".\"client_id\" ) DESC NULLS LAST LIMIT 9\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 9' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t1`.`client_id` ) FROM `client` AS `t1` INNER JOIN `district` AS `t2` ON `t1`.`district_id` = `t2`.`district_id` WHERE `t1`.`gender` = 'M' AND `t2`.`a15` = ( SELECT `t3`.`a15` FROM `district` AS `t3` ORDER BY `t3`.`a15` DESC LIMIT 1 OFFSET 1 )\n",
+    "pg": "SELECT COUNT( \"t1\".\"client_id\" ) FROM \"client\" AS \"t1\" INNER JOIN \"district\" AS \"t2\" ON \"t1\".\"district_id\" = \"t2\".\"district_id\" WHERE \"t1\".\"gender\" = 'M' AND \"t2\".\"a15\" = ( SELECT \"t3\".\"a15\" FROM \"district\" AS \"t3\" ORDER BY \"t3\".\"a15\" DESC NULLS LAST LIMIT 1 OFFSET 1 )\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 OFFSET 1 )' at line 1\")"
+  },
+  {
+    "mysql": "SELECT DISTINCT `t1`.`a2` FROM `district` AS `t1` INNER JOIN `account` AS `t2` ON `t1`.`district_id` = `t2`.`district_id` INNER JOIN `trans` AS `t3` ON `t2`.`account_id` = `t3`.`account_id` WHERE `t3`.`type` = 'VYDAJ' AND `t3`.`date` LIKE '1996-01%' ORDER BY `a2` ASC LIMIT 10\n",
+    "pg": "SELECT DISTINCT \"t1\".\"a2\" FROM \"district\" AS \"t1\" INNER JOIN \"account\" AS \"t2\" ON \"t1\".\"district_id\" = \"t2\".\"district_id\" INNER JOIN \"trans\" AS \"t3\" ON \"t2\".\"account_id\" = \"t3\".\"account_id\" WHERE \"t3\".\"type\" = 'VYDAJ' AND CAST( \"t3\".\"date\" AS TEXT ) LIKE '1996-01%' ORDER BY \"t1\".\"a2\" ASC LIMIT 10\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TEXT ) LIKE '1996-01%' ORDER BY `t1`.`a2` ASC LIMIT 10' at line 1\")"
+  },
+  {
+    "mysql": "SELECT COUNT( `t1`.`client_id` ) FROM `client` AS `t1` INNER JOIN `district` AS `t2` ON `t1`.`district_id` = `t2`.`district_id` WHERE `t1`.`gender` = 'M' AND `t2`.`a15` = ( SELECT `t3`.`a15` FROM `district` AS `t3` ORDER BY `t3`.`a15` DESC LIMIT 1 OFFSET 1 )\n",
+    "pg": "SELECT COUNT( \"t1\".\"client_id\" ) FROM \"client\" AS \"t1\" INNER JOIN \"district\" AS \"t2\" ON \"t1\".\"district_id\" = \"t2\".\"district_id\" WHERE \"t1\".\"gender\" = 'M' AND \"t2\".\"a15\" = ( SELECT \"t3\".\"a15\" FROM \"district\" AS \"t3\" ORDER BY \"t3\".\"a15\" DESC NULLS LAST LIMIT 1 OFFSET 1 )\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS LAST LIMIT 1 OFFSET 1 )' at line 1\")"
+  },
+  {
+    "mysql": "SELECT CAST( ( SUM( CASE WHEN DATE_FORMAT( CAST( `t1`.`date` AS DATETIME ) , '%Y' ) = '1997' THEN `t1`.`amount` ELSE 0 END ) - SUM( CASE WHEN DATE_FORMAT( CAST( `t1`.`date` AS DATETIME ) , '%Y' ) = '1996' THEN `t1`.`amount` ELSE 0 END ) ) AS DOUBLE ) * 100 / SUM( CASE WHEN DATE_FORMAT( CAST( `t1`.`date` AS DATETIME ) , '%Y' ) = '1996' THEN `t1`.`amount` ELSE 0 END ) FROM `loan` AS `t1` INNER JOIN `account` AS `t2` ON `t1`.`account_id` = `t2`.`account_id` INNER JOIN `disp` AS `t3` ON `t3`.`account_id` = `t2`.`account_id` INNER JOIN `client` AS `t4` ON `t4`.`client_id` = `t3`.`client_id` WHERE `t4`.`gender` = 'M' AND `t3`.`type` = 'OWNER'\n",
+    "pg": "SELECT CAST( ( SUM( CASE WHEN TO_CHAR( CAST( \"t1\".\"date\" AS TIMESTAMP ) , 'YYYY' ) = '1997' THEN \"t1\".\"amount\" ELSE 0 END ) - SUM( CASE WHEN TO_CHAR( CAST( \"t1\".\"date\" AS TIMESTAMP ) , 'YYYY' ) = '1996' THEN \"t1\".\"amount\" ELSE 0 END ) ) AS REAL ) * 100 / NULLIF( SUM( CASE WHEN TO_CHAR( CAST( \"t1\".\"date\" AS TIMESTAMP ) , 'YYYY' ) = '1996' THEN \"t1\".\"amount\" ELSE 0 END ) , 0 ) FROM \"loan\" AS \"t1\" INNER JOIN \"account\" AS \"t2\" ON \"t1\".\"account_id\" = \"t2\".\"account_id\" INNER JOIN \"disp\" AS \"t3\" ON \"t3\".\"account_id\" = \"t2\".\"account_id\" INNER JOIN \"client\" AS \"t4\" ON \"t4\".\"client_id\" = \"t3\".\"client_id\" WHERE \"t4\".\"gender\" = 'M' AND \"t3\".\"type\" = 'OWNER'\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'TIMESTAMP ) , 'YYYY' ) = '1997' THEN `t1`.`amount` ELSE 0 END ) - SUM( CASE WHEN' at line 1\")"
+  },
+  {
+    "mysql": "SELECT `t3`.`account_id` FROM `client` AS `t1` INNER JOIN `district` AS `t2` ON `t1`.`district_id` = `t2`.`district_id` INNER JOIN `account` AS `t3` ON `t2`.`district_id` = `t3`.`district_id` INNER JOIN `disp` AS `t4` ON `t1`.`client_id` = `t4`.`client_id` AND `t4`.`account_id` = `t3`.`account_id` WHERE `t1`.`gender` = 'F' ORDER BY `t1`.`birth_date` ASC , `t2`.`a11` ASC LIMIT 1\n",
+    "pg": "SELECT \"t3\".\"account_id\" FROM \"client\" AS \"t1\" INNER JOIN \"district\" AS \"t2\" ON \"t1\".\"district_id\" = \"t2\".\"district_id\" INNER JOIN \"account\" AS \"t3\" ON \"t2\".\"district_id\" = \"t3\".\"district_id\" INNER JOIN \"disp\" AS \"t4\" ON \"t1\".\"client_id\" = \"t4\".\"client_id\" AND \"t4\".\"account_id\" = \"t3\".\"account_id\" WHERE \"t1\".\"gender\" = 'F' ORDER BY \"t1\".\"birth_date\" ASC NULLS FIRST , \"t2\".\"a11\" ASC NULLS FIRST LIMIT 1\n",
+    "mysql_err": "(1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NULLS FIRST , `t2`.`a11` ASC NULLS FIRST LIMIT 1' at line 1\")"
+  }
+]
