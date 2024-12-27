@@ -66,16 +66,22 @@ def split(pattern: str):
 
 def parse_pattern(tokens: List[str], index_begin: int, index_end: int) -> tuple[Pattern, int]:
     i = index_begin
-    while i < len(tokens):
+    pattern = Pattern()
+    while i < index_end:
         token = tokens[i]
         if token == '@':
-            parse_function(tokens, i, index_end)
+            function_slot, i = parse_function(tokens, i, index_end)
+            pattern.add_slot(function_slot)
         elif token == '[':
             slot, i = parse_slot(tokens, i, index_end)
+            pattern.add_slot(slot)
         elif token == '{':
             for_slot, i = parse_for_loop(tokens, i, index_end)
+            pattern.add_slot(for_slot)
         else:
-            pass
+            pattern.add_keyword(tokens[i])
+            i = i + 1
+    return pattern, i
 
 
 def parse_for_loop(tokens: List[str], index_begin: int, index_end: int) -> tuple[ForSlot, int]:
@@ -100,7 +106,20 @@ def parse_for_loop(tokens: List[str], index_begin: int, index_end: int) -> tuple
         ele_slots.append(slot)
         assert tokens[i] == ',' or tokens[i] == ':'
     i = i + 1
-    pattern, i = parse_pattern(tokens, i, index_end)
+    # find the corresponding }
+    j = i
+    flag = 0
+    while True:
+        if tokens[j] == '{':
+            flag = flag + 1
+        elif tokens[j] == '}':
+            if flag == 0:
+                break
+            else:
+                flag = flag - 1
+        j = j + 1
+
+    pattern, i = parse_pattern(tokens, i, j)
     assert tokens[i] == '}'
     return ForSlot(pattern, ele_names, ele_slots), i + 1
 

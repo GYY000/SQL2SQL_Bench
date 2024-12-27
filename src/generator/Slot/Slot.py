@@ -17,9 +17,18 @@ class SlotType(Enum):
 
 
 class Slot:
-    def __init__(self, name: str = None, slot_type: Type = None):
-        self.name = name
-        self.slot_type = type
+    def __init__(self):
+        pass
 
-    def match(self, op: Operand):
-        return True
+    def __str__(self):
+        return 'slot'
+
+
+class ValueSlot(Slot):
+    def __init__(self, name: str, slot_type: Type):
+        super().__init__()
+        self.name = name
+        self.slot_type = slot_type
+
+    def __str__(self):
+        return f"[{self.name}: {str(self.slot_type)}]"

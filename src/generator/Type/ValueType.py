@@ -9,3 +9,6 @@ from generator.Type.Type import Type
 class ValueType(Type):
     def __init__(self):
         super().__init__()
+
+    def __str__(self):
+        return 'Value'

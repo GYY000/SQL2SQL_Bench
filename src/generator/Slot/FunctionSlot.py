@@ -17,3 +17,11 @@ class FunctionSlot(Slot):
 
     def add_func_def(self, func_def: str):
         self.func_def = func_def
+
+    def __str__(self):
+        params = ""
+        for slot in self.slots:
+            if params != '':
+                params = params + ", "
+            params = params + str(slot)
+        return f"{self.func_name}({params.strip()})"

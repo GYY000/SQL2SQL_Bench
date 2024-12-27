@@ -10,3 +10,6 @@ class ListType(Type):
     def __init__(self, ele_type: Type):
         super().__init__()
         self.ele_type = ele_type
+
+    def __str__(self):
+        return f'List[{str(self.ele_type)}]'

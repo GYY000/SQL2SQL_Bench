@@ -7,11 +7,16 @@ from typing import List
 
 from generator.Pattern import Pattern
 from generator.Slot import Slot
-from generator.Slot.Slot import SlotType
 
 
 class ForSlot(Slot):
     def __init__(self, pattern: Pattern, ele_names: List[str], slots: List[Slot]):
         super().__init__()
         self.slots = []
+        self.pattern = pattern
+        self.ele_names = ele_names
+        self.slots = slots
 
+    def __str__(self):
+        # TODO:
+        return "For loop"

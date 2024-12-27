@@ -3129,7 +3129,12 @@ group_by_item
     | cube_clause
     | rollup_clause
     | grouping_sets_clause
+    | group_expr_list
     | a_expr
+    ;
+
+group_expr_list
+    : OPEN_PAREN expr_list CLOSE_PAREN
     ;
 
 empty_grouping_set

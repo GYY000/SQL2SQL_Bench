@@ -96,7 +96,6 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
                 node = node.get_child_by_value('queryExpression')
                 assert node is not None
             node = node.get_child_by_value('querySpecification')
-        print(node.value)
         assert node.value == 'querySpecificationNointo' or node.value == 'querySpecification'
         group_by_node = node.get_child_by_value('groupByClause')
         if group_by_node is None:
@@ -118,14 +117,12 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             assert isinstance(group_by_node, TreeNode)
             normal_nodes = []
             aggregate_nodes = []
-
             expression_nodes = group_by_node.get_children_by_value('groupByItem')
             for expression_node in expression_nodes:
                 assert isinstance(expression_node, TreeNode)
                 node = expression_node.get_child_by_value('expression')
                 assert node is not None
                 normal_nodes.append(node)
-
             clone_node = node.clone()
             select_elements_node = clone_node.get_child_by_value('selectElements')
             assert isinstance(select_elements_node, TreeNode)
@@ -152,9 +149,100 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             return normal_nodes, aggregate_nodes, group_by_node
 
 
-def get_pg_usable_cols(db_name, node: TreeNode) -> List:
+def parse_pg_group_by(group_list_node: TreeNode) -> List:
+    group_by_item_nodes = group_list_node.get_children_by_value('group_by_list')
+    if len(group_by_item_nodes) > 1:
+        # No Node has cube or grouping sets or roll up
+        res = []
+        for children in group_by_item_nodes:
+            res.append(str(children))
+        return res
+    elif len(group_by_item_nodes) == 1:
+        group_by_item = group_by_item_nodes[0]
+        assert isinstance(group_by_item, TreeNode)
+        if group_by_item.get_child_by_value('empty_grouping_set') is not None:
+            return []
+        elif group_by_item.get_child_by_value('a_expr') is not None:
+            return [str(group_by_item.get_child_by_value('a_expr'))]
+        elif group_by_item.get_child_by_value('cube_clause') is not None:
+            cube_clause_node = group_by_item.get_child_by_value('cube_clause')
+            expr_list_node = cube_clause_node.get_child_by_value('expr_list')
+            res = []
+            for expr in expr_list_node.get_children_by_value('a_expr'):
+                res.append(str(expr))
+            return res
+        elif group_by_item.get_child_by_value('rollup_clause') is not None:
+            rollup_clause_node = group_by_item.get_child_by_value('rollup_clause')
+            expr_list_node = rollup_clause_node.get_child_by_value('expr_list')
+            res = []
+            for expr in expr_list_node.get_children_by_value('a_expr'):
+                res.append(str(expr))
+            return res
+        elif group_by_item.get_child_by_value('grouping_sets_clause') is not None:
+            sets_clause_node = group_by_item.get_child_by_value('grouping_sets_clause')
+            expr_list_node = sets_clause_node.get_child_by_value('expr_list')
+            res = []
+            for expr in expr_list_node.get_children_by_value('a_expr'):
+                res.append(str(expr))
+            return res
+        else:
+            assert False
+    else:
+        assert False
 
-    return None
+
+def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
+    """
+        :param db_name: 所连接的数据库名
+        :param node: sql语句解析得到的 ANTLR 根节点
+        :return: tuple[List[Operand]]:非聚合函数可用列，
+                 tuple[List[Operand]]:聚合函数可用列
+                 TreeNode/None       :group_by的节点
+    """
+    select_node = node
+    while select_node.value != 'select_no_parens' and select_node.value != 'select_with_parens':
+        select_node = select_node.children[0]
+    if select_node.value == 'select_with_parens':
+        used_node = select_node.get_child_by_value('select_no_parens')
+        while used_node is None:
+            select_node = select_node.get_child_by_value('select_with_parens')
+            assert select_node is not None
+            used_node = select_node.get_child_by_value('select_no_parens')
+        select_node = used_node
+    assert isinstance(select_node, TreeNode)
+    select_clause_node = select_node.get_child_by_value('select_clause')
+    assert isinstance(select_clause_node, TreeNode)
+    if len(select_clause_node.get_children_by_value('simple_select_intersect')) != 1:
+        # TODO: need to solve the problem of using UNION
+        return [], [], None
+    else:
+        simple_select_intersect_node = select_clause_node.get_child_by_value('simple_select_intersect')
+        if len(simple_select_intersect_node.get_children_by_value('simple_select_pramary')) != 1:
+            return [], [], None
+        else:
+            simple_select_primary_node = select_clause_node.get_child_by_value('simple_select_pramary')
+    assert isinstance(simple_select_primary_node, TreeNode)
+    clone_node = simple_select_primary_node.clone()
+    tgt_node = clone_node.get_child_by_value('opt_target_list')
+    if tgt_node is None:
+        tgt_node = clone_node.get_child_by_value('target_list')
+    assert isinstance(tgt_node, TreeNode)
+    tgt_node.is_terminal = True
+    tgt_node.value = '*'
+    flag, res = get_mysql_type(str(clone_node), db_name, False)
+    if not flag:
+        raise ValueError(f"can't get types of {str(clone_node)}")
+    normal_ops = []
+    for ele in res:
+        normal_ops.append(Operand(ele['col'], ele['type']))
+    if simple_select_primary_node.get_child_by_value('group_clause') is not None:
+        group_node = simple_select_primary_node.get_child_by_value('group_clause')
+        assert isinstance(group_node, TreeNode)
+        group_list = group_node.get_child_by_value('group_list')
+        group_by_ops = parse_pg_group_by(group_list)
+        return group_by_ops, normal_ops, group_node
+    else:
+        return normal_ops, [], None
 
 
 def get_oracle_usable_cols(db_name: str, node: TreeNode):

@@ -1,4 +1,4 @@
-# Generated from D:/Coding/LLM4DB/antlr_gram/pg/PostgreSQLParser.g4 by ANTLR 4.13.1
+# Generated from D://Coding//SQL2SQL_Bench//src//antlr_parser//antlr_def//pg//PostgreSQLParser.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .PostgreSQLParser import PostgreSQLParser
@@ -4642,6 +4642,15 @@ class PostgreSQLParserListener(ParseTreeListener):
 
     # Exit a parse tree produced by PostgreSQLParser#group_by_item.
     def exitGroup_by_item(self, ctx:PostgreSQLParser.Group_by_itemContext):
+        pass
+
+
+    # Enter a parse tree produced by PostgreSQLParser#group_expr_list.
+    def enterGroup_expr_list(self, ctx:PostgreSQLParser.Group_expr_listContext):
+        pass
+
+    # Exit a parse tree produced by PostgreSQLParser#group_expr_list.
+    def exitGroup_expr_list(self, ctx:PostgreSQLParser.Group_expr_listContext):
         pass
 
 
