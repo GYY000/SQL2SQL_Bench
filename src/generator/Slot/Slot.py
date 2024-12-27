@@ -7,6 +7,7 @@
 from enum import Enum
 
 from generator.Operand import Operand
+from generator.Type.Type import Type
 
 
 class SlotType(Enum):
@@ -16,8 +17,9 @@ class SlotType(Enum):
 
 
 class Slot:
-    def __init__(self, type: SlotType):
-        self.type = type
+    def __init__(self, name: str = None, slot_type: Type = None):
+        self.name = name
+        self.slot_type = type
 
     def match(self, op: Operand):
         return True

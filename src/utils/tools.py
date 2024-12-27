@@ -47,13 +47,23 @@ def self_split(str1: str) -> List[str]:
     """
     res = []
     str0 = ''
-    flag = False
+    flag0 = False
+    flag1 = False
     i = 0
     while i < len(str1):
+        if str1[i] == '\"':
+            if flag0:
+                str0 = str0 + str1[i]
+            else:
+                flag1 = not flag1
+                str0 = str0 + str1[i]
         if str1[i] == '\'':
-            flag = not flag
-            str0 = str0 + str1[i]
-        elif not flag and (str1[i] == ' ' or str1[i] == '\n'):
+            if flag1:
+                str0 = str0 + str1[i]
+            else:
+                flag0 = not flag0
+                str0 = str0 + str1[i]
+        elif not flag0 and not flag1 and (str1[i] == ' ' or str1[i] == '\n'):
             if str0 != '':
                 res.append(str0)
             str0 = ''
@@ -73,3 +83,4 @@ def remove_all_space(ori_str: str):
     for ori_sql_slice in ori_str.split():
         res = res + ori_sql_slice
     return res
+

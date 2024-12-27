@@ -81,7 +81,7 @@ mysql_types = None
 def get_mysql_type_by_oid(type_code):
     global mysql_types
     if mysql_types is None:
-        with open(os.path.join(get_proj_root_path(), 'src', 'schema', 'mysql_types,json'), 'r') as file:
+        with open(os.path.join(get_proj_root_path(), 'src', 'schema', 'mysql_types.json'), 'r') as file:
             mysql_types = json.loads(file.read())
     if str(type_code) in mysql_types:
         return mysql_types[str(type_code)]
