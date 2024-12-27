@@ -180,10 +180,13 @@ def parse_pg_group_by(group_list_node: TreeNode) -> List:
             return res
         elif group_by_item.get_child_by_value('grouping_sets_clause') is not None:
             sets_clause_node = group_by_item.get_child_by_value('grouping_sets_clause')
-            expr_list_node = sets_clause_node.get_child_by_value('expr_list')
+            group_by_list_node = sets_clause_node.get_child_by_value('group_by_list')
             res = []
-            for expr in expr_list_node.get_children_by_value('a_expr'):
-                res.append(str(expr))
+            for item_node in group_by_list_node.get_children_by_value('group_by_item'):
+                assert item_node.get_child_by_value('group_expr_list') is not None
+                expr_list = group_by_item.get_child_by_value('group_expr_list').get_child_by_value('expr_list')
+                for a_expr in expr_list.get_child_by_value('a_expr'):
+                    res.append(a_expr)
             return res
         else:
             assert False
@@ -240,6 +243,28 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
         assert isinstance(group_node, TreeNode)
         group_list = group_node.get_child_by_value('group_list')
         group_by_ops = parse_pg_group_by(group_list)
+        clone_node = simple_select_primary_node.clone()
+        select_elements_node = clone_node.get_child_by_value('opt_target_list')
+        if select_elements_node is None:
+            select_elements_node = clone_node.get_child_by_value('target_list')
+        assert isinstance(select_elements_node, TreeNode)
+        new_str = ''
+        for node in group_by_ops:
+            if new_str != '':
+                new_str = new_str + ', '
+            new_str = new_str + str(node)
+        select_elements_node.value = ' ' + new_str + ' '
+        select_elements_node.is_terminal = True
+        clone_node.rm_child_by_value('group_clause')
+        clone_node.rm_child_by_value('having_clause')
+        flag, res = get_pg_type(str(clone_node), db_name, False)
+        group_by_ops = []
+        if not flag:
+            raise ValueError(f"can't get types of {str(clone_node)}")
+        else:
+            for col in res:
+                type = col['type']
+                group_by_ops.append(Operand(str(node), type))
         return group_by_ops, normal_ops, group_node
     else:
         return normal_ops, [], None

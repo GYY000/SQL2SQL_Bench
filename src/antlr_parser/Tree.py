@@ -336,6 +336,18 @@ class TreeNode:
             new_node.add_child(child.clone())
         return new_node
 
+    def rm_child(self, node):
+        for child in self.children:
+            if child == node:
+                self.children.remove(child)
+                break
+
+    def rm_child_by_value(self, value: str):
+        for child in self.children:
+            if child.value == value:
+                self.children.remove(child)
+                break
+
 
 def merge_tree(sub_tree_node: TreeNode, father_tree_node: TreeNode,
                rel_father_tree_node: TreeNode, start_index_i=0, start_index_j=-1):
