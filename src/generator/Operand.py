@@ -10,3 +10,6 @@ class Operand:
 
     def __str__(self):
         return f"value: {self.value} type: {self.type}"
+
+    def __repr__(self):
+        return f"value: {self.value} type: {self.type}"

@@ -232,7 +232,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
     assert isinstance(tgt_node, TreeNode)
     tgt_node.is_terminal = True
     tgt_node.value = '*'
-    flag, res = get_mysql_type(str(clone_node), db_name, False)
+    flag, res = get_pg_type(str(clone_node), db_name, False)
     if not flag:
         raise ValueError(f"can't get types of {str(clone_node)}")
     normal_ops = []
@@ -272,3 +272,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
 
 def get_oracle_usable_cols(db_name: str, node: TreeNode):
     return None
+
+
+normal, aggr, _ = get_usable_cols('bird', 'SELECT * FROM badges', 'postgres')
+print(normal)

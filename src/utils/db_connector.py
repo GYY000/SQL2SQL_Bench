@@ -196,7 +196,6 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
         cursor.execute(sql)
         res = []
         for column in cursor.description:
-            print(column)
             res.append({
                 "col": column.name,
                 "type": get_type_name_by_oid(column.type_code)
