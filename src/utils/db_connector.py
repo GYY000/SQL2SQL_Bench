@@ -5,8 +5,7 @@ import subprocess
 
 from typing import List
 
-import pymysql
-from pymysql.err import Error
+import mysql.connector
 
 import psycopg2
 from psycopg2 import Error
@@ -35,7 +34,7 @@ def sql_execute(dialect: str, db_name: str, sql: str):
 def mysql_db_connect(dbname):
     try:
         # 连接数据库
-        connection = pymysql.connect(
+        connection = mysql.connector.connect(
             host='localhost',  # 数据库主机地址，默认为localhost
             port=3306,  # MySQL默认端口
             user='root',  # 数据库用户名
@@ -45,7 +44,7 @@ def mysql_db_connect(dbname):
         cursor = connection.cursor()
         mysql_conn_map[dbname] = connection
         mysql_cursor_map[dbname] = cursor
-        if connection.open:
+        if connection.is_connected():
             return connection, cursor
     except Error as e:
         print(f"Error while connecting to MySQL: {e}")
@@ -61,7 +60,7 @@ def mysql_sql_execute(db_name: str, sql):
         rows = cursor.fetchall()
         connection.commit()
         return True, rows
-    except pymysql.Error as e:
+    except mysql.connector.Error as e:
         connection.rollback()
         return False, e.args[1]
 
@@ -103,13 +102,19 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
         cursor.execute(sql)
         res = []
 
-        for column in cursor.description:
+        columns = cursor.description
+        res = []
+
+        for column in columns:
+            col_name = column[0]
+            col_type_code = column[1]
+            col_type = get_mysql_type_by_oid(col_type_code)
             res.append({
-                "col": column[0],
-                "type": get_mysql_type_by_oid(column[1])
+                "col": col_name,
+                "type": col_type
             })
         return True, res
-    except pymysql.Error as e:
+    except mysql.connector.Error as e:
         connection.rollback()
         return False, [str(e)]
 

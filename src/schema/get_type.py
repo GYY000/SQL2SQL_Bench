@@ -272,7 +272,3 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
 
 def get_oracle_usable_cols(db_name: str, node: TreeNode):
     return None
-
-
-normal, aggr, _ = get_usable_cols('bird', 'SELECT * FROM badges', 'postgres')
-print(normal)

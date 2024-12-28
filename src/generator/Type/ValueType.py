@@ -12,3 +12,10 @@ class ValueType(Type):
 
     def __str__(self):
         return 'Value'
+
+
+
+class DateType(ValueType):
+    def __init__(self):
+        super().__init__()
+

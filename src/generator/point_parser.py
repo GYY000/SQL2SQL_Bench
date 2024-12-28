@@ -8,7 +8,7 @@ from typing import List
 from generator.Pattern import Pattern
 from generator.Slot.ForSlot import ForSlot
 from generator.Slot.FunctionSlot import FunctionSlot
-from generator.Slot.Slot import Slot
+from generator.Slot.Slot import Slot, ValueSlot
 from generator.Type.ListType import ListType
 from generator.Type.Type import Type
 from generator.Type.ValueType import ValueType
@@ -133,7 +133,7 @@ def parse_arg_slot(tokens: List[str], index_begin: int, index_end: int) -> tuple
     assert tokens[i] == ':'
     i = i + 1
     slot_type, i = parse_type(tokens, i, index_end)
-    return Slot(name.strip(), slot_type), i
+    return ValueSlot(name.strip(), slot_type), i
 
 
 def parse_function(tokens: List[str], index_begin: int, index_end: int) -> tuple[FunctionSlot, int]:
