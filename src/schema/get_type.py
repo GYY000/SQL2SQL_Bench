@@ -223,7 +223,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
         if len(simple_select_intersect_node.get_children_by_value('simple_select_pramary')) != 1:
             return [], [], None
         else:
-            simple_select_primary_node = select_clause_node.get_child_by_value('simple_select_pramary')
+            simple_select_primary_node = simple_select_intersect_node.get_child_by_value('simple_select_pramary')
     assert isinstance(simple_select_primary_node, TreeNode)
     clone_node = simple_select_primary_node.clone()
     tgt_node = clone_node.get_child_by_value('opt_target_list')
@@ -272,7 +272,3 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
 
 def get_oracle_usable_cols(db_name: str, node: TreeNode):
     return None
-
-
-normal, aggr, _ = get_usable_cols('BIRD', 'SELECT * FROM account', 'mysql')
-print(normal)

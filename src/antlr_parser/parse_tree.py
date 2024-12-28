@@ -87,7 +87,7 @@ def parse_oracle_tree(src_sql: str):
 
 def get_parser(dialect: str):
     input_stream = InputStream('')
-    if dialect == 'pg':
+    if dialect == 'postgres':
         lexer = PostgreSQLLexer(input_stream)
         stream = CommonTokenStream(lexer)
         return PostgreSQLParser(stream)
