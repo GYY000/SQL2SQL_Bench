@@ -1,0 +1,6 @@
+[
+    {
+        "postgres": "GROUPING([value: Value])",
+        "mysql": "CASE WHEN [value: Value] IS NULL THEN 1 ELSE 0"
+    }
+]

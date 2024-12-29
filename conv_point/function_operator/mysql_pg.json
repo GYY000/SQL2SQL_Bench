@@ -1,6 +1,12 @@
 [
     {
-        "mysql": "FROM_DAYS([int_value])",
-        "pg": "'0001-01-01'::DATE + ([int_value] - 1)"
-    }
+        "mysql": "FROM_DAYS([value: INT])",
+        "pg": "'0001-01-01'::DATE + ([value: INT] - 1)",
+        "type": "insert"
+    },
+    {
+        "mysql": "UTC_DATE()",
+        "pg": "DATE(current_timestamp AT TIME ZONE 'UTC')",
+        "type": "insert"
+    },
 ]

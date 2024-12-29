@@ -5,9 +5,9 @@
 # @Time: 2024/12/25 12:40
 from typing import List
 
-from generator.Pattern import Pattern
-from generator.Slot.ForSlot import ForSlot
-from generator.Slot.FunctionSlot import FunctionSlot
+from generator.Slot.Pattern import Pattern
+from generator.Slot.Pattern import ForSlot
+from generator.Slot.Pattern import FunctionSlot
 from generator.Slot.Slot import Slot, ValueSlot
 from generator.Type.ListType import ListType
 from generator.Type.Type import Type

@@ -14,8 +14,36 @@ class ValueType(Type):
         return 'Value'
 
 
-
 class DateType(ValueType):
     def __init__(self):
         super().__init__()
 
+
+class IntType(ValueType):
+    def __init__(self):
+        super().__init__()
+
+
+class FloatType(ValueType):
+    def __init__(self):
+        super().__init__()
+
+
+class TextType(ValueType):
+    def __init__(self):
+        super().__init__()
+
+
+class JsonType(ValueType):
+    def __init__(self):
+        super().__init__()
+
+
+class TimeStampType(ValueType):
+    def __init__(self):
+        super().__init__()
+
+
+class PointType(ValueType):
+    def __init__(self):
+        super().__init__()
