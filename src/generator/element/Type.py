@@ -60,3 +60,69 @@ class ListType(Type):
 
     def __repr__(self):
         return str(self)
+
+
+def gen_type(src_dialect: str, value_type: str) -> Type:
+    if src_dialect == 'mysql':
+        if value_type == 'VALUE':
+            return MySQLType.ANY_VALUE
+        elif value_type == 'INT':
+            return MySQLType.INT
+        elif value_type == 'BOOL':
+            return MySQLType.BOOL
+        elif value_type == 'FLOAT':
+            return MySQLType.FLOAT
+        elif value_type == 'DATE':
+            return MySQLType.DATE
+        elif value_type == 'TIME':
+            return MySQLType.TIME
+        elif value_type == 'TIMESTAMP':
+            return MySQLType.TIMESTAMP
+        elif value_type == 'TEXT':
+            return MySQLType.TEXT
+        elif value_type == 'JSON':
+            return MySQLType.JSON
+        elif value_type == 'POINT':
+            return MySQLType.POINT
+    elif src_dialect == 'pg':
+        if value_type == 'VALUE':
+            return PostgresType.ANY_VALUE
+        elif value_type == 'INT':
+            return PostgresType.INT
+        elif value_type == 'BOOL':
+            return PostgresType.BOOL
+        elif value_type == 'FLOAT':
+            return PostgresType.FLOAT
+        elif value_type == 'DATE':
+            return PostgresType.DATE
+        elif value_type == 'TIME':
+            return PostgresType.TIME
+        elif value_type == 'TIMESTAMP':
+            return PostgresType.TIMESTAMP
+        elif value_type == 'TIMESTAMPTZ':
+            return PostgresType.TIMESTAMP_TZ
+        elif value_type == 'TEXT':
+            return PostgresType.TEXT
+        elif value_type == 'UUID':
+            return PostgresType.UUID
+        elif value_type == 'JSON':
+            return PostgresType.JSON
+        elif value_type == 'POINT':
+            return PostgresType.POINT
+    elif src_dialect == 'oracle':
+        if value_type == 'VALUE':
+            return OracleType.ANY_VALUE
+        elif value_type == 'NUMBER':
+            return OracleType.NUMBER
+        elif value_type == 'DATE':
+            return OracleType.DATE
+        elif value_type == 'TIMESTAMP':
+            return OracleType.TIMESTAMP
+        elif value_type == 'TIMESTAMPTZ':
+            return OracleType.TIMESTAMP_TZ
+        elif value_type == 'VARCHAR2':
+            return OracleType.VARCHAR2
+        elif value_type == 'SDO_GEOMETRY':
+            return OracleType.SDO_GEOMETRY
+    else:
+        raise ValueError(f"Type {value_type} does not exist in {src_dialect} of this system")

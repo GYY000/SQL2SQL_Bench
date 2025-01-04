@@ -5,13 +5,9 @@
 # @Time: 2024/12/25 12:40
 from typing import List
 
-from generator.Slot.Pattern import Pattern
-from generator.Slot.Pattern import ForSlot
-from generator.Slot.Pattern import FunctionSlot
-from generator.Slot.Slot import Slot, ValueSlot
-from generator.Type.ListType import ListType
-from generator.Type.Type import Type
-from generator.Type.ValueType import ValueType
+from generator.element.Pattern import Pattern, ForSlot, Slot, MySQLValueSlot, PostgresValueSlot, OracleValueSlot, \
+    FunctionSlot
+from generator.element.Type import Type, ListType, MySQLType, PostgresType, OracleType, gen_type
 
 
 def split(pattern: str):
@@ -126,6 +122,8 @@ def parse_for_loop(tokens: List[str], index_begin: int, index_end: int, src_dial
 
 def parse_arg_slot(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Slot, int]:
     i = index_begin
+    assert tokens[index_begin] == '['
+    i = index_begin + 1
     name = ""
     while tokens[i] != ':' and i < index_end:
         name = name + tokens[i] + " "
@@ -133,7 +131,18 @@ def parse_arg_slot(tokens: List[str], index_begin: int, index_end: int, src_dial
     assert tokens[i] == ':'
     i = i + 1
     slot_type, i = parse_type(tokens, i, index_end, src_dialect)
-    return ValueSlot(name.strip(), slot_type), i
+    assert tokens[i] == ']'
+    if src_dialect == 'mysql':
+        assert isinstance(slot_type, MySQLType)
+        return MySQLValueSlot(name.strip(), slot_type), i + 1
+    elif src_dialect == 'pg':
+        assert isinstance(slot_type, PostgresType)
+        return PostgresValueSlot(name.strip(), slot_type), i + 1
+    elif src_dialect == 'oracle':
+        assert isinstance(slot_type, OracleType)
+        return OracleValueSlot(name.strip(), slot_type), i + 1
+    else:
+        assert False
 
 
 def parse_function(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[FunctionSlot, int]:
@@ -165,8 +174,7 @@ def parse_type(tokens: List[str], index_begin: int, index_end: int, src_dialect:
         i = i + 1
         return ListType(ele_type), i
     else:
-        if tokens[i] == 'value':
-            return ValueType(), i
+        return gen_type(src_dialect, tokens[i]), i + 1
 
 
 def parse_slot(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Slot, int]:

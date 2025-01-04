@@ -6,7 +6,7 @@
 from typing import List
 from abc import ABC, abstractmethod
 
-from generator.element.Type import Type
+from generator.element.Type import Type, MySQLType, PostgresType, OracleType
 
 
 class Slot(ABC):
@@ -106,3 +106,27 @@ class FunctionSlot(Slot):
                 params = params + ", "
             params = params + str(slot)
         return f"{self.func_name}({params.strip()})"
+
+
+class MySQLValueSlot(ValueSlot):
+    def __init__(self, name: str, value_type: MySQLType):
+        super().__init__(name, value_type)
+
+    def fulfill(self, cols, tgt_dialect: str):
+        pass
+
+
+class PostgresValueSlot(ValueSlot):
+    def __init__(self, name: str, value_type: PostgresType):
+        super().__init__(name, value_type)
+
+    def fulfill(self, cols, tgt_dialect: str):
+        pass
+
+
+class OracleValueSlot(ValueSlot):
+    def __init__(self, name: str, value_type: OracleType):
+        super().__init__(name, value_type)
+
+    def fulfill(self, cols, tgt_dialect: str):
+        pass
