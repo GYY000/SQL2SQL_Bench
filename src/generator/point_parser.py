@@ -64,19 +64,19 @@ def split(pattern: str):
     return res
 
 
-def parse_pattern(tokens: List[str], index_begin: int, index_end: int) -> tuple[Pattern, int]:
+def parse_pattern(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Pattern, int]:
     i = index_begin
     pattern = Pattern()
     while i < index_end:
         token = tokens[i]
         if token == '@':
-            function_slot, i = parse_function(tokens, i, index_end)
+            function_slot, i = parse_function(tokens, i, index_end,src_dialect)
             pattern.add_slot(function_slot)
         elif token == '[':
-            slot, i = parse_slot(tokens, i, index_end)
+            slot, i = parse_slot(tokens, i, index_end, src_dialect)
             pattern.add_slot(slot)
         elif token == '{':
-            for_slot, i = parse_for_loop(tokens, i, index_end)
+            for_slot, i = parse_for_loop(tokens, i, index_end, src_dialect)
             pattern.add_slot(for_slot)
         else:
             pattern.add_keyword(tokens[i])
@@ -84,7 +84,7 @@ def parse_pattern(tokens: List[str], index_begin: int, index_end: int) -> tuple[
     return pattern, i
 
 
-def parse_for_loop(tokens: List[str], index_begin: int, index_end: int) -> tuple[ForSlot, int]:
+def parse_for_loop(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[ForSlot, int]:
     assert tokens[index_begin] == '{'
     # parse_for_loop
     i = index_begin + 1
@@ -102,7 +102,7 @@ def parse_for_loop(tokens: List[str], index_begin: int, index_end: int) -> tuple
 
     while tokens[i] != ':':
         i = i + 1
-        slot, i = parse_arg_slot(tokens, i, index_end)
+        slot, i = parse_arg_slot(tokens, i, index_end, src_dialect)
         ele_slots.append(slot)
         assert tokens[i] == ',' or tokens[i] == ':'
     i = i + 1
@@ -119,12 +119,12 @@ def parse_for_loop(tokens: List[str], index_begin: int, index_end: int) -> tuple
                 flag = flag - 1
         j = j + 1
 
-    pattern, i = parse_pattern(tokens, i, j)
+    pattern, i = parse_pattern(tokens, i, j, src_dialect)
     assert tokens[i] == '}'
     return ForSlot(pattern, ele_names, ele_slots), i + 1
 
 
-def parse_arg_slot(tokens: List[str], index_begin: int, index_end: int) -> tuple[Slot, int]:
+def parse_arg_slot(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Slot, int]:
     i = index_begin
     name = ""
     while tokens[i] != ':' and i < index_end:
@@ -132,11 +132,11 @@ def parse_arg_slot(tokens: List[str], index_begin: int, index_end: int) -> tuple
         i = i + 1
     assert tokens[i] == ':'
     i = i + 1
-    slot_type, i = parse_type(tokens, i, index_end)
+    slot_type, i = parse_type(tokens, i, index_end, src_dialect)
     return ValueSlot(name.strip(), slot_type), i
 
 
-def parse_function(tokens: List[str], index_begin: int, index_end: int) -> tuple[FunctionSlot, int]:
+def parse_function(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[FunctionSlot, int]:
     assert tokens[index_begin] == '@'
     name = ''
     i = index_begin
@@ -147,20 +147,20 @@ def parse_function(tokens: List[str], index_begin: int, index_end: int) -> tuple
     slots = []
     while tokens[i] != ')':
         i = i + 1
-        slot, i = parse_arg_slot(tokens, i, index_end)
+        slot, i = parse_arg_slot(tokens, i, index_end, src_dialect)
         slots.append(slot)
         assert tokens[i] == ',' or tokens[i] == ')'
     i = i + 1
     return FunctionSlot(name, slots), i
 
 
-def parse_type(tokens: List[str], index_begin: int, index_end: int) -> tuple[Type, int]:
+def parse_type(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Type, int]:
     i = index_begin
     if tokens[i] == 'List':
         i = i + 1
         assert tokens[i] == '['
         i = i + 1
-        ele_type, i = parse_type(tokens, i, index_end)
+        ele_type, i = parse_type(tokens, i, index_end, src_dialect)
         assert tokens[i] == ']'
         i = i + 1
         return ListType(ele_type), i
@@ -169,12 +169,12 @@ def parse_type(tokens: List[str], index_begin: int, index_end: int) -> tuple[Typ
             return ValueType(), i
 
 
-def parse_slot(tokens: List[str], index_begin: int, index_end: int) -> tuple[Slot, int]:
+def parse_slot(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Slot, int]:
     """
     Slot: [name: type]
     """
     assert tokens[index_begin] == '['
     i = index_begin + 1
-    slot, i = parse_arg_slot(tokens, i, index_end)
+    slot, i = parse_arg_slot(tokens, i, index_end, src_dialect)
     assert tokens[i] == ']'
     return slot, i + 1

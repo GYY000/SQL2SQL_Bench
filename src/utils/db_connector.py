@@ -113,6 +113,8 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
                 "col": col_name,
                 "type": col_type
             })
+        rows = cursor.fetchall()
+        connection.commit()
         return True, res
     except mysql.connector.Error as e:
         connection.rollback()
@@ -200,11 +202,13 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
     try:
         cursor.execute(sql)
         res = []
-        for column in cursor.description:
-            res.append({
-                "col": column.name,
-                "type": get_type_name_by_oid(column.type_code)
-            })
+        if cursor.description:
+            for column in cursor.description:
+                res.append({
+                    "col": column.name,
+                    "type": get_type_name_by_oid(column.type_code)
+                })
+        connection.commit()
         return True, res
     except (Exception, Error) as error:
         connection.rollback()
@@ -279,6 +283,7 @@ def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
         else:
             sql = obj
         cursor.execute(sql)
+
         res = []
         for column in cursor.description:
             match = re.search(r'DB_TYPE_(\w+)', column[1].name)
@@ -288,6 +293,7 @@ def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
                 "col": column[0],
                 "type": type_name
             })
+        cursor.fetchall()
         return True, res
     except Exception as e:
         raise e

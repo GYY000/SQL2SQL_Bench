@@ -4,8 +4,28 @@
 # @Author: 10379
 # @Time: 2024/12/25 0:13
 from typing import List
+from abc import ABC, abstractmethod
 
-from generator.Slot.Slot import ValueSlot, Slot
+from generator.element.Type import Type
+
+
+class Slot(ABC):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return 'slot'
+
+
+class ValueSlot(Slot):
+    def __init__(self, name: str, value_type: Type):
+        super().__init__()
+        self.value_type = value_type
+        self.name = name
+
+    @abstractmethod
+    def fulfill(self, cols, tgt_dialect: str):
+        pass
 
 
 class Pattern:
@@ -32,7 +52,7 @@ class Pattern:
             self.elements.append(slot)
             self.for_slots.append(slot)
             temp_slots = []
-            for for_slot in slot.slots:
+            for for_slot in slot.ele_slots:
                 if isinstance(for_slot, ValueSlot):
                     temp_slots.append(self.set_or_get_value_slot(for_slot))
                 else:
@@ -43,7 +63,7 @@ class Pattern:
             self.elements.append(slot)
             self.func_slots.append(slot)
             temp_slots = []
-            for func_slot in slot.slots:
+            for func_slot in slot.arg_slots:
                 if isinstance(func_slot, ValueSlot):
                     temp_slots.append(self.set_or_get_value_slot(func_slot))
                 else:
@@ -57,12 +77,12 @@ class Pattern:
 
 
 class ForSlot(Slot):
-    def __init__(self, pattern: Pattern, ele_names: List[str], slots: List[Slot]):
+    def __init__(self, pattern: Pattern, ele_names: List[str], ele_slots: List[Slot]):
         super().__init__()
         self.slots = []
         self.pattern = pattern
         self.ele_names = ele_names
-        self.slots = slots
+        self.ele_slots = ele_slots
 
     def __str__(self):
         # TODO:
@@ -70,9 +90,9 @@ class ForSlot(Slot):
 
 
 class FunctionSlot(Slot):
-    def __init__(self, func_name: str, slots: List[Slot], func_def: str = None):
+    def __init__(self, func_name: str, arg_slots: List[Slot], func_def: str = None):
         super().__init__()
-        self.slots = slots
+        self.arg_slots = arg_slots
         self.func_def = func_def
         self.func_name = func_name
 
@@ -81,7 +101,7 @@ class FunctionSlot(Slot):
 
     def __str__(self):
         params = ""
-        for slot in self.slots:
+        for slot in self.arg_slots:
             if params != '':
                 params = params + ", "
             params = params + str(slot)

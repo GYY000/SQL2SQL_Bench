@@ -43,10 +43,9 @@ def get_cte_type(cte: str, recursive: bool, db_name: str, dialect: str):
             assert False
 
 
-def get_usable_cols(db_name, sql: str, dialect: str):
+def get_usable_cols(db_name, sql: str, dialect: str) -> tuple[List, List, object]:
     try:
         root_node, line, col, msg = parse_tree(sql, dialect)
-
         if root_node is None:
             raise ValueError(f"Parse error when executing ANTLR parser of {dialect}.\n"
                              f"The sql is {sql}")
@@ -120,9 +119,9 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             expression_nodes = group_by_node.get_children_by_value('groupByItem')
             for expression_node in expression_nodes:
                 assert isinstance(expression_node, TreeNode)
-                node = expression_node.get_child_by_value('expression')
-                assert node is not None
-                normal_nodes.append(node)
+                node_expr = expression_node.get_child_by_value('expression')
+                assert node_expr is not None
+                normal_nodes.append(node_expr)
             clone_node = node.clone()
             select_elements_node = clone_node.get_child_by_value('selectElements')
             assert isinstance(select_elements_node, TreeNode)
@@ -135,7 +134,7 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             select_elements_node.is_terminal = True
             flag, res = get_mysql_type(str(clone_node), db_name, False)
             if not flag:
-                raise ValueError(f"can't get types of {str(clone_node)}")
+                raise ValueError(f"can't get types of {str(clone_node)} db: {db_name}")
             else:
                 for col in res:
                     type = col['type']
@@ -143,7 +142,7 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             select_elements_node.value = ' * '
             flag, res = get_mysql_type(str(clone_node), db_name, False)
             if not flag:
-                raise ValueError(f"can't get types of {str(clone_node)}")
+                raise ValueError(f"can't get types of {str(clone_node)} reason: {res}")
             for ele in res:
                 aggregate_nodes.append(Operand(ele['col'], ele['type']))
             return normal_nodes, aggregate_nodes, group_by_node
@@ -271,4 +270,4 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
 
 
 def get_oracle_usable_cols(db_name: str, node: TreeNode):
-    return None
+    return [], [], None
