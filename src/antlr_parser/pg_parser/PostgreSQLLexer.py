@@ -2,7 +2,7 @@
 from antlr4 import *
 from io import StringIO
 import sys
-from antlr_parser.pg_parser_bat.PostgreSQLLexerBase import *
+from antlr_parser.pg_parser.PostgreSQLLexerBase import *
 if sys.version_info[1] > 5:
     from typing import TextIO
 else:
@@ -2623,7 +2623,7 @@ def serializedATN():
         0,7,664,0,2,3,0,1,688,4,6,0,0,4,0,0,2,1,0,1,692,5,1,694,6
     ]
 
-class PostgreSQLLexer(Lexer):
+class PostgreSQLLexer(PostgreSQLLexerBase):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -3746,25 +3746,23 @@ class PostgreSQLLexer(Lexer):
 
     def Operator_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 0:
-
-                HandleLessLessGreaterGreater();
+            self.HandleLessLessGreaterGreater()
                
      
 
     def BeginDollarStringConstant_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 1:
-            pushTag();
+            self.pushTag()
      
 
     def NumericFail_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 2:
-            HandleNumericFail();
+            self.HandleNumericFail()
      
 
     def UnterminatedBlockComment_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 3:
-
-                        UnterminatedBlockCommentDebugAssert();
+            self.UnterminatedBlockCommentDebugAssert()
                
      
 
@@ -3797,44 +3795,44 @@ class PostgreSQLLexer(Lexer):
 
     def Operator_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 0:
-                return checkLA('-')
+                return self.checkLA('-')
          
 
             if predIndex == 1:
-                return checkLA('*')
+                return self.checkLA('*')
          
 
             if predIndex == 2:
-                return checkLA('*')
+                return self.checkLA('*')
          
 
     def OperatorEndingWithPlusMinus_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 3:
-                return checkLA('-')
+                return self.checkLA('-')
          
 
             if predIndex == 4:
-                return checkLA('*')
+                return self.checkLA('*')
          
 
             if predIndex == 5:
-                return checkLA('-')
+                return self.checkLA('-')
          
 
     def IdentifierStartChar_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 6:
-                return charIsLetter()
+                return self.charIsLetter()
          
 
             if predIndex == 7:
                 return 
-            CheckIfUtf32Letter()
+            self.CheckIfUtf32Letter()
            
          
 
     def EndDollarStringConstant_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 8:
-                return isTag()
+                return self.isTag()
          
 
 

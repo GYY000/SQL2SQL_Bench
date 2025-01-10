@@ -2,6 +2,7 @@
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
+from antlr_parser.pg_parser.PostgreSQLParserBase import *
 import sys
 if sys.version_info[1] > 5:
 	from typing import TextIO
@@ -4634,7 +4635,7 @@ def serializedATN():
         10662,10667,10671,10699
     ]
 
-class PostgreSQLParser ( Parser ):
+class PostgreSQLParser (PostgreSQLParserBase):
 
     grammarFileName = "PostgreSQLParser.g4"
 
