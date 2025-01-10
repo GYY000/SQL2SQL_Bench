@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-# @Project: SQL2SQL_Bench
-# @Module: Type$
-# @Author: 10379
-# @Time: 2024/12/26 19:50
+from abc import ABC, abstractmethod
 from enum import Enum
 
 from enum import Enum
@@ -23,6 +19,8 @@ class MySQLType(Type, Enum):
     TEXT = 7
     JSON = 8
     POINT = 9
+    NULL = 10
+    YEAR = 11
 
 
 class PostgresType(Type, Enum):
@@ -38,6 +36,7 @@ class PostgresType(Type, Enum):
     UUID = 9
     JSON = 10
     POINT = 11
+    NULL = 12
 
 
 class OracleType(Type, Enum):
@@ -48,6 +47,7 @@ class OracleType(Type, Enum):
     TIMESTAMP_TZ = 4
     VARCHAR2 = 5
     SDO_GEOMETRY = 6
+    NULL = 7
 
 
 class ListType(Type):
@@ -84,6 +84,10 @@ def gen_type(src_dialect: str, value_type: str) -> Type:
             return MySQLType.JSON
         elif value_type == 'POINT':
             return MySQLType.POINT
+        elif value_type == 'NULL':
+            return MySQLType.NULL
+        elif value_type == 'YEAR':
+            return MySQLType.YEAR
     elif src_dialect == 'pg':
         if value_type == 'VALUE':
             return PostgresType.ANY_VALUE
@@ -109,6 +113,8 @@ def gen_type(src_dialect: str, value_type: str) -> Type:
             return PostgresType.JSON
         elif value_type == 'POINT':
             return PostgresType.POINT
+        elif value_type == 'NULL':
+            return PostgresType.NULL
     elif src_dialect == 'oracle':
         if value_type == 'VALUE':
             return OracleType.ANY_VALUE
@@ -124,5 +130,30 @@ def gen_type(src_dialect: str, value_type: str) -> Type:
             return OracleType.VARCHAR2
         elif value_type == 'SDO_GEOMETRY':
             return OracleType.SDO_GEOMETRY
+        elif value_type == 'NULL':
+            return OracleType.NULL
     else:
         raise ValueError(f"Type {value_type} does not exist in {src_dialect} of this system")
+
+# # specify the allowed type
+# def type_trans(src_op: Operand, tgt_type: Type):
+#     if isinstance(src_op.op_type, MySQLType):
+#         if src_op.op_type == MySQLType.INT:
+#             pass
+#         elif src_op.op_type == MySQLType.BOOL:
+#             pass
+#         elif src_op.op_type == MySQLType.TEXT:
+#             pass
+#         elif src_op.op_type == MySQLType.FLOAT:
+#             pass
+#         elif src_op.op_type == MySQLType.DATE:
+#             pass
+#         elif src_op.op_type == MySQLType.TIME:
+#             pass
+#         pass
+#     elif isinstance(src_op.op_type, PostgresType):
+#         pass
+#     elif isinstance(src_op.op_type, OracleType):
+#         pass
+#     else:
+#         raise ValueError

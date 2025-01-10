@@ -21,7 +21,7 @@ class CustomErrorListener(ErrorListener):
 
 
 def parse_tree(src_sql: str, dialect: str) -> (str, int, int, str):
-    if dialect == 'postgres':
+    if dialect == 'pg':
         return parse_pg_tree(src_sql)
     elif dialect == 'mysql':
         return parse_mysql_tree(src_sql)
@@ -87,7 +87,7 @@ def parse_oracle_tree(src_sql: str):
 
 def get_parser(dialect: str):
     input_stream = InputStream('')
-    if dialect == 'postgres':
+    if dialect == 'pg':
         lexer = PostgreSQLLexer(input_stream)
         stream = CommonTokenStream(lexer)
         return PostgreSQLParser(stream)

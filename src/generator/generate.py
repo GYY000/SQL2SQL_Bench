@@ -18,7 +18,8 @@ from utils.tools import get_proj_root_path
 
 def check_select_cond(src_sql: str, dialect: str) -> bool:
     if dialect == 'mysql':
-        node = TreeNode.make_g4_tree_by_node(parse_tree(src_sql, dialect), dialect)
+        node, _, _, _ = parse_tree(src_sql, dialect)
+        node = TreeNode.make_g4_tree_by_node(node, dialect)
         while (node.value != 'selectStatement'):
             node = node.children[0]
         if node.get_child_by_value('UNION') is not None:
@@ -67,7 +68,7 @@ def insert_select_list_pos(src_sql: str, dialect: str, insert_content: str) -> s
 
 
 def gen_by_insert(src_pattern: Pattern, tgt_pattern: Pattern, src_dialect: str, tgt_dialect: str, functions: List,
-                  dbname: str = 'BIRD') -> Dict:
+                  dbname: str = 'bird') -> Dict:
     queries_path = os.path.join(get_proj_root_path(), 'data', dbname, 'query', f"{src_dialect}_{tgt_dialect}.json")
     with open(queries_path, 'r') as file:
         queries = json.load(file)
@@ -77,9 +78,12 @@ def gen_by_insert(src_pattern: Pattern, tgt_pattern: Pattern, src_dialect: str, 
                                                                                           tgt_dialect):
         query = random.choice(queries)
     src_sql = query[src_dialect]
-    tgt_sql = query[tgt_pattern]
+    tgt_sql = query[tgt_dialect]
 
-    normal_cols, aggregate_cols, group_by_node = get_usable_cols(dbname, src_sql, src_dialect)
+    src_normal_cols, src_aggregate_cols, src_group_by_node = get_usable_cols(dbname, src_sql, src_dialect)
+    tgt_normal_cols, tgt_aggregate_cols, tgt_group_by_node = get_usable_cols(dbname, tgt_sql, tgt_dialect)
+    print(src_normal_cols)
+    print(tgt_normal_cols)
     for value_slot in src_pattern.value_slots:
         pass
     return {
@@ -97,15 +101,7 @@ def gen_by_transform(src_pattern: Pattern, tgt_pattern: Pattern, src_dialect: st
 
 
 def generate_by_point(point: Dict, src_dialect, tgt_dialect):
-    src_pattern = point[src_dialect]
-    tgt_pattern = point[tgt_dialect]
-
-    src_split = split(src_pattern)
-    src_pattern, _ = parse_pattern(split(src_pattern), 0, len(src_split), src_dialect)
-
-    tgt_split = split(tgt_pattern)
-    tgt_pattern, _ = parse_pattern(split(tgt_split), 0, len(tgt_split), tgt_dialect)
-
+    src_pattern, tgt_pattern = parse_point(point, src_dialect, tgt_dialect)
     functions = None
     if 'func_def' in point:
         """
@@ -127,4 +123,6 @@ def test():
         points = json.load(file)
 
     for point in points:
-        generate_by_point(point, 'mysql', 'postgres')
+        generate_by_point(point, 'mysql', 'pg')
+
+test()

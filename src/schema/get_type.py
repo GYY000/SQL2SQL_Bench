@@ -7,7 +7,7 @@ from typing import Dict
 
 from antlr_parser.Tree import TreeNode
 from antlr_parser.parse_tree import parse_tree
-from generator.Operand import Operand
+from generator.element.Operand import Operand
 from utils.db_connector import *
 from utils.tools import dialect_judge
 
@@ -108,7 +108,7 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
                 raise ValueError(f"can't get types of {str(clone_node)}")
             normal_ops = []
             for ele in res:
-                normal_ops.append(Operand(ele['col'], ele['type']))
+                normal_ops.append(Operand(ele['col'], ele['type'], 'mysql'))
             return normal_ops, [], None
         else:
             # 对于GROUP BY，聚合函数中可以使用的为SELECT * FROM xxx 去除GROUP BY时的所有列
@@ -138,13 +138,13 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             else:
                 for col in res:
                     type = col['type']
-                    normal_nodes.append(Operand(str(node), type))
+                    normal_nodes.append(Operand(str(node), type, 'mysql'))
             select_elements_node.value = ' * '
             flag, res = get_mysql_type(str(clone_node), db_name, False)
             if not flag:
                 raise ValueError(f"can't get types of {str(clone_node)} reason: {res}")
             for ele in res:
-                aggregate_nodes.append(Operand(ele['col'], ele['type']))
+                aggregate_nodes.append(Operand(ele['col'], ele['type'], 'mysql'))
             return normal_nodes, aggregate_nodes, group_by_node
 
 
@@ -236,7 +236,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
         raise ValueError(f"can't get types of {str(clone_node)}")
     normal_ops = []
     for ele in res:
-        normal_ops.append(Operand(ele['col'], ele['type']))
+        normal_ops.append(Operand(ele['col'], ele['type'], 'pg'))
     if simple_select_primary_node.get_child_by_value('group_clause') is not None:
         group_node = simple_select_primary_node.get_child_by_value('group_clause')
         assert isinstance(group_node, TreeNode)
@@ -263,7 +263,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
         else:
             for col in res:
                 type = col['type']
-                group_by_ops.append(Operand(str(node), type))
+                group_by_ops.append(Operand(str(node), type, 'pg'))
         return group_by_ops, normal_ops, group_node
     else:
         return normal_ops, [], None
