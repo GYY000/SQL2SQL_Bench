@@ -79,7 +79,8 @@ class Pattern:
                     if not ele.is_fulfilled():
                         raise ValueError(f"Slot {ele.name} haven't been fulfilled "
                                          f"before construction please check the define order of the slots")
-
+                    else:
+                        res = res + " " + ele.fulfill(src_flag)
                 elif isinstance(ele, ForSlot):
                     res = res + "\n" + ele.fulfill(src_flag)
             else:

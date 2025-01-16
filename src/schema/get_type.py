@@ -6,10 +6,11 @@
 from typing import Dict
 
 from antlr_parser.Tree import TreeNode
+from antlr_parser.get_structure import get_pg_select_primary
 from antlr_parser.parse_tree import parse_tree
 from generator.element.Operand import Operand
 from utils.db_connector import *
-from utils.tools import dialect_judge
+from utils.tools import dialect_judge, add_quote
 
 
 # TODO: With Recursive has to be solved
@@ -73,8 +74,16 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
              TreeNode/None       :group_by的节点
     """
     # find all the sub_query, with_query, and common table
-    while (node.value != 'selectStatement'):
-        node = node.children[0]
+    node = node.get_child_by_value('sqlStatements')
+    assert isinstance(node, TreeNode)
+    for sql_statement in node.get_children_by_value('sqlStatement'):
+        dml_statement = sql_statement.get_child_by_value('dmlStatement')
+        assert isinstance(dml_statement, TreeNode)
+        if dml_statement.get_child_by_value('selectStatement') is None:
+            continue
+        else:
+            node = dml_statement.get_child_by_value('selectStatement')
+    assert node.value == 'selectStatement'
     if node.get_child_by_value('UNION') is not None:
         # TODO: strategy to use sql have UNION is to be solved
         return [], [], None
@@ -108,7 +117,7 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
                 raise ValueError(f"can't get types of {str(clone_node)}")
             normal_ops = []
             for ele in res:
-                normal_ops.append(Operand(ele['col'], ele['type'], 'mysql'))
+                normal_ops.append(Operand(add_quote('mysql', ele['col']), ele['type'], 'mysql'))
             return normal_ops, [], None
         else:
             # 对于GROUP BY，聚合函数中可以使用的为SELECT * FROM xxx 去除GROUP BY时的所有列
@@ -144,7 +153,7 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             if not flag:
                 raise ValueError(f"can't get types of {str(clone_node)} reason: {res}")
             for ele in res:
-                aggregate_nodes.append(Operand(ele['col'], ele['type'], 'mysql'))
+                aggregate_nodes.append(Operand(add_quote('mysql', ele['col']), ele['type'], 'mysql'))
             return normal_nodes, aggregate_nodes, group_by_node
 
 
@@ -202,28 +211,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
                  TreeNode/None       :group_by的节点
     """
     select_node = node
-    while select_node.value != 'select_no_parens' and select_node.value != 'select_with_parens':
-        select_node = select_node.children[0]
-    if select_node.value == 'select_with_parens':
-        used_node = select_node.get_child_by_value('select_no_parens')
-        while used_node is None:
-            select_node = select_node.get_child_by_value('select_with_parens')
-            assert select_node is not None
-            used_node = select_node.get_child_by_value('select_no_parens')
-        select_node = used_node
-    assert isinstance(select_node, TreeNode)
-    select_clause_node = select_node.get_child_by_value('select_clause')
-    assert isinstance(select_clause_node, TreeNode)
-    if len(select_clause_node.get_children_by_value('simple_select_intersect')) != 1:
-        # TODO: need to solve the problem of using UNION
-        return [], [], None
-    else:
-        simple_select_intersect_node = select_clause_node.get_child_by_value('simple_select_intersect')
-        if len(simple_select_intersect_node.get_children_by_value('simple_select_pramary')) != 1:
-            return [], [], None
-        else:
-            simple_select_primary_node = simple_select_intersect_node.get_child_by_value('simple_select_pramary')
-    assert isinstance(simple_select_primary_node, TreeNode)
+    simple_select_primary_node = get_pg_select_primary(select_node)
     clone_node = simple_select_primary_node.clone()
     tgt_node = clone_node.get_child_by_value('opt_target_list')
     if tgt_node is None:
@@ -236,7 +224,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
         raise ValueError(f"can't get types of {str(clone_node)}")
     normal_ops = []
     for ele in res:
-        normal_ops.append(Operand(ele['col'], ele['type'], 'pg'))
+        normal_ops.append(Operand(add_quote('pg', ele['col']), ele['type'], 'pg'))
     if simple_select_primary_node.get_child_by_value('group_clause') is not None:
         group_node = simple_select_primary_node.get_child_by_value('group_clause')
         assert isinstance(group_node, TreeNode)

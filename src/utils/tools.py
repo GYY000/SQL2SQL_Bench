@@ -84,3 +84,29 @@ def remove_all_space(ori_str: str):
         res = res + ori_sql_slice
     return res
 
+
+def get_quote(dialect: str):
+    if dialect == 'mysql':
+        return '`'
+    elif dialect == 'oracle' or dialect == 'pg':
+        return '"'
+    else:
+        assert False
+
+
+def strip_quote(dialect: str, name: str):
+    quote = get_quote(dialect)
+    if name.startswith(quote):
+        name = name[1:]
+    if name.endswith(quote):
+        name = name[:len(name) - 1]
+    return name
+
+
+def add_quote(dialect: str, name: str):
+    quote = get_quote(dialect)
+    if name.startswith(quote):
+        name = name[1:]
+    if name.endswith(quote):
+        name = name[:len(name) - 1]
+    return quote + name + quote
