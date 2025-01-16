@@ -135,6 +135,7 @@ def gen_type(src_dialect: str, value_type: str) -> Type:
     else:
         raise ValueError(f"Type {value_type} does not exist in {src_dialect} of this system")
 
+
 # # specify the allowed type
 # def type_trans(src_op: Operand, tgt_type: Type):
 #     if isinstance(src_op.op_type, MySQLType):
@@ -157,3 +158,22 @@ def gen_type(src_dialect: str, value_type: str) -> Type:
 #         pass
 #     else:
 #         raise ValueError
+
+def get_dialect_by_type(type: Type):
+    if isinstance(type, MySQLType):
+        return 'mysql'
+    elif isinstance(type, PostgresType):
+        return 'pg'
+    elif isinstance(type, OracleType):
+        return 'oracle'
+    elif isinstance(type, ListType):
+        return get_dialect_by_type(type.ele_type)
+    else:
+        assert False
+
+
+def type_match(type1: Type, type2: Type):
+    if isinstance(type1, ListType) or isinstance(type2, ListType):
+        return False
+    else:
+        return type1 == type2
