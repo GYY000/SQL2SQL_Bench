@@ -85,7 +85,7 @@ class Pattern:
                     res = res + "\n" + ele.fulfill(src_flag)
             else:
                 if res != '':
-                    res = res + ''
+                    res = res + ' '
                 res = res + ele
         return res
 

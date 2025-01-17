@@ -53,7 +53,8 @@ def split(pattern: str):
         if pattern[i] == '\"':
             if cur_str != '':
                 res.append(cur_str)
-                cur_str = ''
+            cur_str = '\"'
+            i = i + 1
             while pattern[i] != "\"":
                 if pattern[i] == '\\':
                     cur_str = cur_str + pattern[i]
@@ -67,7 +68,8 @@ def split(pattern: str):
         elif pattern[i] == '\'':
             if cur_str != '':
                 res.append(cur_str)
-                cur_str = ''
+            cur_str = '\''
+            i = i + 1
             while pattern[i] != "\'":
                 if pattern[i] == '\\':
                     cur_str = cur_str + pattern[i]
