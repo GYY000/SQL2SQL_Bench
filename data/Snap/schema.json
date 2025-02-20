@@ -1,0 +1,294 @@
+[
+    {
+        "table": "FacebookUsers",
+        "primary_key": "id",
+        "cols": [
+            {
+                "col_name": "id",
+                "type": {
+                    "mysql": "INT",
+                    "pg": "INT",
+                    "oracle": "NUMBER"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "birthday",
+                "type": {
+                    "mysql": "DATE",
+                    "pg": "DATE",
+                    "oracle": "DATE"
+                }
+            },
+            {
+                "col_name": "education_concentration",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "education_school",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "education_year",
+                "type": {
+                    "mysql": "YEAR",
+                    "pg": "SMALLINT",
+                    "oracle": "NUMBER(4)"
+                }
+            },
+            {
+                "col_name": "first_name",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "gender",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "hometown",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "languages",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "last_name",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "location",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "work_employer",
+                "type": {
+                    "mysql": "CHAR(36)",
+                    "pg": "UUID",
+                    "oracle": "VARCHAR2(36)"
+                }
+            },
+            {
+                "col_name": "work_location",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "work_position",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "work_start_date",
+                "type": {
+                    "mysql": "DATE",
+                    "pg": "DATE",
+                    "oracle": "DATE"
+                }
+            },
+            {
+                "col_name": "middle_name",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "work_projects",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "religion",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "name",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            },
+            {
+                "col_name": "political",
+                "type": {
+                    "mysql": "TEXT",
+                    "pg": "TEXT",
+                    "oracle": "VARCHAR2(100)"
+                }
+            }
+        ]
+    },
+    {
+        "table": "UserConnections",
+        "cols": [
+            {
+                "col_name": "node_a_id",
+                "type": {
+                    "mysql": "INT",
+                    "pg": "INT",
+                    "oracle": "NUMBER"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "node_b_id",
+                "type": {
+                    "mysql": "INT",
+                    "pg": "INT",
+                    "oracle": "NUMBER"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "table": "Circles",
+        "primary_key": "circle_id",
+        "cols": [
+            {
+                "col_name": "circle_id",
+                "type": {
+                    "mysql": "CHAR(36)",
+                    "pg": "UUID",
+                    "oracle": "VARCHAR2(36)"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "ego_node_id",
+                "type": {
+                    "mysql": "INT",
+                    "pg": "INT",
+                    "oracle": "NUMBER"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "circle_name",
+                "type": {
+                    "mysql": "VARCHAR(100)",
+                    "pg": "VARCHAR(100)",
+                    "oracle": "VARCHAR2(100)"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "table": "CircleMembers",
+        "cols": [
+            {
+                "col_name": "circle_id",
+                "type": {
+                    "mysql": "CHAR(36)",
+                    "pg": "UUID",
+                    "oracle": "VARCHAR2(36)"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "node_id",
+                "type": {
+                    "mysql": "INT",
+                    "pg": "INT",
+                    "oracle": "NUMBER"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "FK_table": "UserConnections",
+        "FK_col": "node_a_id",
+        "REF_table": "FacebookUsers",
+        "REF_col": "id"
+    },
+    {
+        "FK_table": "UserConnections",
+        "FK_col": "node_b_id",
+        "REF_table": "FacebookUsers",
+        "REF_col": "id"
+    },
+    {
+        "FK_table": "Circles",
+        "FK_col": "ego_node_id",
+        "REF_table": "FacebookUsers",
+        "REF_col": "id"
+    },
+    {
+        "FK_table": "CircleMembers",
+        "FK_col": "circle_id",
+        "REF_table": "Circles",
+        "REF_col": "circle_id"
+    },
+    {
+        "FK_table": "CircleMembers",
+        "FK_col": "node_id",
+        "REF_table": "FacebookUsers",
+        "REF_col": "id"
+    }
+]
