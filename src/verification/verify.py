@@ -12,7 +12,6 @@ from utils.tools import get_proj_root_path, is_running_on_linux
 def verify_sql_solver(sql1, sql2, schema):
     # verify one by one
     cur_path = os.path.join(get_proj_root_path(), 'src', 'verification')
-
     jar_path = os.path.join(cur_path, 'solver_dependency', 'sqlsolver-v1.1.0.jar')
 
     sql1_path = os.path.join(cur_path, 'sql1.sql')
@@ -32,7 +31,8 @@ def verify_sql_solver(sql1, sql2, schema):
         load_cmd = f"export LD_LIBRARY_PATH={os.path.join(cur_path, 'solver_dependency')}"
     else:
         load_cmd = f"set PATH={os.path.join(cur_path, 'solver_dependency')};%PATH%"
-    cmd = load_cmd + f" & java -jar {jar_path} -sql1={sql1_path} -sql2={sql2_path} -schema={schema_path} -output={res_path}"
+    cmd = load_cmd + (f" & java -jar {jar_path} -sql1={sql1_path} -sql2={sql2_path} "
+                      f"-schema={schema_path} -output={res_path}")
 
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     verify_result = None
@@ -89,7 +89,8 @@ def verify_sqls_solver(sql1s, sql2s, schema):
         load_cmd = f"export LD_LIBRARY_PATH={os.path.join(cur_path, 'solver_dependency')}"
     else:
         load_cmd = f"set PATH={os.path.join(cur_path, 'solver_dependency')};%PATH%"
-    cmd = load_cmd + f" & java -jar {jar_path} -sql1={sql1_path} -sql2={sql2_path} -schema={schema_path} -output={res_path}"
+    cmd = load_cmd + (f" & java -jar {jar_path} -sql1={sql1_path} "
+                      f"-sql2={sql2_path} -schema={schema_path} -output={res_path}")
 
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     res = []

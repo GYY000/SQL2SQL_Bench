@@ -5,6 +5,7 @@
 # @Time: 2024/12/9 20:18
 import configparser
 import os
+import platform
 from typing import List
 
 
@@ -110,3 +111,9 @@ def add_quote(dialect: str, name: str):
     if name.endswith(quote):
         name = name[:len(name) - 1]
     return quote + name + quote
+
+def is_running_on_linux():
+    if os.name == 'posix':
+        return 'linux' in platform.system().lower()
+    return False
+

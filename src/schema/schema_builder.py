@@ -59,7 +59,7 @@ def pg_create_table(schema: dict):
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
     if primary_key is not None:
-        return (f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n\tCONSTRAINT PK_{table_name} "
+        return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT PK_{table_name} "
                 f"PRIMARY KEY (\"{primary_key}\")\n);")
     else:
         return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
@@ -92,7 +92,7 @@ def oracle_create_table(schema: dict):
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
     if primary_key is not None:
-        return (f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n\tCONSTRAINT \"PK_{table_name}\" "
+        return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT \"PK_{table_name}\" "
                 f"PRIMARY KEY (\"{primary_key}\")\n);")
     else:
         return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
