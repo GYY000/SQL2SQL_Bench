@@ -58,7 +58,7 @@ class TreeNode:
                     and (self.children[0].value == 'scalarFunctionName' or self.children[0].value == 'fullId')):
                 flag_paren = False
             elif (self.value == 'specificFunction' or self.value == 'passwordFunctionClause' or
-                  self.value == 'aggregateWindowedFunction' or self.value == 'nonAggregateWindowedFunction'):
+                  self.value == 'aggregateWindowedFunction' or self.value == 'nonAggregateWindowedFunction' or self.value == 'dataType'):
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
@@ -67,7 +67,7 @@ class TreeNode:
                         flag = True
                     else:
                         sub_str = str(child)
-                        if sub_str.startswith('.') or res.endswith('.'):
+                        if sub_str.startswith('.') or sub_str.startswith('(') or res.endswith('.'):
                             flag = False
                         if sub_str != '':
                             if flag:
@@ -80,6 +80,8 @@ class TreeNode:
             if ((self.value == 'func_application' or self.value == 'func_expr_common_subexpr')
                     and len(self.children) != 0):
                 flag_paren = False
+            if self.father.value == 'simpletypename':
+                flag_paren = False
             if not flag_paren:
                 for child in self.children:
                     if child.is_terminal and child.value == '(':
@@ -87,7 +89,7 @@ class TreeNode:
                         flag = True
                     else:
                         sub_str = str(child)
-                        if sub_str.startswith('.') or res.endswith('.'):
+                        if sub_str.startswith('.') or sub_str.startswith('(') or res.endswith('.'):
                             flag = False
                         if sub_str != '':
                             if flag:
@@ -103,7 +105,7 @@ class TreeNode:
                     res = res + sub_str.strip()
                 return res
             if (self.value == 'string_function' or self.value == 'json_function'
-                    or self.value == 'other_function' or self.value == 'numeric_function'):
+                    or self.value == 'other_function' or self.value == 'numeric_function' or self.value == 'datatype'):
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
@@ -112,7 +114,7 @@ class TreeNode:
                         flag = True
                     else:
                         sub_str = str(child)
-                        if sub_str.startswith('.') or res.endswith('.'):
+                        if sub_str.startswith('.') or sub_str.startswith('(') or res.endswith('.'):
                             flag = False
                         if sub_str != '':
                             if flag:

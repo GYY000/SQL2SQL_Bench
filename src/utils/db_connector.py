@@ -132,7 +132,7 @@ def pg_db_connect(dbname):
             host='localhost',  # 数据库主机地址，默认为localhost
             port='5432',  # PostgreSQL默认端口
             user='postgres',  # 数据库用户名
-            password='123456',  # 数据库密码
+            password='021021',  # 数据库密码
 
             dbname=dbname  # 要连接的数据库名称
         )
@@ -267,7 +267,6 @@ def close_oracle_connnect(db_name: str):
     if connection:
         cursor.close()
         connection.close()
-        print("Oracle connection is closed")
 
 
 oracle_conn_local_map = {}

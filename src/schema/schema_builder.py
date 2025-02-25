@@ -10,9 +10,13 @@ import os.path
 def mysql_create_table(schema):
     table_name = schema['table']
     cols = schema['cols']
-    primary_key = None
+    primary_keys = ''
     if "primary_key" in schema:
         primary_key = schema['primary_key']
+        for key in primary_key:
+            if primary_keys != '':
+                primary_keys = primary_keys + ', '
+            primary_keys = primary_keys + key
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -24,9 +28,9 @@ def mysql_create_table(schema):
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    if primary_key is not None:
+    if primary_keys is not None:
         return (f"CREATE TABLE `{table_name}` (\n{col_defs},\n\tCONSTRAINT `PK_{table_name}` "
-                f"PRIMARY KEY (`{primary_key}`)\n);")
+                f"PRIMARY KEY (`{primary_keys}`)\n);")
     else:
         return f"CREATE TABLE `{table_name}` (\n{col_defs}\n);"
 
@@ -44,9 +48,13 @@ def mysql_add_foreign_key(schema):
 def pg_create_table(schema: dict):
     table_name = schema['table']
     cols = schema['cols']
-    primary_key = None
+    primary_keys = ''
     if "primary_key" in schema:
         primary_key = schema['primary_key']
+        for key in primary_key:
+            if primary_keys != '':
+                primary_keys = primary_keys + ', '
+            primary_keys = primary_keys + key
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -58,9 +66,9 @@ def pg_create_table(schema: dict):
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    if primary_key is not None:
+    if primary_keys != '':
         return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT PK_{table_name} "
-                f"PRIMARY KEY (\"{primary_key}\")\n);")
+                f"PRIMARY KEY (\"{primary_keys}\")\n);")
     else:
         return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
 
@@ -77,9 +85,13 @@ def pg_add_foreign_key(schema):
 def oracle_create_table(schema: dict):
     table_name = schema['table']
     cols = schema['cols']
-    primary_key = None
+    primary_keys = ''
     if "primary_key" in schema:
         primary_key = schema['primary_key']
+        for key in primary_key:
+            if primary_keys != '':
+                primary_keys = primary_keys + ', '
+            primary_keys = primary_keys + key
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -91,9 +103,9 @@ def oracle_create_table(schema: dict):
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    if primary_key is not None:
+    if primary_keys != '':
         return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT \"PK_{table_name}\" "
-                f"PRIMARY KEY (\"{primary_key}\")\n);")
+                f"PRIMARY KEY (\"{primary_keys}\")\n);")
     else:
         return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
 
@@ -136,4 +148,5 @@ def build_schema(out_dir: str, schema_path: str):
     sql_writer(os.path.join(out_dir, 'pg_ddl.sql'), pg_ddls)
     sql_writer(os.path.join(out_dir, 'oracle_ddl.sql'), oracle_ddls)
 
-build_schema('D:\\Coding\\SQL2SQL_Bench\\data\\Snap\\ddl', 'D:\\Coding\\SQL2SQL_Bench\\data\\Snap\\schema.json')
+
+
