@@ -11,7 +11,7 @@ from antlr_parser.Tree import TreeNode
 from antlr_parser.get_structure import get_pg_select_primary
 from antlr_parser.parse_tree import parse_tree
 from generator.point_parser import *
-from schema.get_type import get_usable_cols
+from db_builder.get_type import get_usable_cols
 from utils.tools import get_proj_root_path, strip_quote
 
 
