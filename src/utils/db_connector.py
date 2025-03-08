@@ -19,6 +19,33 @@ mysql_cursor_map = {}
 
 oracle_locate_open = False
 
+database_mapping = {
+    "customer_order": {
+        "mysql": "cus_order",
+        "pg": "cus_order",
+        "oracle": "orc_sample_db",
+    },
+    "human_resource": {
+        "mysql": "order_entry",
+        "pg": "tpch",
+        "oracle": "tpch"
+    },
+    "sale_history": {
+        "mysql": "",
+        "pg": "",
+        "oracle": "orcl"
+    },
+    "order_enrty": {
+        "mysql": "order_entry",
+        "pg": "tpch",
+        "oracle": "tpch"
+    },
+    "snap": {
+        "mysql": "snap",
+        "pg": "snap",
+        "oracle": "tpch"
+    },
+}
 
 def sql_execute(dialect: str, db_name: str, sql: str):
     if dialect == 'pg':
@@ -220,9 +247,11 @@ oracle_cursor_map = {}
 
 
 def oracle_db_connect(db_name):
-    # connection = cx_Oracle.connect(user="system", password="021021", dsn=db_name)
-    dsn = cx_Oracle.makedsn("8.131.229.55", "49161", service_name="XE")
-    connection = cx_Oracle.connect("BIRD", "dmai4db2021.", dsn)
+    if db_name != 'bird':
+        connection = cx_Oracle.connect(user="system", password="021021", dsn=db_name)
+    else:
+        dsn = cx_Oracle.makedsn("8.131.229.55", "49161", service_name="XE")
+        connection = cx_Oracle.connect("BIRD", "dmai4db2021.", dsn)
     cursor = connection.cursor()
     oracle_cursor_map[db_name] = cursor
     oracle_conn_map[db_name] = connection

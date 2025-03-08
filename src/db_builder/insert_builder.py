@@ -5,6 +5,9 @@
 # @Time: 2025/2/18 21:52
 import json
 
+from antlr_parser.Tree import TreeNode, try_fetch_nodes_by_route
+from antlr_parser.parse_tree import parse_tree
+
 
 def mysql_value_builder(type, value, format: str = '', timezone=None) -> str:
     if type == 'INT':
@@ -112,7 +115,7 @@ def oracle_value_builder(type: str, value, format=None, timezone=None) -> str:
     elif type == 'DATE':
         return f"TO_DATE('{value}', '{format}')"
     elif type == 'TIMESTAMP':
-        return f"TO_TIMESTAMP('{value}', '{type}')"
+        return f"TO_TIMESTAMP('{value}', '{format}')"
     elif type == 'TIMESTAMP WITH TIME ZONE':
         return f"TO_TIMESTAMP_TZ('{value} {timezone}:00', '{format} TZR')"
     elif type == 'CLOB' or type.startswith('VARCHAR2'):
@@ -182,3 +185,32 @@ def oracle_11_builder(table_schema, insert_values) -> str:
                                                                                                ele) + ')\n'
         values = values + res_value
     return f"INSERT ALL\n{values}\nSELECT 1 FROM dual;"
+
+
+def extract_values_from_insert(ins_sql: str, dialect: str):
+    tree_node, _, _, _ = parse_tree(ins_sql, dialect)
+    if tree_node is not None:
+        node = TreeNode.make_g4_tree_by_node(tree_node, dialect)
+    else:
+        print(f"Parsing error\n{ins_sql}")
+        exit()
+    if dialect == 'mysql':
+        return node.extract_values_from_mysql_insert()
+    elif dialect == 'pg':
+        return node.extract_values_from_pg_insert()
+    elif dialect == 'oracle':
+        single_table_nodes = try_fetch_nodes_by_route(node, ['sql_script', 'unit_statement', 'data_manipulation_language_statements',
+                                        'insert_statement', 'single_table_insert'])
+        into_clause_node = single_table_nodes[0].get_child_by_value('insert_into_clause')
+        table_name_node = into_clause_node.get_child_by_value('general_table_ref')
+        column_list_nodes = try_fetch_nodes_by_route(into_clause_node, ['insert_into_clause',
+                                                                        'paren_column_list', 'column_list', 'column_name'])
+        assert isinstance(into_clause_node, TreeNode)
+        value_clause_node = single_table_nodes[0].get_child_by_value('values_clause')
+        value_list_nodes = try_fetch_nodes_by_route(value_clause_node, ['values_clause', 'expressions', 'expression'])
+        assert len(column_list_nodes) == len(value_list_nodes)
+        col_names = [str(col_node) for col_node in column_list_nodes]
+        values = [str(value_node) for value_node in value_list_nodes]
+        return str(table_name_node), col_names, values
+    else:
+        assert False

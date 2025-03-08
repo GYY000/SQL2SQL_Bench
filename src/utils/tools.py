@@ -112,8 +112,43 @@ def add_quote(dialect: str, name: str):
         name = name[:len(name) - 1]
     return quote + name + quote
 
+
 def is_running_on_linux():
     if os.name == 'posix':
         return 'linux' in platform.system().lower()
     return False
 
+
+def extract_parameters(func_expr: str):
+    i = 0
+    while i < len(func_expr) and func_expr[i] != '(':
+        i = i + 1
+    assert func_expr[i] == '('
+    i = i + 1
+    res = []
+    quote_stack = []
+    paren_layer = 1
+    cur_str = ''
+    while i < len(func_expr) and paren_layer != 0:
+        if func_expr[i] in ['\"', '\'', '`']:
+            if len(quote_stack) > 0 and quote_stack[len(quote_stack) - 1] == func_expr[i]:
+                quote_stack.pop()
+            else:
+                quote_stack.append(func_expr[i])
+            cur_str = cur_str + func_expr[i]
+        elif func_expr[i] == ',' and len(quote_stack) == 0:
+            res.append(cur_str.strip())
+            cur_str = ''
+        elif func_expr == '(' and len(quote_stack) == 0:
+            paren_layer = paren_layer + 1
+            cur_str = cur_str + func_expr[i]
+        elif func_expr == ')' and len(quote_stack) == 0:
+            paren_layer = paren_layer - 1
+            if paren_layer != 0:
+                cur_str = cur_str + func_expr[i]
+        else:
+            cur_str = cur_str + func_expr[i]
+        i = i + 1
+    if len(cur_str) > 0:
+        res.append(cur_str.strip())
+    return res

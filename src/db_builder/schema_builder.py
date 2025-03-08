@@ -6,6 +6,8 @@
 import json
 import os.path
 
+from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute
+
 
 def mysql_create_table(schema):
     table_name = schema['table']
@@ -16,7 +18,7 @@ def mysql_create_table(schema):
         for key in primary_key:
             if primary_keys != '':
                 primary_keys = primary_keys + ', '
-            primary_keys = primary_keys + key
+            primary_keys = primary_keys + '`' + key + '`'
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -30,7 +32,7 @@ def mysql_create_table(schema):
         col_defs = col_defs + type_def
     if primary_keys is not None:
         return (f"CREATE TABLE `{table_name}` (\n{col_defs},\n\tCONSTRAINT `PK_{table_name}` "
-                f"PRIMARY KEY (`{primary_keys}`)\n);")
+                f"PRIMARY KEY ({primary_keys})\n);")
     else:
         return f"CREATE TABLE `{table_name}` (\n{col_defs}\n);"
 
@@ -45,6 +47,12 @@ def mysql_add_foreign_key(schema):
             f"ON DELETE NO ACTION ON UPDATE NO ACTION;")
 
 
+def mysql_add_index(schema):
+    table = schema['index_tbl']
+    column = schema['index_col']
+    return (f"CREATE INDEX idx_{table}_{column} ON `{table}` (`{column}`);")
+
+
 def pg_create_table(schema: dict):
     table_name = schema['table']
     cols = schema['cols']
@@ -54,7 +62,7 @@ def pg_create_table(schema: dict):
         for key in primary_key:
             if primary_keys != '':
                 primary_keys = primary_keys + ', '
-            primary_keys = primary_keys + key
+            primary_keys = primary_keys + '"' + key + '"'
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -68,7 +76,7 @@ def pg_create_table(schema: dict):
         col_defs = col_defs + type_def
     if primary_keys != '':
         return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT PK_{table_name} "
-                f"PRIMARY KEY (\"{primary_keys}\")\n);")
+                f"PRIMARY KEY ({primary_keys})\n);")
     else:
         return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
 
@@ -82,6 +90,12 @@ def pg_add_foreign_key(schema):
             f"REFERENCES \"{ref_table}\" (\"{ref_column}\") ON DELETE NO ACTION ON UPDATE NO ACTION;")
 
 
+def pg_add_index(schema):
+    table = schema['index_tbl']
+    column = schema['index_col']
+    return (f"CREATE INDEX idx_{table}_{column} ON \"{table}\" (\"{column}\");")
+
+
 def oracle_create_table(schema: dict):
     table_name = schema['table']
     cols = schema['cols']
@@ -91,11 +105,13 @@ def oracle_create_table(schema: dict):
         for key in primary_key:
             if primary_keys != '':
                 primary_keys = primary_keys + ', '
-            primary_keys = primary_keys + key
+            primary_keys = primary_keys + '"' + key + '"'
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
         type = col['type']['oracle']
+        if type == 'JSON' or type == 'Unsupported':
+            continue
         if 'attribute' in col and 'NOT NULL' in col['attribute']:
             type_def = f"\t\"{col_name}\" {type} NOT NULL"
         else:
@@ -105,7 +121,7 @@ def oracle_create_table(schema: dict):
         col_defs = col_defs + type_def
     if primary_keys != '':
         return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT \"PK_{table_name}\" "
-                f"PRIMARY KEY (\"{primary_keys}\")\n);")
+                f"PRIMARY KEY ({primary_keys})\n);")
     else:
         return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
 
@@ -119,10 +135,22 @@ def oracle_add_foreign_key(schema):
             f"REFERENCES \"{ref_table}\" (\"{ref_column}\");")
 
 
-def sql_writer(file, sqls: list):
+def oracle_add_index(schema):
+    table = schema['index_tbl']
+    column = schema['index_col']
+    return (f"CREATE INDEX idx_{table}_{column} ON \"{table}\" (\"{column}\");")
+
+
+def sql_writer(file, ddl_sqls: list, foreign_key_sqls: list = None, index_sqls: list = None):
     with open(file, 'w') as file:
-        for sql in sqls:
+        for sql in ddl_sqls:
             file.write(sql + '\n\n')
+        if foreign_key_sqls is not None:
+            for sql in foreign_key_sqls:
+                file.write(sql + '\n\n')
+        if index_sqls is not None:
+            for sql in index_sqls:
+                file.write(sql + '\n\n')
 
 
 def build_schema(out_dir: str, schema_path: str):
@@ -130,23 +158,53 @@ def build_schema(out_dir: str, schema_path: str):
         os.makedirs(out_dir)
     with open(schema_path, 'r') as file:
         schema = json.load(file)
-    mysql_ddls = []
-    pg_ddls = []
-    oracle_ddls = []
+    ddls = {}
+    ddls['mysql'] = []
+    ddls['pg'] = []
+    ddls['oracle'] = []
+    foreign_key = {}
+    foreign_key['mysql'] = []
+    foreign_key['pg'] = []
+    foreign_key['oracle'] = []
+    index = {}
+    index['mysql'] = []
+    index['pg'] = []
+    index['oracle'] = []
     for ele in schema:
         if "table" in ele:
-            mysql_ddls.append(mysql_create_table(ele))
-            pg_ddls.append(pg_create_table(ele))
-            oracle_ddls.append(oracle_create_table(ele))
+            ddls['mysql'].append(mysql_create_table(ele))
+            ddls['pg'].append(pg_create_table(ele))
+            ddls['oracle'].append(oracle_create_table(ele))
         elif 'FK_table' in ele:
-            mysql_ddls.append(mysql_add_foreign_key(ele))
-            pg_ddls.append(pg_add_foreign_key(ele))
-            oracle_ddls.append(oracle_add_foreign_key(ele))
+            foreign_key['mysql'].append(mysql_add_foreign_key(ele))
+            foreign_key['pg'].append(pg_add_foreign_key(ele))
+            foreign_key['oracle'].append(oracle_add_foreign_key(ele))
+        elif 'index_tbl' in ele:
+            index['mysql'].append(mysql_add_index(ele))
+            index['pg'].append(pg_add_index(ele))
+            index['oracle'].append(oracle_add_index(ele))
         else:
             assert False
-    sql_writer(os.path.join(out_dir, 'mysql_ddl.sql'), mysql_ddls)
-    sql_writer(os.path.join(out_dir, 'pg_ddl.sql'), pg_ddls)
-    sql_writer(os.path.join(out_dir, 'oracle_ddl.sql'), oracle_ddls)
+
+    for dialect in ['mysql', 'pg', 'oracle']:
+        if not os.path.exists(os.path.join(out_dir, dialect)):
+            os.makedirs(os.path.join(out_dir, dialect))
+        sql_writer(os.path.join(out_dir, dialect, f'{dialect}_ddl.sql'), ddls[dialect])
+        sql_writer(os.path.join(out_dir, dialect, f'{dialect}_fk.sql'), foreign_key[dialect])
+        sql_writer(os.path.join(out_dir, dialect, f'{dialect}_idx.sql'), index[dialect])
 
 
-
+def drop_schema(schema: dict, dialect, db_name):
+    for ele in schema:
+        if "table" in ele:
+            table_name = ele['table']
+            if dialect == 'oracle':
+                flag, res = oracle_sql_execute(db_name, f"DROP TABLE {table_name} CASCADE CONSTRAINTS;")
+            elif dialect == 'mysql':
+                flag, res = mysql_sql_execute(db_name, f"DROP TABLE {table_name};")
+            elif dialect == 'pg':
+                flag, res = pg_sql_execute(db_name, f"DROP TABLE {table_name} CASCADE;")
+            else:
+                assert False
+            if not flag:
+                print(f'{table_name} may fail to drop')

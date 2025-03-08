@@ -401,3 +401,16 @@ def lift_node(node, all_pieces, tree_node, piece):
     if node.father is None or len(node.children) > 1:
         terminate_flag = True
     return terminate_flag, node, tree_node, piece
+
+
+def try_fetch_nodes_by_route(root_node: TreeNode, path: list):
+    if root_node.value == path[0]:
+        if len(path) == 1:
+            return [root_node]
+        else:
+            res = []
+            for child in root_node.children:
+                res = res + try_fetch_nodes_by_route(child, path[1:])
+            return res
+    else:
+        return []
