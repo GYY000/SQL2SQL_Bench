@@ -6,6 +6,7 @@
 import json
 import os.path
 
+from db_builder.general_type import build_type
 from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute
 
 
@@ -20,9 +21,12 @@ def mysql_create_table(schema):
                 primary_keys = primary_keys + ', '
             primary_keys = primary_keys + '`' + key + '`'
     col_defs = ''
+    constraints = []
     for col in cols:
         col_name = col['col_name']
-        type = col['type']['mysql']
+        type, constraint = build_type(col['type'], col_name, 'mysql')
+        if constraint is not None:
+            constraints.append(constraint)
         if 'attribute' in col and 'NOT NULL' in col['attribute']:
             type_def = f"\t`{col_name}` {type} NOT NULL"
         else:
@@ -30,11 +34,13 @@ def mysql_create_table(schema):
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
+    create_stmt = f"CREATE TABLE `{table_name}` (\n{col_defs}"
     if primary_keys is not None:
-        return (f"CREATE TABLE `{table_name}` (\n{col_defs},\n\tCONSTRAINT `PK_{table_name}` "
-                f"PRIMARY KEY ({primary_keys})\n);")
-    else:
-        return f"CREATE TABLE `{table_name}` (\n{col_defs}\n);"
+        constraints.append(f"CONSTRAINT `PK_{table_name}` PRIMARY KEY ({primary_keys})")
+    for constraint in constraints:
+        create_stmt += ',\n\t' + constraint
+    create_stmt += '\n);'
+    return create_stmt
 
 
 def mysql_add_foreign_key(schema):
@@ -63,10 +69,13 @@ def pg_create_table(schema: dict):
             if primary_keys != '':
                 primary_keys = primary_keys + ', '
             primary_keys = primary_keys + '"' + key + '"'
+    constraints = []
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
-        type = col['type']['pg']
+        type, constraint = build_type(col['type'], col_name, 'pg')
+        if constraint is not None:
+            constraints.append(constraint)
         if 'attribute' in col and 'NOT NULL' in col['attribute']:
             type_def = f"\t\"{col_name}\" {type} NOT NULL"
         else:
@@ -74,11 +83,13 @@ def pg_create_table(schema: dict):
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    if primary_keys != '':
-        return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT PK_{table_name} "
-                f"PRIMARY KEY ({primary_keys})\n);")
-    else:
-        return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
+    create_stmt = f"CREATE TABLE \"{table_name}\" (\n{col_defs}"
+    if primary_keys is not None:
+        constraints.append(f"CONSTRAINT \"PK_{table_name}\" PRIMARY KEY ({primary_keys})")
+    for constraint in constraints:
+        create_stmt += ',\n\t' + constraint
+    create_stmt += '\n);'
+    return create_stmt
 
 
 def pg_add_foreign_key(schema):
@@ -107,9 +118,11 @@ def oracle_create_table(schema: dict):
                 primary_keys = primary_keys + ', '
             primary_keys = primary_keys + '"' + key + '"'
     col_defs = ''
+    constraints = []
     for col in cols:
         col_name = col['col_name']
-        type = col['type']['oracle']
+        type, constraint = build_type(col['type'], col_name, 'oracle')
+        constraint.append(constraint)
         if type == 'JSON' or type == 'Unsupported':
             continue
         if 'attribute' in col and 'NOT NULL' in col['attribute']:
@@ -119,11 +132,13 @@ def oracle_create_table(schema: dict):
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    if primary_keys != '':
-        return (f"CREATE TABLE \"{table_name}\" (\n{col_defs},\n\tCONSTRAINT \"PK_{table_name}\" "
-                f"PRIMARY KEY ({primary_keys})\n);")
-    else:
-        return f"CREATE TABLE \"{table_name}\" (\n{col_defs}\n);"
+    create_stmt = f"CREATE TABLE \"{table_name}\" (\n{col_defs}"
+    if primary_keys is not None:
+        constraints.append(f"CONSTRAINT \"PK_{table_name}\" PRIMARY KEY ({primary_keys})")
+    for constraint in constraints:
+        create_stmt += ',\n\t' + constraint
+    create_stmt += '\n);'
+    return create_stmt
 
 
 def oracle_add_foreign_key(schema):
