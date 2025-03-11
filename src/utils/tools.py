@@ -136,19 +136,20 @@ def extract_parameters(func_expr: str):
             else:
                 quote_stack.append(func_expr[i])
             cur_str = cur_str + func_expr[i]
-        elif func_expr[i] == ',' and len(quote_stack) == 0:
+        elif func_expr[i] == ',' and len(quote_stack) == 0 and paren_layer == 1:
             res.append(cur_str.strip())
             cur_str = ''
-        elif func_expr == '(' and len(quote_stack) == 0:
+        elif func_expr[i] == '(' and len(quote_stack) == 0:
             paren_layer = paren_layer + 1
             cur_str = cur_str + func_expr[i]
-        elif func_expr == ')' and len(quote_stack) == 0:
+        elif func_expr[i] == ')' and len(quote_stack) == 0:
             paren_layer = paren_layer - 1
             if paren_layer != 0:
                 cur_str = cur_str + func_expr[i]
+            else:
+                res.append(cur_str.strip())
+                cur_str = ''
         else:
             cur_str = cur_str + func_expr[i]
         i = i + 1
-    if len(cur_str) > 0:
-        res.append(cur_str.strip())
     return res
