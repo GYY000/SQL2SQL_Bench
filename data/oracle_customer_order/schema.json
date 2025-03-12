@@ -111,7 +111,8 @@
             {
                 "col_name": "logo_last_updated",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 }
             }
         ]
@@ -190,7 +191,8 @@
             {
                 "col_name": "image_last_updated",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 }
             }
         ]
@@ -214,7 +216,7 @@
                 "col_name": "order_tms",
                 "type": {
                     "type_name": "TIMESTAMP",
-                    "format": ""
+                    "format": "DD-MON-YYYY HH24.MI.SS.FF"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -232,8 +234,15 @@
             {
                 "col_name": "order_status",
                 "type": {
-                    "type_name": "VARCHAR",
-                    "length": 40
+                    "type_name": "ENUM",
+                    "values": [
+                        "CANCELLED",
+                        "COMPLETE",
+                        "OPEN",
+                        "PAID",
+                        "REFUNDED",
+                        "SHIPPED"
+                    ]
                 },
                 "attribute": [
                     "NOT NULL"
@@ -296,8 +305,13 @@
             {
                 "col_name": "shipment_status",
                 "type": {
-                    "type_name": "VARCHAR",
-                    "length": 400
+                    "type_name": "ENUM",
+                    "values": [
+                        "CREATED",
+                        "SHIPPED",
+                        "IN-TRANSIT",
+                        "DELIVERED"
+                    ]
                 },
                 "attribute": [
                     "NOT NULL"
@@ -467,30 +481,44 @@
     },
     {
         "index_tbl": "customers",
-        "index_col": "full_name"
+        "index_cols": [
+            "full_name"
+        ]
     },
     {
         "index_tbl": "orders",
-        "index_col": "customer_id"
+        "index_cols": [
+            "customer_id"
+        ]
     },
     {
         "index_tbl": "orders",
-        "index_col": "store_id"
+        "index_cols": [
+            "store_id"
+        ]
     },
     {
         "index_tbl": "shipments",
-        "index_col": "store_id"
+        "index_cols": [
+            "store_id"
+        ]
     },
     {
         "index_tbl": "shipments",
-        "index_col": "customer_id"
+        "index_cols": [
+            "customer_id"
+        ]
     },
     {
         "index_tbl": "order_items",
-        "index_col": "shipment_id"
+        "index_cols": [
+            "shipment_id"
+        ]
     },
     {
         "index_tbl": "inventory",
-        "index_col": "product_id"
+        "index_cols": [
+            "product_id"
+        ]
     }
 ]
