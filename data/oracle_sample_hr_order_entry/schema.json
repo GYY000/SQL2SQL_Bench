@@ -1,0 +1,871 @@
+[
+    {
+        "table": "regions",
+        "primary_key": [
+            "region_id"
+        ],
+        "cols": [
+            {
+                "col_name": "region_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "region_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 25
+                }
+            }
+        ]
+    },
+    {
+        "table": "countries",
+        "primary_key": [
+            "country_id"
+        ],
+        "cols": [
+            {
+                "col_name": "country_id",
+                "type": {
+                    "type_name": "CHAR",
+                    "length": 2
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "country_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 60
+                }
+            },
+            {
+                "col_name": "region_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "locations",
+        "primary_key": [
+            "location_id"
+        ],
+        "cols": [
+            {
+                "col_name": "location_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "street_address",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 40
+                }
+            },
+            {
+                "col_name": "postal_code",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 12
+                }
+            },
+            {
+                "col_name": "city",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 30
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "state_province",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 25
+                }
+            },
+            {
+                "col_name": "country_id",
+                "type": {
+                    "type_name": "CHAR",
+                    "length": 2
+                }
+            }
+        ]
+    },
+    {
+        "table": "departments",
+        "primary_key": [
+            "department_id"
+        ],
+        "cols": [
+            {
+                "col_name": "department_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "department_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 30
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "manager_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "location_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "jobs",
+        "primary_key": [
+            "job_id"
+        ],
+        "cols": [
+            {
+                "col_name": "job_id",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 10
+                }
+            },
+            {
+                "col_name": "job_title",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 35
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "min_salary",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "max_salary",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "employees",
+        "primary_key": [
+            "employee_id"
+        ],
+        "cols": [
+            {
+                "col_name": "employee_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "first_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 20
+                }
+            },
+            {
+                "col_name": "last_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 25
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "email",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 25
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "phone_number",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 20
+                }
+            },
+            {
+                "col_name": "hire_date",
+                "type": {
+                    "type_name": "DATE"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "job_id",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 10
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "salary",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 8,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "commission_pct",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 2,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "manager_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "department_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "job_history",
+        "primary_key": [
+            "employee_id",
+            "start_date"
+        ],
+        "cols": [
+            {
+                "col_name": "employee_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "start_date",
+                "type": {
+                    "type_name": "DATE"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "end_date",
+                "type": {
+                    "type_name": "DATE"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "job_id",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 10
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "department_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "customers",
+        "primary_key": [
+            "customer_id"
+        ],
+        "cols": [
+            {
+                "col_name": "customer_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "cust_first_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 20
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "cust_last_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 20
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "cust_address",
+                "type": {
+                    "type_name": "JSON",
+                    "structure": {
+                        "street_address": "",
+                        "postal_code": "",
+                        "city": "",
+                        "state_province": "",
+                        "country_id": ""
+                    }
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "phone_numbers",
+                "type": {
+                    "type_name": "JSON",
+                    "structure": []
+                }
+            },
+            {
+                "col_name": "nls_language",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 3
+                }
+            },
+            {
+                "col_name": "nls_territory",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 30
+                }
+            },
+            {
+                "col_name": "credit_limit",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 9,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "cust_email",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 40
+                }
+            },
+            {
+                "col_name": "account_mgr_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "cust_geo_location",
+                "type": {
+                    "type_name": "POINT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "order_items",
+        "primary_key": [
+            "order_id",
+            "line_item_id"
+        ],
+        "cols": [
+            {
+                "col_name": "order_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "line_item_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "product_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "unit_price",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 8,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "quantity",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "inventories",
+        "primary_key": [
+            "product_id",
+            "warehouse_id"
+        ],
+        "cols": [
+            {
+                "col_name": "product_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "warehouse_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "quantity_on_hand",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "table": "product_information",
+        "primary_key": [
+            "product_id"
+        ],
+        "cols": [
+            {
+                "col_name": "product_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "product_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 50
+                }
+            },
+            {
+                "col_name": "product_description",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2000
+                }
+            },
+            {
+                "col_name": "category_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "weight_class",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "warranty_period",
+                "type": {
+                    "type_name": "INTERVAL YEAR TO MONTH"
+                }
+            },
+            {
+                "col_name": "supplier_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "product_status",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 20
+                }
+            },
+            {
+                "col_name": "list_price",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 8,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "min_price",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 8,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "catalog_url",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 50
+                }
+            }
+        ]
+    },
+    {
+        "table": "product_descriptions",
+        "primary_key": [
+            "product_id",
+            "language_id"
+        ],
+        "cols": [
+            {
+                "col_name": "product_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "language_id",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 3
+                }
+            },
+            {
+                "col_name": "translated_name",
+                "type": {
+                    "type_name": "NVARCHAR",
+                    "length": 50
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "translated_description",
+                "type": {
+                    "type_name": "NVARCHAR",
+                    "length": 2000
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "table": "promotions",
+        "primary_key": [
+            "promo_id"
+        ],
+        "cols": [
+            {
+                "col_name": "promo_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "promo_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 20
+                }
+            }
+        ]
+    },
+    {
+        "table": "orders",
+        "primary_key": [
+            "order_id"
+        ],
+        "cols": [
+            {
+                "col_name": "order_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "order_date",
+                "type": {
+                    "type_name": "TIMESTAMPTZ",
+                    "format": ""
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "order_mode",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 8
+                }
+            },
+            {
+                "col_name": "customer_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "order_status",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "order_total",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 8,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "sales_rep_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "promotion_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "warehouses",
+        "primary_key": [
+            "warehouse_id"
+        ],
+        "cols": [
+            {
+                "col_name": "warehouse_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "warehouse_spec",
+                "type": {
+                    "type_name": "XML"
+                }
+            },
+            {
+                "col_name": "warehouse_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 35
+                }
+            },
+            {
+                "col_name": "location_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "wh_geo_location",
+                "type": {
+                    "type_name": "POINT"
+                }
+            }
+        ]
+    },
+    {
+        "FK_table": "countries",
+        "FK_col": "region_id",
+        "REF_table": "regions",
+        "REF_col": "region_id"
+    },
+    {
+        "FK_table": "locations",
+        "FK_col": "country_id",
+        "REF_table": "countries",
+        "REF_col": "country_id"
+    },
+    {
+        "FK_table": "departments",
+        "FK_col": "location_id",
+        "REF_table": "locations",
+        "REF_col": "location_id"
+    },
+    {
+        "FK_table": "employees",
+        "FK_col": "department_id",
+        "REF_table": "departments",
+        "REF_col": "department_id"
+    },
+    {
+        "FK_table": "employees",
+        "FK_col": "job_id",
+        "REF_table": "jobs",
+        "REF_col": "job_id"
+    },
+    {
+        "FK_table": "employees",
+        "FK_col": "manager_id",
+        "REF_table": "employees",
+        "REF_col": "employee_id"
+    },
+    {
+        "FK_table": "departments",
+        "FK_col": "manager_id",
+        "REF_table": "employees",
+        "REF_col": "employee_id"
+    },
+    {
+        "FK_table": "job_history",
+        "FK_col": "job_id",
+        "REF_table": "jobs",
+        "REF_col": "job_id"
+    },
+    {
+        "FK_table": "job_history",
+        "FK_col": "employee_id",
+        "REF_table": "employees",
+        "REF_col": "employee_id"
+    },
+    {
+        "FK_table": "job_history",
+        "FK_col": "department_id",
+        "REF_table": "departments",
+        "REF_col": "department_id"
+    },
+    {
+        "FK_table": "order_items",
+        "FK_col": "product_id",
+        "REF_table": "product_information",
+        "REF_col": "product_id"
+    },
+    {
+        "FK_table": "product_descriptions",
+        "FK_col": "product_id",
+        "REF_table": "product_information",
+        "REF_col": "product_id"
+    },
+    {
+        "FK_table": "orders",
+        "FK_col": "sales_rep_id",
+        "REF_table": "employees",
+        "REF_col": "employee_id"
+    },
+    {
+        "FK_table": "orders",
+        "FK_col": "customer_id",
+        "REF_table": "customers",
+        "REF_col": "customer_id"
+    },
+    {
+        "FK_table": "warehouses",
+        "FK_col": "location_id",
+        "REF_table": "locations",
+        "REF_col": "location_id"
+    },
+    {
+        "FK_table": "customers",
+        "FK_col": "account_mgr_id",
+        "REF_table": "employees",
+        "REF_col": "employee_id"
+    },
+    {
+        "FK_table": "inventories",
+        "FK_col": "warehouse_id",
+        "REF_table": "warehouses",
+        "REF_col": "warehouse_id"
+    },
+    {
+        "FK_table": "inventories",
+        "FK_col": "product_id",
+        "REF_table": "product_information",
+        "REF_col": "product_id"
+    },
+    {
+        "FK_table": "order_items",
+        "FK_col": "order_id",
+        "REF_table": "orders",
+        "REF_col": "order_id"
+    }
+]

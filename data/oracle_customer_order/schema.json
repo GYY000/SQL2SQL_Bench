@@ -1,0 +1,496 @@
+[
+    {
+        "table": "customers",
+        "primary_key": [
+            "customer_id"
+        ],
+        "cols": [
+            {
+                "col_name": "customer_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "email_address",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 1020
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "full_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 1020
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "table": "stores",
+        "primary_key": [
+            "store_id"
+        ],
+        "cols": [
+            {
+                "col_name": "store_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "store_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 1020
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "web_address",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 400
+                }
+            },
+            {
+                "col_name": "physical_address",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                }
+            },
+            {
+                "col_name": "coordinate",
+                "type": {
+                    "type_name": "POINT"
+                }
+            },
+            {
+                "col_name": "logo",
+                "type": {
+                    "type_name": "BLOB"
+                }
+            },
+            {
+                "col_name": "logo_mime_type",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                }
+            },
+            {
+                "col_name": "logo_filename",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                }
+            },
+            {
+                "col_name": "logo_charset",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                }
+            },
+            {
+                "col_name": "logo_last_updated",
+                "type": {
+                    "type_name": "DATE"
+                }
+            }
+        ]
+    },
+    {
+        "table": "products",
+        "primary_key": [
+            "product_id"
+        ],
+        "cols": [
+            {
+                "col_name": "product_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            },
+            {
+                "col_name": "product_name",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 1020
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "unit_price",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 10,
+                    "scale": 2
+                }
+            },
+            {
+                "col_name": "product_details",
+                "type": {
+                    "type_name": "JSON",
+                    "structure": {
+                        "colour": "",
+                        "gender": "",
+                        "brand": "",
+                        "description": "",
+                        "sizes": [],
+                        "reviews": []
+                    }
+                }
+            },
+            {
+                "col_name": "product_image",
+                "type": {
+                    "type_name": "BLOB"
+                }
+            },
+            {
+                "col_name": "image_mime_type",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                }
+            },
+            {
+                "col_name": "image_filename",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                }
+            },
+            {
+                "col_name": "image_charset",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                }
+            },
+            {
+                "col_name": "image_last_updated",
+                "type": {
+                    "type_name": "DATE"
+                }
+            }
+        ]
+    },
+    {
+        "table": "orders",
+        "primary_key": [
+            "order_id"
+        ],
+        "cols": [
+            {
+                "col_name": "order_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "order_tms",
+                "type": {
+                    "type_name": "TIMESTAMP",
+                    "format": ""
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "customer_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "order_status",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 40
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "store_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "table": "shipments",
+        "primary_key": [
+            "shipment_id"
+        ],
+        "cols": [
+            {
+                "col_name": "shipment_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "store_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "customer_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "delivery_address",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 2048
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "shipment_status",
+                "type": {
+                    "type_name": "VARCHAR",
+                    "length": 400
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "table": "order_items",
+        "primary_key": [
+            "order_id",
+            "line_item_id"
+        ],
+        "cols": [
+            {
+                "col_name": "order_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "line_item_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "product_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "unit_price",
+                "type": {
+                    "type_name": "DECIMAL",
+                    "precision": 10,
+                    "scale": 2
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "quantity",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "shipment_id",
+                "type": {
+                    "type_name": "INT"
+                }
+            }
+        ]
+    },
+    {
+        "table": "inventory",
+        "primary_key": [
+            "inventory_id"
+        ],
+        "cols": [
+            {
+                "col_name": "inventory_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "store_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "product_id",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            },
+            {
+                "col_name": "product_inventory",
+                "type": {
+                    "type_name": "INT"
+                },
+                "attribute": [
+                    "NOT NULL"
+                ]
+            }
+        ]
+    },
+    {
+        "FK_table": "orders",
+        "FK_col": "store_id",
+        "REF_table": "stores",
+        "REF_col": "store_id"
+    },
+    {
+        "FK_table": "orders",
+        "FK_col": "customer_id",
+        "REF_table": "customers",
+        "REF_col": "customer_id"
+    },
+    {
+        "FK_table": "shipments",
+        "FK_col": "store_id",
+        "REF_table": "stores",
+        "REF_col": "store_id"
+    },
+    {
+        "FK_table": "shipments",
+        "FK_col": "customer_id",
+        "REF_table": "customers",
+        "REF_col": "customer_id"
+    },
+    {
+        "FK_table": "order_items",
+        "FK_col": "order_id",
+        "REF_table": "orders",
+        "REF_col": "order_id"
+    },
+    {
+        "FK_table": "order_items",
+        "FK_col": "shipment_id",
+        "REF_table": "shipments",
+        "REF_col": "shipment_id"
+    },
+    {
+        "FK_table": "order_items",
+        "FK_col": "product_id",
+        "REF_table": "products",
+        "REF_col": "product_id"
+    },
+    {
+        "FK_table": "inventory",
+        "FK_col": "store_id",
+        "REF_table": "stores",
+        "REF_col": "store_id"
+    },
+    {
+        "FK_table": "inventory",
+        "FK_col": "product_id",
+        "REF_table": "products",
+        "REF_col": "product_id"
+    },
+    {
+        "index_tbl": "customers",
+        "index_col": "full_name"
+    },
+    {
+        "index_tbl": "orders",
+        "index_col": "customer_id"
+    },
+    {
+        "index_tbl": "orders",
+        "index_col": "store_id"
+    },
+    {
+        "index_tbl": "shipments",
+        "index_col": "store_id"
+    },
+    {
+        "index_tbl": "shipments",
+        "index_col": "customer_id"
+    },
+    {
+        "index_tbl": "order_items",
+        "index_col": "shipment_id"
+    },
+    {
+        "index_tbl": "inventory",
+        "index_col": "product_id"
+    }
+]

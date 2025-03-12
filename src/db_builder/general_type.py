@@ -3,6 +3,11 @@
 # @Module: general_type$
 # @Author: 10379
 # @Time: 2025/3/11 13:56
+import json
+import os
+
+from utils.tools import get_proj_root_path
+
 
 def build_type(general_type: dict, col_name: str, dialect: str):
     type_name = general_type['type_name']
@@ -87,6 +92,8 @@ def build_type(general_type: dict, col_name: str, dialect: str):
             final_type = f'VARCHAR({general_type['length']})'
         elif dialect == 'oracle':
             final_type = f"NVARCHAR2({general_type['length']})"
+    elif type_name == 'CHAR':
+        final_type = f"CHAR({general_type['length']})"
     elif type_name == 'TEXT':
         if dialect == 'oracle':
             final_type = f"VARCHAR2(4000)"
@@ -125,10 +132,50 @@ def build_type(general_type: dict, col_name: str, dialect: str):
             final_type = 'XML'
         else:
             final_type = 'XMLType'
+    elif type_name == 'BLOB':
+        if dialect =='mysql' or dialect == 'oracle':
+            final_type = 'BLOB'
+        elif dialect == 'pg':
+            final_type = 'BYTEA'
     else:
         assert False
     return final_type, add_constraint
 
 
 def type_statistic():
-    pass
+    types = {
+        "INT": 0,
+        "BOOL": 0,
+        "DECIMAL": 0,
+        "DOUBLE": 0,
+        "DATE": 0,
+        "TIME": 0,
+        "YEAR": 0,
+        "TIMESTAMP": 0,
+        "DATETIME": 0,
+        "INTERVAL YEAR TO MONTH": 0,
+        "TIMESTAMPTZ": 0,
+        "VARCHAR": 0,
+        "ENUM": 0,
+        "NVARCHAR": 0,
+        "CHAR": 0,
+        "TEXT": 0,
+        "UUID": 0,
+        "JSON": 0,
+        "JSONB": 0,
+        "POINT": 0,
+        "XML": 0,
+        "BLOB": 0,
+    }
+    for file in os.listdir(os.path.join(get_proj_root_path(), 'data')):
+        db_root_path = os.path.join(get_proj_root_path(), 'data', file)
+        if os.path.exists(os.path.join(db_root_path, 'schema.json')):
+            with open(os.path.join(db_root_path, 'schema.json'), 'r') as f:
+                schema = json.load(f)
+            for table in schema:
+                if 'table' in table:
+                    for col in table['cols']:
+                        type = col['type']['type_name']
+                        types[type] = types[type] + 1
+    for type in types:
+        print(f"{type}: {types[type]}")
