@@ -279,13 +279,15 @@
             {
                 "col_name": "cust_eff_from",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 }
             },
             {
                 "col_name": "cust_eff_to",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 }
             },
             {
@@ -374,7 +376,8 @@
             {
                 "col_name": "promo_begin_date",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -383,7 +386,8 @@
             {
                 "col_name": "promo_end_date",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -598,13 +602,15 @@
             {
                 "col_name": "prod_eff_from",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD-HH24-MI-SS"
                 }
             },
             {
                 "col_name": "prod_eff_to",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD-HH24-MI-SS"
                 }
             },
             {
@@ -625,7 +631,8 @@
             {
                 "col_name": "time_id",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -680,7 +687,8 @@
             {
                 "col_name": "week_ending_day",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -772,7 +780,8 @@
             {
                 "col_name": "end_of_cal_month",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -781,7 +790,8 @@
             {
                 "col_name": "end_of_fis_month",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -866,7 +876,8 @@
             {
                 "col_name": "end_of_cal_quarter",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -875,7 +886,8 @@
             {
                 "col_name": "end_of_fis_quarter",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -956,7 +968,8 @@
             {
                 "col_name": "end_of_cal_year",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -965,7 +978,8 @@
             {
                 "col_name": "end_of_fis_year",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -1062,7 +1076,8 @@
             {
                 "col_name": "time_id",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -1123,7 +1138,8 @@
             {
                 "col_name": "time_id",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 },
                 "attribute": [
                     "NOT NULL"
