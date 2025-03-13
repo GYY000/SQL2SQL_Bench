@@ -228,7 +228,8 @@
             {
                 "col_name": "hire_date",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "dd-MM-yyyy"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -293,7 +294,8 @@
             {
                 "col_name": "start_date",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "dd-MM-yyyy"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -302,7 +304,8 @@
             {
                 "col_name": "end_date",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "dd-MM-yyyy"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -377,8 +380,12 @@
             {
                 "col_name": "phone_numbers",
                 "type": {
-                    "type_name": "JSON",
-                    "structure": []
+                    "type_name": "ARRAY",
+                    "length": 5,
+                    "ele_type": {
+                        "type_name": "VARCHAR",
+                        "length": 25
+                    }
                 }
             },
             {
@@ -557,8 +564,13 @@
             {
                 "col_name": "product_status",
                 "type": {
-                    "type_name": "VARCHAR",
-                    "length": 20
+                    "type_name": "ENUM",
+                    "values": [
+                        "orderable",
+                        "planned",
+                        "under development",
+                        "obsolete"
+                    ]
                 }
             },
             {
@@ -665,7 +677,7 @@
                 "col_name": "order_date",
                 "type": {
                     "type_name": "TIMESTAMPTZ",
-                    "format": ""
+                    "format": "DD-MON-RR HH.MI.SS.FF AM"
                 },
                 "attribute": [
                     "NOT NULL"
@@ -674,8 +686,11 @@
             {
                 "col_name": "order_mode",
                 "type": {
-                    "type_name": "VARCHAR",
-                    "length": 8
+                    "type_name": "ENUM",
+                    "values": [
+                        "direct",
+                        "online"
+                    ]
                 }
             },
             {
@@ -867,5 +882,61 @@
         "FK_col": "order_id",
         "REF_table": "orders",
         "REF_col": "order_id"
+    },
+    {
+        "index_tbl": "warehouses",
+        "index_cols": ["location_id"]
+    },
+    {
+        "index_tbl": "inventories",
+        "index_cols": ["product_id"]
+    },
+    {
+        "index_tbl": "order_items",
+        "index_cols": ["order_id"]
+    },
+    {
+        "index_tbl": "order_items",
+        "index_cols": ["product_id"]
+    },
+    {
+        "index_tbl": "orders",
+        "index_cols": ["sales_rep_id"]
+    },
+    {
+        "index_tbl": "orders",
+        "index_cols": ["customer_id"]
+    },
+    {
+        "index_tbl": "orders",
+        "index_cols": ["order_date"]
+    },
+    {
+        "index_tbl": "customers",
+        "index_cols": ["account_mgr_id"]
+    },
+    {
+        "index_tbl": "customers",
+        "index_cols": ["cust_last_name"]
+    },
+    {
+        "index_tbl": "customers",
+        "index_cols": ["cust_email"]
+    },
+    {
+        "index_tbl": "product_descriptions",
+        "index_cols": ["translated_name"]
+    },
+    {
+        "index_tbl": "product_information",
+        "index_cols": ["supplier_id"]
+    },
+    {
+        "index_tbl": "customers",
+        "index_cols": ["supplier_id"]
+    },
+    {
+        "index_tbl": "customers",
+        "index_cols": ["UPPER(`cust_last_name`)", "UPPER(`cust_first_name`)"]
     }
 ]
