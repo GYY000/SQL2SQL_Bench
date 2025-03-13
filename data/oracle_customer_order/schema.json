@@ -112,7 +112,7 @@
                 "col_name": "logo_last_updated",
                 "type": {
                     "type_name": "DATE",
-                    "format": "YYYY-MM-DD"
+                    "format": "yyyy-MM-dd"
                 }
             }
         ]
@@ -192,7 +192,7 @@
                 "col_name": "image_last_updated",
                 "type": {
                     "type_name": "DATE",
-                    "format": "YYYY-MM-DD"
+                    "format": "yyyy-MM-dd"
                 }
             }
         ]
