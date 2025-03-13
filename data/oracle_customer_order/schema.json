@@ -17,8 +17,8 @@
             {
                 "col_name": "email_address",
                 "type": {
-                    "type_name": "VARCHAR",
-                    "length": 1020
+                    "type_name": "NVARCHAR",
+                    "length": 255
                 },
                 "attribute": [
                     "NOT NULL"
@@ -27,8 +27,8 @@
             {
                 "col_name": "full_name",
                 "type": {
-                    "type_name": "VARCHAR",
-                    "length": 1020
+                    "type_name": "NVARCHAR",
+                    "length": 255
                 },
                 "attribute": [
                     "NOT NULL"
@@ -54,7 +54,7 @@
             {
                 "col_name": "store_name",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 1020
                 },
                 "attribute": [
@@ -64,14 +64,14 @@
             {
                 "col_name": "web_address",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 400
                 }
             },
             {
                 "col_name": "physical_address",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 }
             },
@@ -90,21 +90,21 @@
             {
                 "col_name": "logo_mime_type",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 }
             },
             {
                 "col_name": "logo_filename",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 }
             },
             {
                 "col_name": "logo_charset",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 }
             },
@@ -132,7 +132,7 @@
             {
                 "col_name": "product_name",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 1020
                 },
                 "attribute": [
@@ -170,21 +170,21 @@
             {
                 "col_name": "image_mime_type",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 }
             },
             {
                 "col_name": "image_filename",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 }
             },
             {
                 "col_name": "image_charset",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 }
             },
@@ -295,7 +295,7 @@
             {
                 "col_name": "delivery_address",
                 "type": {
-                    "type_name": "VARCHAR",
+                    "type_name": "NVARCHAR",
                     "length": 2048
                 },
                 "attribute": [
