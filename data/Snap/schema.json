@@ -15,7 +15,8 @@
             {
                 "col_name": "birthday",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "MM-DD"
                 }
             },
             {
@@ -45,7 +46,11 @@
             {
                 "col_name": "gender",
                 "type": {
-                    "type_name": "TEXT"
+                    "type_name": "ENUM",
+                    "values": [
+                        "M",
+                        "F"
+                    ]
                 }
             },
             {
@@ -93,7 +98,8 @@
             {
                 "col_name": "work_start_date",
                 "type": {
-                    "type_name": "DATE"
+                    "type_name": "DATE",
+                    "format": "YYYY-MM-DD"
                 }
             },
             {

@@ -676,7 +676,7 @@
             {
                 "col_name": "order_date",
                 "type": {
-                    "type_name": "TIMESTAMPTZ",
+                    "type_name": "TIMESTAMP",
                     "format": "DD-MON-RR HH.MI.SS.FF AM"
                 },
                 "attribute": [
