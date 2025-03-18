@@ -5,9 +5,9 @@
 # @Time: 2024/12/25 12:40
 from typing import List, Dict
 
-from generator.element.Pattern import Pattern, ForSlot, Slot, UdfFunction, ValueSlot
-from generator.element.Point import Point
-from generator.element.Type import Type, ListType, MySQLType, PostgresType, OracleType, gen_type
+from sql_gen.generator.element.Pattern import Pattern, ForSlot, Slot, UdfFunction, ValueSlot
+from sql_gen.generator.element.Point import Point
+from sql_gen.generator.element.Type import Type, ListType, MySQLType, PostgresType, OracleType, gen_type
 
 slots_defs = [[]]
 
@@ -80,6 +80,12 @@ def split(pattern: str):
             i = i + 1
             res.append(cur_str)
             cur_str = ''
+        elif pattern[i:].startswith('::'):
+            if cur_str != '':
+                res.append(cur_str)
+                cur_str = ''
+            res.append("::")
+            i = i + 2
         elif pattern[i] in ['@', '{', '}', ',', ':', '(', ')', '[', ']']:
             if cur_str != '':
                 res.append(cur_str)
@@ -94,6 +100,8 @@ def split(pattern: str):
         else:
             cur_str = cur_str + pattern[i]
             i = i + 1
+    if cur_str != '':
+        res.append(cur_str)
     return res
 
 
