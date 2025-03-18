@@ -1,5 +1,5 @@
-[
-    {
+{
+    "regions": {
         "table": "regions",
         "primary_key": [
             "region_id"
@@ -21,9 +21,11 @@
                     "length": 25
                 }
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "countries": {
         "table": "countries",
         "primary_key": [
             "country_id"
@@ -52,9 +54,17 @@
                     "type_name": "INT"
                 }
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "region_id",
+                "ref_table": "regions",
+                "ref_col": "region_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "locations": {
         "table": "locations",
         "primary_key": [
             "location_id"
@@ -104,9 +114,17 @@
                     "length": 2
                 }
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "country_id",
+                "ref_table": "countries",
+                "ref_col": "country_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "departments": {
         "table": "departments",
         "primary_key": [
             "department_id"
@@ -140,9 +158,22 @@
                     "type_name": "INT"
                 }
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "location_id",
+                "ref_table": "locations",
+                "ref_col": "location_id"
+            },
+            {
+                "col": "manager_id",
+                "ref_table": "employees",
+                "ref_col": "employee_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "jobs": {
         "table": "jobs",
         "primary_key": [
             "job_id"
@@ -177,9 +208,11 @@
                     "type_name": "INT"
                 }
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "employees": {
         "table": "employees",
         "primary_key": [
             "employee_id"
@@ -273,9 +306,27 @@
                     "type_name": "INT"
                 }
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "department_id",
+                "ref_table": "departments",
+                "ref_col": "department_id"
+            },
+            {
+                "col": "job_id",
+                "ref_table": "jobs",
+                "ref_col": "job_id"
+            },
+            {
+                "col": "manager_id",
+                "ref_table": "employees",
+                "ref_col": "employee_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "job_history": {
         "table": "job_history",
         "primary_key": [
             "employee_id",
@@ -327,9 +378,27 @@
                     "type_name": "INT"
                 }
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "job_id",
+                "ref_table": "jobs",
+                "ref_col": "job_id"
+            },
+            {
+                "col": "employee_id",
+                "ref_table": "employees",
+                "ref_col": "employee_id"
+            },
+            {
+                "col": "department_id",
+                "ref_table": "departments",
+                "ref_col": "department_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "customers": {
         "table": "customers",
         "primary_key": [
             "customer_id"
@@ -429,9 +498,31 @@
                     "type_name": "POINT"
                 }
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "account_mgr_id",
+                "ref_table": "employees",
+                "ref_col": "employee_id"
+            }
+        ],
+        "index": [
+            [
+                "account_mgr_id"
+            ],
+            [
+                "cust_last_name"
+            ],
+            [
+                "cust_email"
+            ],
+            [
+                "cust_last_name",
+                "cust_first_name"
+            ]
         ]
     },
-    {
+    "order_items": {
         "table": "order_items",
         "primary_key": [
             "order_id",
@@ -476,9 +567,29 @@
                     "type_name": "INT"
                 }
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "product_id",
+                "ref_table": "product_information",
+                "ref_col": "product_id"
+            },
+            {
+                "col": "order_id",
+                "ref_table": "orders",
+                "ref_col": "order_id"
+            }
+        ],
+        "index": [
+            [
+                "order_id"
+            ],
+            [
+                "product_id"
+            ]
         ]
     },
-    {
+    "inventories": {
         "table": "inventories",
         "primary_key": [
             "product_id",
@@ -509,9 +620,26 @@
                     "NOT NULL"
                 ]
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "warehouse_id",
+                "ref_table": "warehouses",
+                "ref_col": "warehouse_id"
+            },
+            {
+                "col": "product_id",
+                "ref_table": "product_information",
+                "ref_col": "product_id"
+            }
+        ],
+        "index": [
+            [
+                "product_id"
+            ]
         ]
     },
-    {
+    "product_information": {
         "table": "product_information",
         "primary_key": [
             "product_id"
@@ -596,9 +724,15 @@
                     "length": 50
                 }
             }
+        ],
+        "foreign_key": [],
+        "index": [
+            [
+                "supplier_id"
+            ]
         ]
     },
-    {
+    "product_descriptions": {
         "table": "product_descriptions",
         "primary_key": [
             "product_id",
@@ -638,9 +772,21 @@
                     "NOT NULL"
                 ]
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "product_id",
+                "ref_table": "product_information",
+                "ref_col": "product_id"
+            }
+        ],
+        "index": [
+            [
+                "translated_name"
+            ]
         ]
     },
-    {
+    "promotions": {
         "table": "promotions",
         "primary_key": [
             "promo_id"
@@ -659,9 +805,11 @@
                     "length": 20
                 }
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "orders": {
         "table": "orders",
         "primary_key": [
             "order_id"
@@ -728,9 +876,32 @@
                     "type_name": "INT"
                 }
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "sales_rep_id",
+                "ref_table": "employees",
+                "ref_col": "employee_id"
+            },
+            {
+                "col": "customer_id",
+                "ref_table": "customers",
+                "ref_col": "customer_id"
+            }
+        ],
+        "index": [
+            [
+                "sales_rep_id"
+            ],
+            [
+                "customer_id"
+            ],
+            [
+                "order_date"
+            ]
         ]
     },
-    {
+    "warehouses": {
         "table": "warehouses",
         "primary_key": [
             "warehouse_id"
@@ -767,176 +938,18 @@
                     "type_name": "POINT"
                 }
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "location_id",
+                "ref_table": "locations",
+                "ref_col": "location_id"
+            }
+        ],
+        "index": [
+            [
+                "location_id"
+            ]
         ]
-    },
-    {
-        "FK_table": "countries",
-        "FK_col": "region_id",
-        "REF_table": "regions",
-        "REF_col": "region_id"
-    },
-    {
-        "FK_table": "locations",
-        "FK_col": "country_id",
-        "REF_table": "countries",
-        "REF_col": "country_id"
-    },
-    {
-        "FK_table": "departments",
-        "FK_col": "location_id",
-        "REF_table": "locations",
-        "REF_col": "location_id"
-    },
-    {
-        "FK_table": "employees",
-        "FK_col": "department_id",
-        "REF_table": "departments",
-        "REF_col": "department_id"
-    },
-    {
-        "FK_table": "employees",
-        "FK_col": "job_id",
-        "REF_table": "jobs",
-        "REF_col": "job_id"
-    },
-    {
-        "FK_table": "employees",
-        "FK_col": "manager_id",
-        "REF_table": "employees",
-        "REF_col": "employee_id"
-    },
-    {
-        "FK_table": "departments",
-        "FK_col": "manager_id",
-        "REF_table": "employees",
-        "REF_col": "employee_id"
-    },
-    {
-        "FK_table": "job_history",
-        "FK_col": "job_id",
-        "REF_table": "jobs",
-        "REF_col": "job_id"
-    },
-    {
-        "FK_table": "job_history",
-        "FK_col": "employee_id",
-        "REF_table": "employees",
-        "REF_col": "employee_id"
-    },
-    {
-        "FK_table": "job_history",
-        "FK_col": "department_id",
-        "REF_table": "departments",
-        "REF_col": "department_id"
-    },
-    {
-        "FK_table": "order_items",
-        "FK_col": "product_id",
-        "REF_table": "product_information",
-        "REF_col": "product_id"
-    },
-    {
-        "FK_table": "product_descriptions",
-        "FK_col": "product_id",
-        "REF_table": "product_information",
-        "REF_col": "product_id"
-    },
-    {
-        "FK_table": "orders",
-        "FK_col": "sales_rep_id",
-        "REF_table": "employees",
-        "REF_col": "employee_id"
-    },
-    {
-        "FK_table": "orders",
-        "FK_col": "customer_id",
-        "REF_table": "customers",
-        "REF_col": "customer_id"
-    },
-    {
-        "FK_table": "warehouses",
-        "FK_col": "location_id",
-        "REF_table": "locations",
-        "REF_col": "location_id"
-    },
-    {
-        "FK_table": "customers",
-        "FK_col": "account_mgr_id",
-        "REF_table": "employees",
-        "REF_col": "employee_id"
-    },
-    {
-        "FK_table": "inventories",
-        "FK_col": "warehouse_id",
-        "REF_table": "warehouses",
-        "REF_col": "warehouse_id"
-    },
-    {
-        "FK_table": "inventories",
-        "FK_col": "product_id",
-        "REF_table": "product_information",
-        "REF_col": "product_id"
-    },
-    {
-        "FK_table": "order_items",
-        "FK_col": "order_id",
-        "REF_table": "orders",
-        "REF_col": "order_id"
-    },
-    {
-        "index_tbl": "warehouses",
-        "index_cols": ["location_id"]
-    },
-    {
-        "index_tbl": "inventories",
-        "index_cols": ["product_id"]
-    },
-    {
-        "index_tbl": "order_items",
-        "index_cols": ["order_id"]
-    },
-    {
-        "index_tbl": "order_items",
-        "index_cols": ["product_id"]
-    },
-    {
-        "index_tbl": "orders",
-        "index_cols": ["sales_rep_id"]
-    },
-    {
-        "index_tbl": "orders",
-        "index_cols": ["customer_id"]
-    },
-    {
-        "index_tbl": "orders",
-        "index_cols": ["order_date"]
-    },
-    {
-        "index_tbl": "customers",
-        "index_cols": ["account_mgr_id"]
-    },
-    {
-        "index_tbl": "customers",
-        "index_cols": ["cust_last_name"]
-    },
-    {
-        "index_tbl": "customers",
-        "index_cols": ["cust_email"]
-    },
-    {
-        "index_tbl": "product_descriptions",
-        "index_cols": ["translated_name"]
-    },
-    {
-        "index_tbl": "product_information",
-        "index_cols": ["supplier_id"]
-    },
-    {
-        "index_tbl": "customers",
-        "index_cols": ["supplier_id"]
-    },
-    {
-        "index_tbl": "customers",
-        "index_cols": ["UPPER(`cust_last_name`)", "UPPER(`cust_first_name`)"]
     }
-]
+}

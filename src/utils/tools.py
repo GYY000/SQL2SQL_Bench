@@ -79,6 +79,40 @@ def self_split(str1: str) -> List[str]:
     return res
 
 
+def str_split(str_to_split: str, split_mark: str):
+    res = []
+    str0 = ''
+    flag0 = False
+    flag1 = False
+    i = 0
+    while i < len(str_to_split):
+        if str_to_split[i] == '\"':
+            if flag0:
+                str0 = str0 + str_to_split[i]
+            else:
+                flag1 = not flag1
+                str0 = str0 + str_to_split[i]
+        if str_to_split[i] == '\'':
+            if flag1:
+                str0 = str0 + str_to_split[i]
+            else:
+                flag0 = not flag0
+                str0 = str0 + str_to_split[i]
+        elif not flag0 and not flag1 and str_to_split[i] == split_mark:
+            if str0 != '':
+                res.append(str0)
+            str0 = ''
+        else:
+            if str_to_split[i] == '\\':
+                str0 = str0 + str_to_split[i]
+                i = i + 1
+            str0 = str0 + str_to_split[i]
+        i = i + 1
+    if str0 != '':
+        res.append(str0)
+    return res
+
+
 def remove_all_space(ori_str: str):
     res = ''
     for ori_sql_slice in ori_str.split():

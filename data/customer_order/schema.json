@@ -1,5 +1,5 @@
-[
-    {
+{
+    "customers": {
         "table": "customers",
         "primary_key": [
             "customer_id"
@@ -34,9 +34,15 @@
                     "NOT NULL"
                 ]
             }
+        ],
+        "foreign_key": [],
+        "index": [
+            [
+                "full_name"
+            ]
         ]
     },
-    {
+    "stores": {
         "table": "stores",
         "primary_key": [
             "store_id"
@@ -115,9 +121,11 @@
                     "format": "yyyy-MM-dd"
                 }
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "products": {
         "table": "products",
         "primary_key": [
             "product_id"
@@ -195,9 +203,11 @@
                     "format": "yyyy-MM-dd"
                 }
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "orders": {
         "table": "orders",
         "primary_key": [
             "order_id"
@@ -257,9 +267,29 @@
                     "NOT NULL"
                 ]
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "store_id",
+                "ref_table": "stores",
+                "ref_col": "store_id"
+            },
+            {
+                "col": "customer_id",
+                "ref_table": "customers",
+                "ref_col": "customer_id"
+            }
+        ],
+        "index": [
+            [
+                "customer_id"
+            ],
+            [
+                "store_id"
+            ]
         ]
     },
-    {
+    "shipments": {
         "table": "shipments",
         "primary_key": [
             "shipment_id"
@@ -317,9 +347,29 @@
                     "NOT NULL"
                 ]
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "store_id",
+                "ref_table": "stores",
+                "ref_col": "store_id"
+            },
+            {
+                "col": "customer_id",
+                "ref_table": "customers",
+                "ref_col": "customer_id"
+            }
+        ],
+        "index": [
+            [
+                "store_id"
+            ],
+            [
+                "customer_id"
+            ]
         ]
     },
-    {
+    "order_items": {
         "table": "order_items",
         "primary_key": [
             "order_id",
@@ -379,9 +429,31 @@
                     "type_name": "INT"
                 }
             }
+        ],
+        "foreign_key": [
+            {
+                "col": "order_id",
+                "ref_table": "orders",
+                "ref_col": "order_id"
+            },
+            {
+                "col": "shipment_id",
+                "ref_table": "shipments",
+                "ref_col": "shipment_id"
+            },
+            {
+                "col": "product_id",
+                "ref_table": "products",
+                "ref_col": "product_id"
+            }
+        ],
+        "index": [
+            [
+                "shipment_id"
+            ]
         ]
     },
-    {
+    "inventory": {
         "table": "inventory",
         "primary_key": [
             "inventory_id"
@@ -423,102 +495,23 @@
                     "NOT NULL"
                 ]
             }
-        ]
-    },
-    {
-        "FK_table": "orders",
-        "FK_col": "store_id",
-        "REF_table": "stores",
-        "REF_col": "store_id"
-    },
-    {
-        "FK_table": "orders",
-        "FK_col": "customer_id",
-        "REF_table": "customers",
-        "REF_col": "customer_id"
-    },
-    {
-        "FK_table": "shipments",
-        "FK_col": "store_id",
-        "REF_table": "stores",
-        "REF_col": "store_id"
-    },
-    {
-        "FK_table": "shipments",
-        "FK_col": "customer_id",
-        "REF_table": "customers",
-        "REF_col": "customer_id"
-    },
-    {
-        "FK_table": "order_items",
-        "FK_col": "order_id",
-        "REF_table": "orders",
-        "REF_col": "order_id"
-    },
-    {
-        "FK_table": "order_items",
-        "FK_col": "shipment_id",
-        "REF_table": "shipments",
-        "REF_col": "shipment_id"
-    },
-    {
-        "FK_table": "order_items",
-        "FK_col": "product_id",
-        "REF_table": "products",
-        "REF_col": "product_id"
-    },
-    {
-        "FK_table": "inventory",
-        "FK_col": "store_id",
-        "REF_table": "stores",
-        "REF_col": "store_id"
-    },
-    {
-        "FK_table": "inventory",
-        "FK_col": "product_id",
-        "REF_table": "products",
-        "REF_col": "product_id"
-    },
-    {
-        "index_tbl": "customers",
-        "index_cols": [
-            "full_name"
-        ]
-    },
-    {
-        "index_tbl": "orders",
-        "index_cols": [
-            "customer_id"
-        ]
-    },
-    {
-        "index_tbl": "orders",
-        "index_cols": [
-            "store_id"
-        ]
-    },
-    {
-        "index_tbl": "shipments",
-        "index_cols": [
-            "store_id"
-        ]
-    },
-    {
-        "index_tbl": "shipments",
-        "index_cols": [
-            "customer_id"
-        ]
-    },
-    {
-        "index_tbl": "order_items",
-        "index_cols": [
-            "shipment_id"
-        ]
-    },
-    {
-        "index_tbl": "inventory",
-        "index_cols": [
-            "product_id"
+        ],
+        "foreign_key": [
+            {
+                "col": "store_id",
+                "ref_table": "stores",
+                "ref_col": "store_id"
+            },
+            {
+                "col": "product_id",
+                "ref_table": "products",
+                "ref_col": "product_id"
+            }
+        ],
+        "index": [
+            [
+                "product_id"
+            ]
         ]
     }
-]
+}

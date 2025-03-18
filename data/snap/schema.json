@@ -1,7 +1,9 @@
-[
-    {
+{
+    "FacebookUsers": {
         "table": "FacebookUsers",
-        "primary_key": "id",
+        "primary_key": [
+            "id"
+        ],
         "cols": [
             {
                 "col_name": "id",
@@ -132,9 +134,11 @@
                     "type_name": "TEXT"
                 }
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "UserConnections": {
         "table": "UserConnections",
         "cols": [
             {
@@ -155,11 +159,26 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "node_a_id",
+                "ref_table": "FacebookUsers",
+                "ref_col": "id"
+            },
+            {
+                "col": "node_b_id",
+                "ref_table": "FacebookUsers",
+                "ref_col": "id"
+            }
+        ],
+        "index": []
     },
-    {
+    "Circles": {
         "table": "Circles",
-        "primary_key": "circle_id",
+        "primary_key": [
+            "circle_id"
+        ],
         "cols": [
             {
                 "col_name": "circle_id",
@@ -189,9 +208,17 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "ego_node_id",
+                "ref_table": "FacebookUsers",
+                "ref_col": "id"
+            }
+        ],
+        "index": []
     },
-    {
+    "CircleMembers": {
         "table": "CircleMembers",
         "cols": [
             {
@@ -212,36 +239,19 @@
                     "NOT NULL"
                 ]
             }
-        ]
-    },
-    {
-        "FK_table": "UserConnections",
-        "FK_col": "node_a_id",
-        "REF_table": "FacebookUsers",
-        "REF_col": "id"
-    },
-    {
-        "FK_table": "UserConnections",
-        "FK_col": "node_b_id",
-        "REF_table": "FacebookUsers",
-        "REF_col": "id"
-    },
-    {
-        "FK_table": "Circles",
-        "FK_col": "ego_node_id",
-        "REF_table": "FacebookUsers",
-        "REF_col": "id"
-    },
-    {
-        "FK_table": "CircleMembers",
-        "FK_col": "circle_id",
-        "REF_table": "Circles",
-        "REF_col": "circle_id"
-    },
-    {
-        "FK_table": "CircleMembers",
-        "FK_col": "node_id",
-        "REF_table": "FacebookUsers",
-        "REF_col": "id"
+        ],
+        "foreign_key": [
+            {
+                "col": "circle_id",
+                "ref_table": "Circles",
+                "ref_col": "circle_id"
+            },
+            {
+                "col": "node_id",
+                "ref_table": "FacebookUsers",
+                "ref_col": "id"
+            }
+        ],
+        "index": []
     }
-]
+}

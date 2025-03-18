@@ -249,7 +249,6 @@ def build_value(col: dict, value, dialect: str) -> str:
     elif type_name == 'YEAR':
         return str(value)
     elif type_name == 'TIMESTAMP':
-        date_format_udf(value['format'])
         timestamp_obj = datetime.strptime(value['value'], date_format_udf(value['format']))
         formatted_timestamp_str = timestamp_obj.strftime('%Y-%m-%d %H:%M:%S')
         if dialect == 'oracle':

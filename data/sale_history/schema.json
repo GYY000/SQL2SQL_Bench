@@ -1,5 +1,5 @@
-[
-    {
+{
+    "countries": {
         "table": "countries",
         "primary_key": [
             "country_id"
@@ -91,9 +91,11 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "customers": {
         "table": "customers",
         "primary_key": [
             "cust_id"
@@ -297,9 +299,17 @@
                     "length": 1
                 }
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "country_id",
+                "ref_table": "countries",
+                "ref_col": "country_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "promotions": {
         "table": "promotions",
         "primary_key": [
             "promo_id"
@@ -412,9 +422,11 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "products": {
         "table": "products",
         "primary_key": [
             "prod_id"
@@ -620,9 +632,11 @@
                     "length": 1
                 }
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "times": {
         "table": "times",
         "primary_key": [
             "time_id"
@@ -985,9 +999,11 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "channels": {
         "table": "channels",
         "primary_key": [
             "channel_id"
@@ -1050,9 +1066,11 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [],
+        "index": []
     },
-    {
+    "sales": {
         "table": "sales",
         "cols": [
             {
@@ -1121,9 +1139,37 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "promo_id",
+                "ref_table": "promotions",
+                "ref_col": "promo_id"
+            },
+            {
+                "col": "cust_id",
+                "ref_table": "customers",
+                "ref_col": "cust_id"
+            },
+            {
+                "col": "prod_id",
+                "ref_table": "products",
+                "ref_col": "prod_id"
+            },
+            {
+                "col": "channel_id",
+                "ref_table": "channels",
+                "ref_col": "channel_id"
+            },
+            {
+                "col": "time_id",
+                "ref_table": "times",
+                "ref_col": "time_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "costs": {
         "table": "costs",
         "cols": [
             {
@@ -1185,9 +1231,32 @@
                     "NOT NULL"
                 ]
             }
-        ]
+        ],
+        "foreign_key": [
+            {
+                "col": "promo_id",
+                "ref_table": "promotions",
+                "ref_col": "promo_id"
+            },
+            {
+                "col": "prod_id",
+                "ref_table": "products",
+                "ref_col": "prod_id"
+            },
+            {
+                "col": "time_id",
+                "ref_table": "times",
+                "ref_col": "time_id"
+            },
+            {
+                "col": "channel_id",
+                "ref_table": "channels",
+                "ref_col": "channel_id"
+            }
+        ],
+        "index": []
     },
-    {
+    "supplementary_demographics": {
         "table": "supplementary_demographics",
         "primary_key": [
             "cust_id"
@@ -1284,66 +1353,8 @@
                     "length": 4000
                 }
             }
-        ]
-    },
-    {
-        "FK_table": "customers",
-        "FK_col": "country_id",
-        "REF_table": "countries",
-        "REF_col": "country_id"
-    },
-    {
-        "FK_table": "sales",
-        "FK_col": "promo_id",
-        "REF_table": "promotions",
-        "REF_col": "promo_id"
-    },
-    {
-        "FK_table": "sales",
-        "FK_col": "cust_id",
-        "REF_table": "customers",
-        "REF_col": "cust_id"
-    },
-    {
-        "FK_table": "sales",
-        "FK_col": "prod_id",
-        "REF_table": "products",
-        "REF_col": "prod_id"
-    },
-    {
-        "FK_table": "sales",
-        "FK_col": "channel_id",
-        "REF_table": "channels",
-        "REF_col": "channel_id"
-    },
-    {
-        "FK_table": "sales",
-        "FK_col": "time_id",
-        "REF_table": "times",
-        "REF_col": "time_id"
-    },
-    {
-        "FK_table": "costs",
-        "FK_col": "promo_id",
-        "REF_table": "promotions",
-        "REF_col": "promo_id"
-    },
-    {
-        "FK_table": "costs",
-        "FK_col": "prod_id",
-        "REF_table": "products",
-        "REF_col": "prod_id"
-    },
-    {
-        "FK_table": "costs",
-        "FK_col": "time_id",
-        "REF_table": "times",
-        "REF_col": "time_id"
-    },
-    {
-        "FK_table": "costs",
-        "FK_col": "channel_id",
-        "REF_table": "channels",
-        "REF_col": "channel_id"
+        ],
+        "foreign_key": [],
+        "index": []
     }
-]
+}

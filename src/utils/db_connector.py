@@ -25,26 +25,21 @@ database_mapping = {
         "pg": "cus_order",
         "oracle": "orc_sample_db",
     },
-    "human_resource": {
+    "hr_order_entry": {
         "mysql": "order_entry",
-        "pg": "tpch",
+        "pg": "order_entry",
         "oracle": "tpch"
     },
     "sale_history": {
-        "mysql": "",
-        "pg": "",
+        "mysql": "sale_his",
+        "pg": "sale_his",
         "oracle": "orcl"
-    },
-    "order_enrty": {
-        "mysql": "order_entry",
-        "pg": "tpch",
-        "oracle": "tpch"
     },
     "snap": {
         "mysql": "snap",
         "pg": "snap",
         "oracle": "tpch"
-    },
+    }
 }
 
 def sql_execute(dialect: str, db_name: str, sql: str):
@@ -78,6 +73,7 @@ def mysql_db_connect(dbname):
 
 
 def mysql_sql_execute(db_name: str, sql):
+    db_name = database_mapping[db_name]['mysql']
     if db_name not in mysql_conn_map:
         mysql_db_connect(db_name)
     connection = mysql_conn_map[db_name]
@@ -177,6 +173,7 @@ def pg_db_connect(dbname):
 
 
 def pg_sql_execute(db_name: str, sql):
+    db_name = database_mapping[db_name]['pg']
     if db_name not in pg_conn_map:
         pg_db_connect(db_name)
     connection = pg_conn_map[db_name]
@@ -259,7 +256,9 @@ def oracle_db_connect(db_name):
 
 
 def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
+    sql = sql.strip(';')
     if not sql_plus_flag:
+        db_name = database_mapping[db_name]['oracle']
         if db_name not in oracle_conn_map:
             oracle_db_connect(db_name)
         connection = oracle_conn_map[db_name]
@@ -275,7 +274,9 @@ def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
         except Exception as e:
             # Handle the exception, log the error, and optionally raise
             error_message = str(e)
+            print(sql)
             print(f"Error executing SQL on database {db_name}: {error_message}")
+            return False, error_message
     else:
         sqlplus_path = "sqlplus"
         user = "SYSTEM"
