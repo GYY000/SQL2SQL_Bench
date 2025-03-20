@@ -80,7 +80,7 @@ class TreeNode:
             if ((self.value == 'func_application' or self.value == 'func_expr_common_subexpr')
                     and len(self.children) != 0):
                 flag_paren = False
-            if self.father.value == 'simpletypename':
+            if self.father is not None and self.father.value == 'simpletypename':
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
