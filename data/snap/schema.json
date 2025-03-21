@@ -80,7 +80,7 @@
                 }
             },
             {
-                "col_name": "work_employer",
+                "col_name": "work_employer_id",
                 "type": {
                     "type_name": "UUID"
                 }
