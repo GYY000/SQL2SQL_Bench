@@ -203,6 +203,8 @@ def build_value(col: dict, value, dialect: str) -> str:
         return 'NULL'
     col_name = col['col_name']
     type_name = col['type']['type_name']
+    if isinstance(value, str):
+        value = value.replace("'", "''")
     if type_name == 'INT':
         return str(value)
     elif type_name == 'BOOL':
@@ -223,7 +225,7 @@ def build_value(col: dict, value, dialect: str) -> str:
             date_format = date_format_udf(value['format'])
             return f"STR_TO_DATE('{value['value']}', '{date_format}')"
         elif dialect == 'pg':
-            return f"TO_DATE({value['value']}, '{value['format']}')"
+            return f"TO_DATE('{value['value']}', '{value['format']}')"
         elif dialect == 'oracle':
             return f"TO_DATE('{value['value']}', '{value['format']}')"
     elif type_name == 'TIME':

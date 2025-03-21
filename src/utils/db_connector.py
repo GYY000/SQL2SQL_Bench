@@ -39,6 +39,11 @@ database_mapping = {
         "mysql": "snap",
         "pg": "snap",
         "oracle": "tpch"
+    },
+    "chinook": {
+        "mysql": "chinook",
+        "pg": "chinook",
+        "oracle": "chinook"
     }
 }
 

@@ -6,7 +6,7 @@
 from utils.tools import extract_parameters
 
 
-def naive_extract_values_from_insert(ins_sql: str, dialect: str):
+def naive_extract_values_from_insert(ins_sql: str):
     "INSERT INTO orders (order_id, order_tms, customer_id, store_id, order_status) VALUES( )"
     tbl_name_begin_pos = ins_sql.find('INSERT INTO') + len('INSERT INTO')
     cut_begin = ins_sql[tbl_name_begin_pos:].strip()

@@ -92,7 +92,7 @@ def str_split(str_to_split: str, split_mark: str):
             else:
                 flag1 = not flag1
                 str0 = str0 + str_to_split[i]
-        if str_to_split[i] == '\'':
+        elif str_to_split[i] == '\'':
             if flag1:
                 str0 = str0 + str_to_split[i]
             else:

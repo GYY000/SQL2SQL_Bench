@@ -4,6 +4,8 @@
 # @Author: 10379
 # @Time: 2024/12/13 10:23
 import os
+import re
+import traceback
 
 from model.llm_model import LLMModel
 from utils.tools import load_config
@@ -39,3 +41,33 @@ def init_model(model_id):
         model.load_model(api_base)
 
     return model
+
+
+def parse_llm_answer(model_id, answer_raw, pattern):
+    if "gpt-" in model_id:
+        answer = answer_raw['choices'][0]['message']['content']
+    elif "llama" in model_id:
+        answer = answer_raw['content']
+
+    try:
+        match = re.search(pattern, answer, re.DOTALL)
+        if match:
+            answer_ori = match.group(1)
+            if answer_ori[0] == '"':
+                answer_ori = answer_ori[1:]
+            if answer_ori[-1] == '"':
+                answer_ori = answer_ori[:-1]
+            answer_extract = answer_ori.replace('\\\"', '\"')
+            reasoning = match.group(2).strip('"').replace('\\\"', '\"')
+            json_content_reflect = {
+                "Answer": answer_extract,
+                "Reasoning": reasoning
+            }
+            res = json_content_reflect["Answer"]
+        else:
+            res = "Answer not returned in the given format!"
+
+        return res
+    except Exception as e:
+        traceback.print_exc()
+        return str(e)

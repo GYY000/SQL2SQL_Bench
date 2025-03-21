@@ -5,7 +5,7 @@ from antlr_parser.parse_tree import parse_tree
 
 import mysql.connector
 
-from db_builder.insert_builder import extract_values_from_insert
+from db_builder.insert_builder import naive_extract_values_from_insert
 from utils.db_connector import mysql_sql_execute, pg_sql_execute
 from utils.tools import extract_parameters
 
@@ -278,7 +278,6 @@ def pg_schema_fetch_table(schema_name: str):
     return res
 
 
-
 def pg_schema_fetch_ddl(ddl_sql: str):
     dialect = 'pg'
     node, _, _, _ = parse_tree(ddl_sql, dialect)
@@ -353,7 +352,8 @@ def oracle_fetch_index_from_ddl(ddl_sql: str):
     dialect = 'oracle'
     node, _, _, _ = parse_tree(ddl_sql, dialect)
     node = TreeNode.make_g4_tree_by_node(node, dialect)
-    index_clause_nodes = try_fetch_nodes_by_route(node, ['sql_script', 'unit_statement', 'create_index', 'table_index_clause'])
+    index_clause_nodes = try_fetch_nodes_by_route(node, ['sql_script', 'unit_statement', 'create_index',
+                                                         'table_index_clause'])
     table_name = index_clause_nodes[0].get_child_by_value('tableview_name')
     col_name = index_clause_nodes[0].get_child_by_value('index_expr')
     print(f"index_table: {table_name}, index_col: {col_name}")
@@ -363,13 +363,26 @@ def oracle_fetch_index_from_ddl(ddl_sql: str):
     }
 
 
+def chinook_type_mapping(oracle_type: str):
+    if oracle_type == 'NUMBER':
+        return 'INTEGER'
+    elif oracle_type == 'VARCHAR2':
+        return 'VARCHAR'
+    elif oracle_type == 'DATE':
+        return 'DATE'
+    else:
+        return oracle_type
+
 
 def oracle_schema_fetch_from_ddl(ddl_sql: str):
     dialect = 'oracle'
+    print(ddl_sql)
     node, _, _, _ = parse_tree(ddl_sql, dialect)
     node = TreeNode.make_g4_tree_by_node(node, dialect)
     table_names = try_fetch_nodes_by_route(node, ['sql_script', 'unit_statement', 'create_table',
                                                   'table_name'])
+
+    print(table_names)
     assert len(table_names) == 1
     table_name = strip_quote(str(table_names[0]), '"')
     col_def_nodes = try_fetch_nodes_by_route(node, ['sql_script', 'unit_statement', 'create_table',
@@ -410,11 +423,11 @@ def oracle_schema_fetch_from_ddl(ddl_sql: str):
         if auto_gen:
             attribute.append('AUTO_INCREMENT')
         column = {
-                "col_name": strip_quote(str(col_name_node), '"'),
-                "type": {
-                    "oracle": str(data_type_node).upper(),
-                }
+            "col_name": strip_quote(str(col_name_node), '"'),
+            "type": {
+                "oracle": str(data_type_node).upper(),
             }
+        }
         if len(attribute) > 0:
             column['attribute'] = attribute
         cols.append(column)
@@ -444,8 +457,8 @@ def fetch_arg_strs_in_paren(args) -> str:
 
 def type_mapping(partial_schema, src_dialect):
     types = set()
-    for table in partial_schema:
-        for col in table['cols']:
+    for table_name, table_value in partial_schema.items():
+        for col in table_value['cols']:
             type = col['type'][src_dialect]
             assert isinstance(type, str)
             types.add(type)
@@ -455,54 +468,74 @@ def type_mapping(partial_schema, src_dialect):
                 pass
             elif src_dialect == 'oracle':
                 if type == 'SDO_GEOMETRY':
-                    col['type']['mysql'] = 'POINT'
-                    col['type']['pg'] = 'GEOMETRY'
+                    col['type'] = {
+                        "type_name": "POINT",
+                    }
                 elif type.startswith('VARCHAR2'):
-                    arg = fetch_args(fetch_arg_strs_in_paren(type))[0]
-                    col['type']['mysql'] = f'VARCHAR({arg})'
-                    col['type']['pg'] = f'VARCHAR({arg})'
+                    col['type'] = {
+                        "type_name": "VARCHAR",
+                        "type_len": int(fetch_args(fetch_arg_strs_in_paren(type))[0])
+                    }
                 elif type.startswith('CHAR'):
-                    arg = fetch_args(fetch_arg_strs_in_paren(type))[0]
-                    col['type']['mysql'] = f'CHAR({arg})'
-                    col['type']['pg'] = f'CHAR({arg})'
+                    col['type'] = {
+                        "type_name": "CHAR",
+                        "length": int(fetch_args(fetch_arg_strs_in_paren(type))[0])
+                    }
                 elif type.startswith('NVARCHAR2'):
-                    arg = fetch_args(fetch_arg_strs_in_paren(type))[0]
-                    col['type']['mysql'] = f'VARCHAR({arg})'
-                    col['type']['pg'] = f'VARCHAR({arg}) CHARACTER SET utf8mb4'
+                    col['type'] = {
+                        "type_name": "NVARCHAR",
+                        "length": int(fetch_args(fetch_arg_strs_in_paren(type))[0])
+                    }
                 elif type.startswith('NUMBER'):
                     if type == 'NUMBER':
-                        col['type']['mysql'] = 'INT'
-                        col['type']['pg'] = 'INT'
+                        col['type'] = {
+                            "type_name": "INT"
+                        }
                     else:
                         args = fetch_args(fetch_arg_strs_in_paren(type))
                         if len(args) == 1:
-                            col['type']['mysql'] = 'INT'
-                            col['type']['pg'] = 'INT'
+                            col['type'] = {
+                                "type_name": "INT"
+                            }
                         else:
                             assert len(args) == 2
-                            col['type']['mysql'] = f'DECIMAL({args[0]},{args[1]})'
-                            col['type']['pg'] = f'DECIMAL({args[0]},{args[1]})'
+                            col['type'] = {
+                                "type_name": "DECIMAL",
+                                "precision": args[0],
+                                "scale": args[1]
+                            }
                 elif type == 'XMLTYPE':
-                    col['type']['mysql'] = 'TEXT'
-                    col['type']['pg'] = 'XML'
+                    col['type'] = {
+                        "type_name": "XML"
+                    }
                 elif type == 'TIMESTAMP WITH TIME ZONE':
-                    col['type']['mysql'] = 'TIMESTAMP'
-                    col['type']['pg'] = 'TIMESTAMP WITH TIME ZONE'
+                    col['type'] = {
+                        "type_name": "TIMESTAMP WITH TIME ZONE",
+                        "format": ""
+                    }
                 elif type == 'JSON':
-                    col['type']['mysql'] = 'JSON'
-                    col['type']['pg'] = 'JSON'
+                    col['type'] = {
+                        "type_name": "JSON",
+                        "json_structure": ""
+                    }
                 elif type == 'INTERVAL YEAR TO MONTH':
-                    col['type']['mysql'] = 'Unsupported'
-                    col['type']['pg'] = 'INTERVAL YEAR TO MONTH'
+                    col['type'] = {
+                        "type_name": "INTERVAL YEAR TO MONTH"
+                    }
                 elif type == 'DATE':
-                    col['type']['mysql'] = 'DATE'
-                    col['type']['pg'] = 'DATE'
+                    col['type'] = {
+                        "type_name": "DATE",
+                        "format": ""
+                    }
                 elif type == 'TIMESTAMP':
-                    col['type']['mysql'] = 'TIMESTAMP'
-                    col['type']['pg'] = 'TIMESTAMP'
+                    col['type'] = {
+                        "type_name": "TIMESTAMP",
+                        "format": ""
+                    }
                 elif type == 'BLOB':
-                    col['type']['mysql'] = 'BLOB'
-                    col['type']['pg'] = 'BYTEA'
+                    col['type'] = {
+                        "type_name": "BLOB"
+                    }
                 else:
                     print(type)
             else:
@@ -552,7 +585,8 @@ def bird_schema_compare(schema1, schema2):
             for table2 in schema2:
                 if 'FK_table' not in table2:
                     continue
-                if (table2['FK_table'].upper() == table1['FK_table'].upper() and table2['FK_col'].upper() == table1['FK_col'].upper()
+                if (table2['FK_table'].upper() == table1['FK_table'].upper() and table2['FK_col'].upper() == table1[
+                    'FK_col'].upper()
                         and table2['REF_table'].upper() == table1['REF_table'].upper() and
                         table2['REF_col'].upper() == table1['REF_col'].upper()):
                     flag = True
@@ -564,7 +598,8 @@ def bird_schema_compare(schema1, schema2):
             for table1 in schema1:
                 if 'FK_table' not in table1:
                     continue
-                if (table2['FK_table'].upper() == table1['FK_table'].upper() and table2['FK_col'].upper() == table1['FK_col'].upper()
+                if (table2['FK_table'].upper() == table1['FK_table'].upper() and table2['FK_col'].upper() == table1[
+                    'FK_col'].upper()
                         and table2['REF_table'].upper() == table1['REF_table'].upper() and
                         table2['REF_col'].upper() == table1['REF_col'].upper()):
                     flag = True
@@ -586,11 +621,12 @@ def build_data(schema_path, data_path, dialect):
             table_mapping[table_name] = cols
     with open(data_path, 'r') as file:
         sqls = file.read().split(';')
+        print(sqls)
         for sql in sqls:
             used_sql = sql.strip()
-            if sql == '':
+            if used_sql == '':
                 continue
-            table_name, cols, values = extract_values_from_insert(used_sql, dialect)
+            table_name, cols, values = naive_extract_values_from_insert(used_sql)
             value = []
             if table_name not in table_values:
                 table_values[table_name] = []
@@ -602,7 +638,10 @@ def build_data(schema_path, data_path, dialect):
                     if col["col_name"].upper() == cols[i].upper():
                         col_info_node = col
                         break
-                col_type = col_info_node['type'][dialect]
+                if col_info_node is None:
+                    col_type = None
+                else:
+                    col_type = col_info_node['type'][dialect]
                 col_value = values[i]
                 format = None
                 if dialect == 'oracle':
@@ -611,11 +650,11 @@ def build_data(schema_path, data_path, dialect):
                         col_value = params[0].strip('\'')
                         format = params[1].strip('\'')
                     elif col_type == 'JSON':
-                        print(extract_parameters(col_value)[0])
                         json_value = extract_parameters(col_value)[0].strip('\'')
-                        print(json_value)
                         content = json.loads(json_value)
                         col_value = content
+                    elif col_type is None:
+                        pass
                     else:
                         pass
                 value.append({
@@ -631,6 +670,30 @@ def build_data(schema_path, data_path, dialect):
             "values": tbl_values,
         })
     with open('D:\\Coding\\SQL2SQL_Bench\\backup\\data.json', 'w') as file:
-        json.dump(res, file)
+        json.dump(res, file, indent=4)
 
-build_data("D:\\Coding\\SQL2SQL_Bench\\data\\oracle_customer_order\\schema.json", "D:\\Coding\\SQL2SQL_Bench\\backup\\test.sql", "oracle")
+
+def get_oracle_type(schema_path):
+    with open(schema_path, 'r') as file:
+        schema = json.load(file)
+    types = set()
+    for ele in schema:
+        if 'table' in ele:
+            table_name = ele['table']
+            cols = ele['cols']
+            for col in cols:
+                types.add(col['type']['type_name'])
+    print(types)
+
+
+final_schema = {}
+with open("D:\\Coding\\SQL2SQL_Bench\\backup\\backup_ddl\\chinook.sql", 'r') as file:
+    ddl_sqls = file.read().split(';')
+    for ddl_sql in ddl_sqls:
+        if ddl_sql.strip() == '':
+            continue
+        table_schema = oracle_schema_fetch_from_ddl(ddl_sql)
+        final_schema[table_schema['table']] = table_schema
+    type_mapping(final_schema, 'oracle')
+with open("D:\\Coding\\SQL2SQL_Bench\\data\\chinook\\schema.json", 'w') as file:
+    json.dump(final_schema, file, indent=4)

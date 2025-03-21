@@ -6,11 +6,46 @@
 import json
 import os.path
 
+from tqdm import tqdm
+
 from db_builder.general_type import build_type, build_value
 from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute
-from utils.tools import get_proj_root_path
+from utils.tools import get_proj_root_path, str_split
 
 id_number = {}
+
+
+def create_table(schema, dialect):
+    if dialect == 'pg':
+        return pg_create_table(schema)
+    elif dialect == 'mysql':
+        return mysql_create_table(schema)
+    elif dialect == 'oracle':
+        return oracle_create_table(schema)
+    else:
+        assert False
+
+
+def add_foreign_key(schema, dialect):
+    if dialect == 'pg':
+        return pg_add_foreign_key(schema)
+    elif dialect == 'mysql':
+        return mysql_add_foreign_key(schema)
+    elif dialect == 'oracle':
+        return oracle_add_foreign_key(schema)
+    else:
+        assert False
+
+
+def add_index(schema, dialect):
+    if dialect == 'pg':
+        return pg_add_index(schema)
+    elif dialect == 'mysql':
+        return mysql_add_index(schema)
+    elif dialect == 'oracle':
+        return oracle_add_index(schema)
+    else:
+        assert False
 
 
 def rename_constraints(name: str):
@@ -72,6 +107,8 @@ def mysql_create_table(schema):
 def mysql_add_foreign_key(schema):
     table = schema['table']
     res = []
+    if 'foreign_key' not in schema:
+        return res
     for fk in schema['foreign_key']:
         column = fk['col']
         ref_table = fk['ref_table']
@@ -85,6 +122,8 @@ def mysql_add_foreign_key(schema):
 def mysql_add_index(schema):
     table = schema['table']
     res = []
+    if 'index' not in schema:
+        return res
     for index_cols in schema['index']:
         str_columns = ''
         for col in index_cols:
@@ -135,19 +174,23 @@ def pg_create_table(schema: dict):
 def pg_add_foreign_key(schema):
     table = schema['table']
     res = []
+    if 'foreign_key' not in schema:
+        return res
     for fk in schema['foreign_key']:
         column = fk['col']
         ref_table = fk['ref_table']
         ref_column = fk['ref_col']
         res.append((
-                       f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f"FK_{table}")} FOREIGN KEY (\"{column}\")\n\t"
-                       f"REFERENCES \"{ref_table}\" (\"{ref_column}\") ON DELETE NO ACTION ON UPDATE NO ACTION;"))
+            f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f"FK_{table}")} FOREIGN KEY (\"{column}\")\n\t"
+            f"REFERENCES \"{ref_table}\" (\"{ref_column}\") ON DELETE NO ACTION ON UPDATE NO ACTION;"))
     return res
 
 
 def pg_add_index(schema):
     table = schema['table']
     res = []
+    if 'index' not in schema:
+        return res
     for index_cols in schema['index']:
         str_columns = ''
         for col in index_cols:
@@ -200,19 +243,23 @@ def oracle_create_table(schema: dict):
 def oracle_add_foreign_key(schema):
     table = schema['table']
     res = []
+    if 'foreign_key' not in schema:
+        return res
     for fk in schema['foreign_key']:
         column = fk['col']
         ref_table = fk['ref_table']
         ref_column = fk['ref_col']
         res.append((
-                       f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f"FK_{table}")} FOREIGN KEY (\"{column}\")\n\t"
-                       f"REFERENCES \"{ref_table}\" (\"{ref_column}\");"))
+            f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f"FK_{table}")} FOREIGN KEY (\"{column}\")\n\t"
+            f"REFERENCES \"{ref_table}\" (\"{ref_column}\");"))
     return res
 
 
 def oracle_add_index(schema):
     table = schema['table']
     res = []
+    if 'index' not in schema:
+        return res
     for index_cols in schema['index']:
         str_columns = ''
         for col in index_cols:
@@ -248,21 +295,12 @@ def build_schema(db_name: str):
     index = {'mysql': [], 'pg': [], 'oracle': []}
     type_defs = {'mysql': [], 'pg': [], 'oracle': []}
     for key, value in schema.items():
-        mysql_create_stmt, mysql_type_def_stmts = mysql_create_table(value)
-        pg_create_stmt, pg_type_def_stmts = pg_create_table(value)
-        oracle_create_stmt, oracle_type_def_stmts = oracle_create_table(value)
-        ddls['mysql'].append(mysql_create_stmt)
-        ddls['pg'].append(pg_create_stmt)
-        ddls['oracle'].append(oracle_create_stmt)
-        type_defs['mysql'] = type_defs['mysql'] + mysql_type_def_stmts
-        type_defs['pg'] = type_defs['pg'] + pg_type_def_stmts
-        type_defs['oracle'] = type_defs['oracle'] + oracle_type_def_stmts
-        foreign_key['mysql'] = foreign_key['mysql'] + mysql_add_foreign_key(value)
-        foreign_key['pg'] = foreign_key['pg'] + pg_add_foreign_key(value)
-        foreign_key['oracle'] = foreign_key['oracle'] + oracle_add_foreign_key(value)
-        index['mysql'] = index['mysql'] + mysql_add_index(value)
-        index['pg'] = index['pg'] + pg_add_index(value)
-        index['oracle'] = index['oracle'] + oracle_add_index(value)
+        for dialect in ['pg', 'mysql', 'oracle']:
+            create_stmt, type_def_stmts = create_table(value, dialect)
+            ddls[dialect].append(create_stmt)
+            type_defs[dialect] = type_defs[dialect] + type_def_stmts
+            foreign_key[dialect] = foreign_key[dialect] + add_foreign_key(value, dialect)
+            index[dialect] = index[dialect] + add_index(value, dialect)
 
     for dialect in ['mysql', 'pg', 'oracle']:
         if not os.path.exists(os.path.join(ddl_dir, dialect)):
@@ -315,18 +353,15 @@ def build_db(db_name, dialect):
         else:
             if dialect == 'oracle':
                 flag, res = oracle_sql_execute(db_name, sql)
-                if not flag:
-                    print(f'{sql} may fail to execute')
             elif dialect == 'mysql':
                 flag, res = mysql_sql_execute(db_name, sql)
-                if not flag:
-                    print(f'{sql} may fail to execute')
-                    print(res)
             elif dialect == 'pg':
                 flag, res = pg_sql_execute(db_name, sql)
-                if not flag:
-                    print(f'{sql} may fail to execute')
-                    print(res)
+            else:
+                assert False
+            if not flag:
+                print(f'{sql} may fail to execute')
+                print(res)
     flag1 = True
     for ele in schema:
         if "table" in ele:
@@ -348,21 +383,48 @@ def build_db(db_name, dialect):
     else:
         print(f'{db_name} create failed')
 
-    for ele in schema:
-        if "table" in ele:
-            table_name = ele['table']
+    if os.path.exists(os.path.join(get_proj_root_path(), 'data', db_name, 'data', f'{dialect}_data.sql')):
+        with open(os.path.join(get_proj_root_path(), 'data', db_name, 'data', f'{dialect}_data.sql'), 'r') as file:
+            insert_sqls = str_split(file.read(), ';')
+        for sql in tqdm(insert_sqls):
+            if sql.strip() == '':
+                continue
+            else:
+                if dialect == 'oracle':
+                    flag, res = oracle_sql_execute(db_name, sql + ';')
+                elif dialect == 'pg':
+                    flag, res = pg_sql_execute(db_name, sql)
+                elif dialect =='mysql':
+                    flag, res = mysql_sql_execute(db_name, sql)
+                else:
+                    assert False
+                if not flag:
+                    print(f'{sql} may fail to execute')
+                    exit()
+    else:
+        for table_name, table_content in schema.items():
+            table_name = table_content['table']
             with open(os.path.join(get_proj_root_path(), 'data', db_name, 'data', f'{table_name}_data.json'),
                       'r') as file:
                 data = json.loads(file.read())
-            for row in data:
+            print(f'insert into table {table_name}')
+            for row in tqdm(data):
                 value_str = ''
                 assert isinstance(row, dict)
+                columns_str = ''
                 for key, value in row.items():
                     if value_str != '':
                         value_str = value_str + ', '
-                    for col in ele['cols']:
+                    for col in table_content['cols']:
                         if col['col_name'] == key:
                             value_str = value_str + build_value(col, value, dialect)
+                            # if columns_str!= '':
+                            #     columns_str = columns_str + ', '
+                            # if dialect == 'oracle' or dialect == 'pg':
+                            #     columns_str = columns_str + f'"{key}"'
+                            # elif dialect =='mysql':
+                            #     columns_str = columns_str + f'`{key}`'
+                            break
                 if dialect == 'oracle':
                     sql = f"INSERT INTO \"{table_name}\" VALUES ({value_str});"
                     flag, res = oracle_sql_execute(db_name, sql)
@@ -374,7 +436,9 @@ def build_db(db_name, dialect):
                     flag, res = pg_sql_execute(db_name, sql)
                 if not flag:
                     print(f'{row} may fail to insert in {dialect}, sql is {sql}')
-                break
+                    print(res)
+                    exit()
+                # break
     with open(os.path.join(get_proj_root_path(), 'data', db_name, 'ddl', dialect, f'{dialect}_fk.sql'), 'r') as file:
         sqls = file.read().split(';')
     for sql in sqls:
@@ -383,8 +447,13 @@ def build_db(db_name, dialect):
         else:
             if dialect == 'oracle':
                 flag, res = oracle_sql_execute(db_name, sql)
-                if not flag:
-                    print(f'{sql} may fail to execute')
+            elif dialect == 'pg':
+                flag, res = pg_sql_execute(db_name, sql)
+            elif dialect == 'mysql':
+                flag, res = mysql_sql_execute(db_name, sql)
+            if not flag:
+                print(f'{sql} may fail to execute')
+                exit()
     with open(os.path.join(get_proj_root_path(), 'data', db_name, 'ddl', dialect, f'{dialect}_idx.sql'), 'r') as file:
         sqls = file.read().split(';')
     for sql in sqls:
@@ -393,5 +462,11 @@ def build_db(db_name, dialect):
         else:
             if dialect == 'oracle':
                 flag, res = oracle_sql_execute(db_name, sql)
-                if not flag:
-                    print(f'{sql} may fail to execute')
+            elif dialect == 'pg':
+                flag, res = pg_sql_execute(db_name, sql)
+            elif dialect == 'mysql':
+                flag, res = mysql_sql_execute(db_name, sql)
+            if not flag:
+                print(f'{sql} may fail to execute')
+                exit()
+    print(f"{db_name} create successful")

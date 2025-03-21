@@ -153,7 +153,7 @@ def remove_quote_oracle(root_node: TreeNode):
         rm_quote_to_bot_node(root_node, '"')
     elif father_value_list_compare(root_node,
                                    ['id_expression', 'identifier', 'tableview_name']) and not child_value_list_compare(
-            root_node, ['dual']):
+        root_node, ['dual']):
         rm_quote_to_bot_node(root_node, '"')
     elif father_value_list_compare(root_node, ['id_expression', 'identifier', 'table_alias']):
         rm_quote_to_bot_node(root_node, '"')
@@ -323,3 +323,7 @@ def remove_for_oracle(sql, dialect):
         return str(node)
     else:
         return None
+
+
+def normalize_specific_sql(sql, dialect):
+    return str(normalize_sql(sql, dialect, dialect))
