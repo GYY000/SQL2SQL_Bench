@@ -1,4 +1,4 @@
-INSERT INTO genre (genre_id, name) VALUES
+INSERT INTO "Genre" ("GenreId", "Name") VALUES
     (1, N'Rock'),
     (2, N'Jazz'),
     (3, N'Metal'),
@@ -25,14 +25,14 @@ INSERT INTO genre (genre_id, name) VALUES
     (24, N'Classical'),
     (25, N'Opera');
 
-INSERT INTO media_type (media_type_id, name) VALUES
+INSERT INTO "MediaType" ("MediaTypeId", "Name") VALUES
     (1, N'MPEG audio file'),
     (2, N'Protected AAC audio file'),
     (3, N'Protected MPEG-4 video file'),
     (4, N'Purchased AAC audio file'),
     (5, N'AAC audio file');
 
-INSERT INTO artist (artist_id, name) VALUES
+INSERT INTO "Artist" ("ArtistId", "Name") VALUES
     (1, N'AC/DC'),
     (2, N'Accept'),
     (3, N'Aerosmith'),
@@ -309,7 +309,7 @@ INSERT INTO artist (artist_id, name) VALUES
     (274, N'Nash Ensemble'),
     (275, N'Philip Glass Ensemble');
 
-INSERT INTO album (album_id, title, artist_id) VALUES
+INSERT INTO "Album" ("AlbumId", "Title", "ArtistId") VALUES
     (1, N'For Those About To Rock We Salute You', 1),
     (2, N'Balls to the Wall', 2),
     (3, N'Restless and Wild', 2),
@@ -658,7 +658,7 @@ INSERT INTO album (album_id, title, artist_id) VALUES
     (346, N'Mozart: Chamber Music', 274),
     (347, N'Koyaanisqatsi (Soundtrack from the Motion Picture)', 275);
 
-INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, milliseconds, bytes, unit_price) VALUES
+INSERT INTO "Track" ("TrackId", "Name", "AlbumId", "MediaTypeId", "GenreId", "Composer", "Milliseconds", "Bytes", "UnitPrice") VALUES
     (1, N'For Those About To Rock (We Salute You)', 1, 1, 1, N'Angus Young, Malcolm Young, Brian Johnson', 343719, 11170334, 0.99),
     (2, N'Balls to the Wall', 2, 2, 1, N'U. Dirkschneider, W. Hoffmann, H. Frank, P. Baltes, S. Kaufmann, G. Hoffmann', 342562, 5510424, 0.99),
     (3, N'Fast As a Shark', 3, 2, 1, N'F. Baltes, S. Kaufman, U. Dirkscneider & W. Hoffman', 230619, 3990994, 0.99),
@@ -1660,7 +1660,7 @@ INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, 
     (999, N'Still', 80, 1, 1, N'Dave Grohl, Taylor Hawkins, Nate Mendel, Chris Shiflett/FOO FIGHTERS', 313182, 10323157, 0.99),
     (1000, N'What If I Do?', 80, 1, 1, N'Dave Grohl, Taylor Hawkins, Nate Mendel, Chris Shiflett/FOO FIGHTERS', 302994, 9929799, 0.99);
 
-INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, milliseconds, bytes, unit_price) VALUES
+INSERT INTO "Track" ("TrackId", "Name", "AlbumId", "MediaTypeId", "GenreId", "Composer", "Milliseconds", "Bytes", "UnitPrice") VALUES
     (1001, N'Miracle', 80, 1, 1, N'Dave Grohl, Taylor Hawkins, Nate Mendel, Chris Shiflett/FOO FIGHTERS', 209684, 6877994, 0.99),
     (1002, N'Another Round', 80, 1, 1, N'Dave Grohl, Taylor Hawkins, Nate Mendel, Chris Shiflett/FOO FIGHTERS', 265848, 8752670, 0.99),
     (1003, N'Friend Of A Friend', 80, 1, 1, N'Dave Grohl, Taylor Hawkins, Nate Mendel, Chris Shiflett/FOO FIGHTERS', 193280, 6355088, 0.99),
@@ -2662,7 +2662,7 @@ INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, 
     (1999, N'Polly', 163, 1, 1, N'Kurt Cobain', 149995, 4885331, 0.99),
     (2000, N'Breed', 163, 1, 1, N'Kurt Cobain', 208378, 6759080, 0.99);
 
-INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, milliseconds, bytes, unit_price) VALUES
+INSERT INTO "Track" ("TrackId", "Name", "AlbumId", "MediaTypeId", "GenreId", "Composer", "Milliseconds", "Bytes", "UnitPrice") VALUES
     (2001, N'Tourette''s', 163, 1, 1, N'Kurt Cobain', 115591, 3753246, 0.99),
     (2002, N'Blew', 163, 1, 1, N'Kurt Cobain', 216346, 7096936, 0.99),
     (2003, N'Smells Like Teen Spirit', 164, 1, 1, N'Kurt Cobain', 301296, 9823847, 0.99),
@@ -3664,7 +3664,7 @@ INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, 
     (2999, N'Heartland', 237, 1, 1, N'Bono/Clayton, Adam/Mullen Jr., Larry/The Edge', 303360, 9867748, 0.99),
     (3000, N'God Part II', 237, 1, 1, N'Bono/Clayton, Adam/Mullen Jr., Larry/The Edge', 195604, 6497570, 0.99);
 
-INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, milliseconds, bytes, unit_price) VALUES
+INSERT INTO "Track" ("TrackId", "Name", "AlbumId", "MediaTypeId", "GenreId", "Composer", "Milliseconds", "Bytes", "UnitPrice") VALUES
     (3001, N'The Star Spangled Banner', 237, 1, 1, N'Hendrix, Jimi', 43232, 1385810, 0.99),
     (3002, N'Bullet The Blue Sky', 237, 1, 1, N'Bono/Clayton, Adam/Mullen Jr., Larry/The Edge', 337005, 10993607, 0.99),
     (3003, N'All I Want Is You', 237, 1, 1, N'Bono/Clayton, Adam/Mullen Jr., Larry/The Edge', 390243, 12729820, 0.99),
@@ -4169,7 +4169,8 @@ INSERT INTO track (track_id, name, album_id, media_type_id, genre_id, composer, 
     (3502, N'Quintet for Horn, Violin, 2 Violas, and Cello in E Flat Major, K. 407/386c: III. Allegro', 346, 2, 24, N'Wolfgang Amadeus Mozart', 221331, 3665114, 0.99),
     (3503, N'Koyaanisqatsi', 347, 2, 10, N'Philip Glass', 206005, 3305164, 0.99);
 
-INSERT INTO employee (employee_id, last_name, first_name, title, reports_to, birth_date, hire_date, address, city, state, country, postal_code, phone, fax, email) VALUES
+
+INSERT INTO "Employee" ("EmployeeId", "LastName", "FirstName", "Title", "ReportsTo", "BirthDate", "HireDate", "Address", "City", "State", "Country", "PostalCode", "Phone", "Fax", "Email") VALUES
     (1, N'Adams', N'Andrew', N'General Manager', NULL, '1962/2/18', '2002/8/14', N'11120 Jasper Ave NW', N'Edmonton', N'AB', N'Canada', N'T5K 2N1', N'+1 (780) 428-9482', N'+1 (780) 428-3457', N'andrew@chinookcorp.com'),
     (2, N'Edwards', N'Nancy', N'Sales Manager', 1, '1958/12/8', '2002/5/1', N'825 8 Ave SW', N'Calgary', N'AB', N'Canada', N'T2P 2T3', N'+1 (403) 262-3443', N'+1 (403) 262-3322', N'nancy@chinookcorp.com'),
     (3, N'Peacock', N'Jane', N'Sales Support Agent', 2, '1973/8/29', '2002/4/1', N'1111 6 Ave SW', N'Calgary', N'AB', N'Canada', N'T2P 5M5', N'+1 (403) 262-3443', N'+1 (403) 262-6712', N'jane@chinookcorp.com'),
@@ -4179,7 +4180,7 @@ INSERT INTO employee (employee_id, last_name, first_name, title, reports_to, bir
     (7, N'King', N'Robert', N'IT Staff', 6, '1970/5/29', '2004/1/2', N'590 Columbia Boulevard West', N'Lethbridge', N'AB', N'Canada', N'T1K 5N8', N'+1 (403) 456-9986', N'+1 (403) 456-8485', N'robert@chinookcorp.com'),
     (8, N'Callahan', N'Laura', N'IT Staff', 6, '1968/1/9', '2004/3/4', N'923 7 ST NW', N'Lethbridge', N'AB', N'Canada', N'T1H 1Y8', N'+1 (403) 467-3351', N'+1 (403) 467-8772', N'laura@chinookcorp.com');
 
-INSERT INTO customer (customer_id, first_name, last_name, company, address, city, state, country, postal_code, phone, fax, email, support_rep_id) VALUES
+INSERT INTO "Customer" ("CustomerId", "FirstName", "LastName", "Company", "Address", "City", "State", "Country", "PostalCode", "Phone", "Fax", "Email", "SupportRepId") VALUES
     (1, N'Luís', N'Gonçalves', N'Embraer - Empresa Brasileira de Aeronáutica S.A.', N'Av. Brigadeiro Faria Lima, 2170', N'São José dos Campos', N'SP', N'Brazil', N'12227-000', N'+55 (12) 3923-5555', N'+55 (12) 3923-5566', N'luisg@embraer.com.br', 3),
     (2, N'Leonie', N'Köhler', NULL, N'Theodor-Heuss-Straße 34', N'Stuttgart', NULL, N'Germany', N'70174', N'+49 0711 2842222', NULL, N'leonekohler@surfeu.de', 5),
     (3, N'François', N'Tremblay', NULL, N'1498 rue Bélanger', N'Montréal', N'QC', N'Canada', N'H2G 1A7', N'+1 (514) 721-4711', NULL, N'ftremblay@gmail.com', 3),
@@ -4240,7 +4241,8 @@ INSERT INTO customer (customer_id, first_name, last_name, company, address, city
     (58, N'Manoj', N'Pareek', NULL, N'12,Community Centre', N'Delhi', NULL, N'India', N'110017', N'+91 0124 39883988', NULL, N'manoj.pareek@rediff.com', 3),
     (59, N'Puja', N'Srivastava', NULL, N'3,Raj Bhavan Road', N'Bangalore', NULL, N'India', N'560001', N'+91 080 22289999', NULL, N'puja_srivastava@yahoo.in', 3);
 
-INSERT INTO invoice (invoice_id, customer_id, invoice_date, billing_address, billing_city, billing_state, billing_country, billing_postal_code, total) VALUES
+
+INSERT INTO "Invoice" ("InvoiceId", "CustomerId", "InvoiceDate", "BillingAddress", "BillingCity", "BillingState", "BillingCountry", "BillingPostalCode", "Total") VALUES
     (1, 2, '2021/1/1', N'Theodor-Heuss-Straße 34', N'Stuttgart', NULL, N'Germany', N'70174', 1.98),
     (2, 4, '2021/1/2', N'Ullevålsveien 14', N'Oslo', NULL, N'Norway', N'0171', 3.96),
     (3, 8, '2021/1/3', N'Grétrystraat 63', N'Brussels', NULL, N'Belgium', N'1000', 5.94),
@@ -4654,7 +4656,7 @@ INSERT INTO invoice (invoice_id, customer_id, invoice_date, billing_address, bil
     (411, 44, '2025/12/14', N'Porthaninkatu 9', N'Helsinki', NULL, N'Finland', N'00530', 13.86),
     (412, 58, '2025/12/22', N'12,Community Centre', N'Delhi', NULL, N'India', N'110017', 1.99);
 
-INSERT INTO invoice_line (invoice_line_id, invoice_id, track_id, unit_price, quantity) VALUES
+INSERT INTO "InvoiceLine" ("InvoiceLineId", "InvoiceId", "TrackId", "UnitPrice", "Quantity") VALUES
     (1, 1, 2, 0.99, 1),
     (2, 1, 4, 0.99, 1),
     (3, 2, 6, 0.99, 1),
@@ -5656,7 +5658,7 @@ INSERT INTO invoice_line (invoice_line_id, invoice_id, track_id, unit_price, qua
     (999, 185, 2561, 0.99, 1),
     (1000, 185, 2565, 0.99, 1);
 
-INSERT INTO invoice_line (invoice_line_id, invoice_id, track_id, unit_price, quantity) VALUES
+INSERT INTO "InvoiceLine" ("InvoiceLineId", "InvoiceId", "TrackId", "UnitPrice", "Quantity") VALUES
     (1001, 186, 2571, 0.99, 1),
     (1002, 186, 2577, 0.99, 1),
     (1003, 186, 2583, 0.99, 1),
@@ -6658,7 +6660,7 @@ INSERT INTO invoice_line (invoice_line_id, invoice_id, track_id, unit_price, qua
     (1999, 369, 1663, 0.99, 1),
     (2000, 369, 1672, 0.99, 1);
 
-INSERT INTO invoice_line (invoice_line_id, invoice_id, track_id, unit_price, quantity) VALUES
+INSERT INTO "InvoiceLine" ("InvoiceLineId", "InvoiceId", "TrackId", "UnitPrice", "Quantity") VALUES
     (2001, 369, 1681, 0.99, 1),
     (2002, 369, 1690, 0.99, 1),
     (2003, 369, 1699, 0.99, 1),
@@ -6900,7 +6902,7 @@ INSERT INTO invoice_line (invoice_line_id, invoice_id, track_id, unit_price, qua
     (2239, 411, 3163, 0.99, 1),
     (2240, 412, 3177, 1.99, 1);
 
-INSERT INTO playlist (playlist_id, name) VALUES
+INSERT INTO "Playlist" ("PlaylistId", "Name") VALUES
     (1, N'Music'),
     (2, N'Movies'),
     (3, N'TV Shows'),
@@ -6920,7 +6922,7 @@ INSERT INTO playlist (playlist_id, name) VALUES
     (17, N'Heavy Metal Classic'),
     (18, N'On-The-Go 1');
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (1, 3402),
     (1, 3389),
     (1, 3390),
@@ -7922,7 +7924,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (1, 984),
     (1, 985);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (1, 986),
     (1, 987),
     (1, 988),
@@ -8924,7 +8926,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (1, 687),
     (1, 688);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (1, 689),
     (1, 690),
     (1, 691),
@@ -9926,7 +9928,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (1, 2549),
     (1, 2550);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (1, 2551),
     (1, 2552),
     (1, 2553),
@@ -10928,7 +10930,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (5, 2514),
     (5, 2515);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (5, 2516),
     (5, 2517),
     (5, 3132),
@@ -11930,7 +11932,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (8, 21),
     (8, 22);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (8, 3411),
     (8, 3412),
     (8, 3419),
@@ -12932,7 +12934,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (8, 503),
     (8, 504);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (8, 505),
     (8, 506),
     (8, 507),
@@ -13934,7 +13936,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (8, 1947),
     (8, 1948);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (8, 1949),
     (8, 1950),
     (8, 1951),
@@ -14936,7 +14938,7 @@ INSERT INTO playlist_track (playlist_id, track_id) VALUES
     (8, 3066),
     (8, 3067);
 
-INSERT INTO playlist_track (playlist_id, track_id) VALUES
+INSERT INTO "PlaylistTrack" ("PlaylistId", "TrackId") VALUES
     (8, 3068),
     (8, 3069),
     (8, 3070),
