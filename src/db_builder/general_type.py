@@ -192,13 +192,13 @@ def type_statistic():
             for table in schema:
                 if 'table' in table:
                     for col in table['cols']:
-                        type = col['type']['type_name']
-                        types[type] = types[type] + 1
-    for type in types:
-        print(f"{type}: {types[type]}")
+                        col_type = col['type']['type_name']
+                        types[col_type] = types[col_type] + 1
+    for type_name in types:
+        print(f"{type_name}: {types[type_name]}")
 
 
-def build_value(col: dict, value, dialect: str) -> str:
+def build_value(col: dict, value, dialect: str) -> str | None:
     if value is None:
         return 'NULL'
     col_name = col['col_name']
@@ -221,6 +221,7 @@ def build_value(col: dict, value, dialect: str) -> str:
     elif type_name in ['DECIMAL', 'DOUBLE']:
         return str(value)
     elif type_name == 'DATE':
+        assert isinstance(value, dict)
         if dialect == 'mysql':
             date_format = date_format_udf(value['format'])
             return f"STR_TO_DATE('{value['value']}', '{date_format}')"
@@ -229,6 +230,7 @@ def build_value(col: dict, value, dialect: str) -> str:
         elif dialect == 'oracle':
             return f"TO_DATE('{value['value']}', '{value['format']}')"
     elif type_name == 'TIME':
+        assert isinstance(value, dict)
         if dialect == 'mysql':
             return f"CAST({value['value']} AS TIME({col['type']['fraction']})"
         else:
@@ -245,21 +247,25 @@ def build_value(col: dict, value, dialect: str) -> str:
             if negative:
                 days = -1 * days
             if dialect == 'oracle':
-                return f"INTERVAL '{days} {hours:02}:{minutes:02}:{seconds:02}' DAY TO SECOND({col['type']['fraction']})"
+                return (f"INTERVAL '{days} {hours:02}:{minutes:02}:{seconds:02}' "
+                        f"DAY TO SECOND({col['type']['fraction']})")
             elif dialect == 'pg':
-                return f"'{days} days {hours}:{minutes}:{seconds:02}'::INTERVAL DAY TO SECOND({col['type']['fraction']})"
+                return (f"'{days} days {hours}:{minutes}:{seconds:02}'::INTERVAL "
+                        f"DAY TO SECOND({col['type']['fraction']})")
     elif type_name == 'YEAR':
         return str(value)
     elif type_name == 'TIMESTAMP':
+        assert isinstance(value, dict)
         timestamp_obj = datetime.strptime(value['value'], date_format_udf(value['format']))
         formatted_timestamp_str = timestamp_obj.strftime('%Y-%m-%d %H:%M:%S')
         if dialect == 'oracle':
             return f"TO_TIMESTAMP('{value['value']}', '{value['format']}')"
         elif dialect == 'pg':
-            return f"{formatted_timestamp_str}::timestamp"
+            return f"'{formatted_timestamp_str}'::timestamp"
         elif dialect == 'mysql':
             return f"TIMESTAMP('{formatted_timestamp_str}')"
     elif type_name == 'DATETIME':
+        assert isinstance(value, dict)
         date_format_udf(value['format'])
         timestamp_obj = datetime.strptime(value['value'], date_format_udf(value['format']))
         formatted_timestamp_str = timestamp_obj.strftime('%Y-%m-%d %H:%M:%S')
@@ -272,8 +278,9 @@ def build_value(col: dict, value, dialect: str) -> str:
                 return f"TIMESTAMP('{formatted_timestamp_str}')"
     elif type_name == 'INTERVAL YEAR TO MONTH':
         if dialect == 'mysql':
-            assert False
+            return None
         else:
+            assert isinstance(value, dict)
             if dialect == 'pg':
                 if value['sign']:
                     value['year'] = -1 * value['year']
@@ -283,7 +290,8 @@ def build_value(col: dict, value, dialect: str) -> str:
                     value['year'] = -1 * value['year']
                 return f"to_yminterval('{value['year']}-{value['month']}')"
     elif type_name == 'TIMESTAMPTZ':
-        assert False
+        # TODO
+        return None
         # if dialect == 'mysql':
         #     final_type = 'TIMESTAMP'
         # else:
@@ -310,12 +318,16 @@ def build_value(col: dict, value, dialect: str) -> str:
         else:
             assert False
     elif type_name == 'POINT':
+        assert isinstance(value, dict)
+        if value['longitude'] is None or value['latitude'] is None:
+            return 'NULL'
         if dialect == 'oracle':
-            return f"SDO_GEOMETRY(2001, 4326, SDO_POINT_TYPE({value['longitude']}, {value['latitude']}, NULL), NULL, NULL)"
+            return (f"SDO_GEOMETRY(2001, 4326, "
+                    f"SDO_POINT_TYPE({value['longitude']}, {value['latitude']}, NULL), NULL, NULL)")
         elif dialect == 'pg':
             return f"ST_GeomFromText('POINT({value['longitude']} {value['latitude']})', 4326)"
         elif dialect == 'mysql':
-            return f"ST_GeomFromText('POINT({value['longitude']} {value['latitude']})', 4326)"
+            return f"ST_GeomFromText('POINT({value['latitude']} {value['longitude']})', 4326)"
     elif type_name == 'XML':
         if dialect == 'mysql':
             return f"'{value}'"
@@ -349,7 +361,7 @@ def build_value(col: dict, value, dialect: str) -> str:
                 if ele_str != '':
                     ele_str = ele_str + ', '
                 ele_str = ele_str + build_value({
-                    'col_name':'sub' + col_name,
+                    'col_name': 'sub' + col_name,
                     'type':  col['type']['ele_type']
                 }, ele, dialect)
             return f"ARRAY[{ele_str}]"

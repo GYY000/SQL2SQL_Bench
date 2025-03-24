@@ -405,19 +405,22 @@ def build_db(db_name, dialect):
         for table_name, table_content in schema.items():
             table_name = table_content['table']
             with open(os.path.join(get_proj_root_path(), 'data', db_name, 'data', f'{table_name}_data.json'),
-                      'r') as file:
-                data = json.loads(file.read())
+                      'r', encoding='utf-8') as file:
+                data = json.load(file)
             print(f'insert into table {table_name}')
             for row in tqdm(data):
                 value_str = ''
                 assert isinstance(row, dict)
                 columns_str = ''
                 for key, value in row.items():
-                    if value_str != '':
-                        value_str = value_str + ', '
                     for col in table_content['cols']:
                         if col['col_name'] == key:
-                            value_str = value_str + build_value(col, value, dialect)
+                            value_rep = build_value(col, value, dialect)
+                            if value_rep is None:
+                                continue
+                            if value_str != '':
+                                value_str = value_str + ', '
+                            value_str = value_str + value_rep
                             # if columns_str!= '':
                             #     columns_str = columns_str + ', '
                             # if dialect == 'oracle' or dialect == 'pg':
@@ -435,7 +438,8 @@ def build_db(db_name, dialect):
                     sql = f"INSERT INTO \"{table_name}\" VALUES ({value_str});"
                     flag, res = pg_sql_execute(db_name, sql)
                 if not flag:
-                    print(f'{row} may fail to insert in {dialect}, sql is {sql}')
+                    print(f'{row} may fail to insert in {dialect}')
+                    print(sql)
                     print(res)
                     exit()
                 # break
