@@ -29,7 +29,7 @@ def get_proj_root_path():
 
 def load_config(config_file=None):
     if config_file is None:
-        config_file = os.path.join(get_proj_root_path(), 'src', 'Config.ini')
+        config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
     config = configparser.ConfigParser()
     config.read(config_file)
     return {
@@ -38,7 +38,50 @@ def load_config(config_file=None):
         "gpt_api_base": config.get("API", 'gpt_api_base'),
         "gpt_api_key": config.get("API", 'gpt_api_key'),
         "llama3.1_api_base": config.get("API", 'llama3.1_api_base'),
-        "llama3.2_api_base": config.get("API", 'llama3.2_api_base'),
+        "llama3.2_api_base": config.get("API", 'llama3.2_api_base')
+    }
+
+
+def load_oracle_config(config_file=None):
+    if config_file is None:
+        config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    return {
+        'oracle_instant_path': config.get("ORACLE_CONN", 'oracle_instant_path'),
+        'oracle_user': config.get("ORACLE_CONN", 'oracle_user'),
+        'oracle_pwd': config.get("ORACLE_CONN", 'oracle_pwd'),
+        'oracle_host': config.get("ORACLE_CONN", 'oracle_host'),
+        'oracle_port': config.getint("ORACLE_CONN", 'oracle_port'),
+    }
+
+
+def load_mysql_config(config_file=None):
+    if config_file is None:
+        config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    return {
+        'mysql_user': config.get("MYSQL_CONN", 'mysql_user'),
+        'mysql_pwd': config.get("MYSQL_CONN", 'mysql_pwd'),
+        'mysql_host': config.get("MYSQL_CONN", 'mysql_host'),
+        'mysql_port': config.getint("MYSQL_CONN", 'mysql_port'),
+    }
+
+
+def load_pg_config(config_file=None):
+    if config_file is None:
+        config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    return {
+        'pg_user': config.get("PG_CONN", 'pg_user'),
+        'pg_pwd': config.get("PG_CONN", 'pg_pwd'),
+        'pg_host': config.get("PG_CONN", 'pg_host'),
+        'pg_port': config.getint("PG_CONN", 'pg_port'),
     }
 
 

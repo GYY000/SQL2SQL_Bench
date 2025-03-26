@@ -10,14 +10,20 @@ import mysql.connector
 import psycopg2
 from psycopg2 import Error
 
-import cx_Oracle
+import oracledb
 
-from utils.tools import get_proj_root_path
+from utils.tools import get_proj_root_path, load_mysql_config, load_pg_config, load_oracle_config
 
 mysql_conn_map = {}
 mysql_cursor_map = {}
 
 oracle_locate_open = False
+
+mysql_config = load_mysql_config()
+pg_config = load_pg_config()
+ora_config = load_oracle_config()
+
+oracledb.init_oracle_client(lib_dir=ora_config['oracle_instant_path'])
 
 database_mapping = {
     "customer_order": {
@@ -47,6 +53,21 @@ database_mapping = {
     }
 }
 
+
+def get_db_name(dialect, db_name):
+    if db_name not in database_mapping:
+        if dialect == 'mysql':
+            assert False
+        elif dialect == 'oracle':
+            return 'helowin'
+        elif dialect == 'pg':
+            assert False
+        else:
+            assert False
+    else:
+        return database_mapping[db_name][dialect]
+
+
 def sql_execute(dialect: str, db_name: str, sql: str):
     if dialect == 'pg':
         return pg_sql_execute(db_name, sql)
@@ -60,13 +81,36 @@ def sql_execute(dialect: str, db_name: str, sql: str):
 
 def mysql_db_connect(dbname):
     try:
-        # 连接数据库
+        # 建立连接
         connection = mysql.connector.connect(
-            host='localhost',  # 数据库主机地址，默认为localhost
-            port=3306,  # MySQL默认端口
-            user='root',  # 数据库用户名
-            password='021021',  # 数据库密码
-            database=dbname  # 要连接的数据库名称
+            host=mysql_config['mysql_host'],
+            port=mysql_config['mysql_port'],
+            user=mysql_config['mysql_user'],
+            password=mysql_config['mysql_pwd'],
+        )
+        cursor = connection.cursor()
+        cursor.execute("SHOW DATABASES")
+        databases = [db[0] for db in cursor.fetchall()]
+
+        if dbname not in databases:
+            print(f"Database '{dbname}' don't exist, start creating")
+            cursor.execute(f"CREATE DATABASE `{dbname}`")
+            print(f"Database '{dbname}' create successfully!")
+            connection.commit()
+        else:
+            print(f"Database '{dbname}' already exists")
+        cursor.close()
+        connection.close()
+    except mysql.connector.Error as err:
+        print(f"error raised: {err}")
+
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_config['mysql_host'],
+            port=mysql_config['mysql_port'],
+            user=mysql_config['mysql_user'],
+            password=mysql_config['mysql_pwd'],
+            database=dbname
         )
         cursor = connection.cursor()
         mysql_conn_map[dbname] = connection
@@ -78,7 +122,7 @@ def mysql_db_connect(dbname):
 
 
 def mysql_sql_execute(db_name: str, sql):
-    db_name = database_mapping[db_name]['mysql']
+    db_name = get_db_name('mysql', db_name)
     if db_name not in mysql_conn_map:
         mysql_db_connect(db_name)
     connection = mysql_conn_map[db_name]
@@ -117,6 +161,7 @@ def get_mysql_type_by_oid(type_code):
 
 
 def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
+    db_name = get_db_name('mysql', db_name)
     if db_name not in mysql_conn_map:
         mysql_db_connect(db_name)
     connection = mysql_conn_map[db_name]
@@ -155,14 +200,37 @@ pg_cursor_map = {}
 
 def pg_db_connect(dbname):
     try:
-        # 连接数据库
         connection = psycopg2.connect(
-            host='localhost',  # 数据库主机地址，默认为localhost
-            port='5432',  # PostgreSQL默认端口
-            user='postgres',  # 数据库用户名
-            password='021021',  # 数据库密码
+            host=pg_config['pg_host'],
+            port=pg_config['pg_port'],
+            user=pg_config['pg_user'],
+            password=pg_config['pg_pwd'],
+            database='postgres'
+        )
+        connection.autocommit = True
 
-            dbname=dbname  # 要连接的数据库名称
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT datname FROM pg_database;")
+        databases = [db[0] for db in cursor.fetchall()]
+
+        if dbname not in databases:
+            print(f"Database '{dbname}' does not exist, creating...")
+            cursor.execute(f"CREATE DATABASE \"{dbname}\";")
+            print(f"Database '{dbname}' created successfully!")
+            connection.commit()
+        else:
+            print(f"Database '{dbname}' already exists.")
+    except (Exception, Error) as error:
+        print(f"Error while connecting to PostgreSQL: {error}")
+
+    try:
+        connection = psycopg2.connect(
+            host=pg_config['pg_host'],
+            port=pg_config['pg_port'],
+            user=pg_config['pg_user'],
+            password=pg_config['pg_pwd'],
+            dbname=dbname
         )
 
         cursor = connection.cursor()
@@ -178,7 +246,7 @@ def pg_db_connect(dbname):
 
 
 def pg_sql_execute(db_name: str, sql):
-    db_name = database_mapping[db_name]['pg']
+    db_name = get_db_name('pg', db_name)
     if db_name not in pg_conn_map:
         pg_db_connect(db_name)
     connection = pg_conn_map[db_name]
@@ -220,6 +288,7 @@ def get_type_name_by_oid(oid):
 
 
 def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
+    db_name = get_db_name('pg', db_name)
     if db_name not in pg_conn_map:
         pg_db_connect(db_name)
     connection = pg_conn_map[db_name]
@@ -249,11 +318,13 @@ oracle_cursor_map = {}
 
 
 def oracle_db_connect(db_name):
-    if db_name != 'bird':
-        connection = cx_Oracle.connect(user="system", password="021021", dsn=db_name)
-    else:
-        dsn = cx_Oracle.makedsn("8.131.229.55", "49161", service_name="XE")
-        connection = cx_Oracle.connect("BIRD", "dmai4db2021.", dsn)
+    connection = oracledb.connect(
+        user=ora_config['oracle_user'],
+        password=ora_config['oracle_pwd'],
+        host=ora_config['oracle_host'],
+        port=ora_config['oracle_port'],
+        service_name=db_name
+    )
     cursor = connection.cursor()
     oracle_cursor_map[db_name] = cursor
     oracle_conn_map[db_name] = connection
@@ -262,8 +333,8 @@ def oracle_db_connect(db_name):
 
 def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
     sql = sql.strip(';')
+    db_name = get_db_name('oracle', db_name)
     if not sql_plus_flag:
-        db_name = database_mapping[db_name]['oracle']
         if db_name not in oracle_conn_map:
             oracle_db_connect(db_name)
         connection = oracle_conn_map[db_name]
@@ -284,10 +355,10 @@ def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
             return False, error_message
     else:
         sqlplus_path = "sqlplus"
-        user = "SYSTEM"
-        password = "021021"
-        server_ip = 'localhost'
-        server_port = 1521
+        user = ora_config['oracle_user'],
+        password = ora_config['oracle_pwd'],
+        server_ip = ora_config['oracle_host'],
+        server_port = ora_config['oracle_port']
         db_string = db_name
         sqlplus_command = f"{sqlplus_path} -S {user}/{password}@{server_ip}:{server_port}/{db_string}"
         process = subprocess.run(sqlplus_command, shell=True,
@@ -310,14 +381,16 @@ oracle_cursor_local_map = {}
 
 def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
     try:
-        connection = cx_Oracle.connect(user="system", password="021021", dsn=db_name)
-        cursor = connection.cursor()
+        db_name = get_db_name('oracle', db_name)
+        if db_name not in oracle_conn_map:
+            oracle_db_connect(db_name)
+        connection = oracle_conn_map[db_name]
+        cursor = oracle_cursor_map[db_name]
         if is_table:
             sql = f"SELECT * FROM {obj}"
         else:
             sql = obj
         cursor.execute(sql)
-
         res = []
         for column in cursor.description:
             match = re.search(r'DB_TYPE_(\w+)', column[1].name)
