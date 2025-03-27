@@ -9,7 +9,7 @@ import os.path
 from tqdm import tqdm
 
 from sql_gen.generator.ele_type.type_operation import build_create_type, build_value
-from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute
+from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute, oracle_drop_db
 from utils.tools import get_proj_root_path, str_split
 
 id_number = {}
@@ -311,12 +311,14 @@ def dump_schema(schema: dict, constraints: dict, schema_type_defs: dict, dialect
 
 
 def drop_schema(db_name, dialect):
+    if dialect == 'oracle':
+        oracle_drop_db(db_name)
     with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
         schema = json.loads(file.read())
     for table_name, value in schema.items():
-        if dialect == 'oracle':
-            oracle_sql_execute(db_name, f"DROP TABLE \"{table_name}\" CASCADE CONSTRAINTS;")
-        elif dialect == 'mysql':
+        # if dialect == 'oracle':
+        #     oracle_sql_execute(db_name, f"DROP TABLE \"{table_name}\" CASCADE CONSTRAINTS;")
+        if dialect == 'mysql':
             mysql_sql_execute(db_name, f"DROP TABLE `{table_name}` CASCADE;")
         elif dialect == 'pg':
             pg_sql_execute(db_name, f"DROP TABLE \"{table_name}\" CASCADE;")
@@ -324,9 +326,9 @@ def drop_schema(db_name, dialect):
             assert False
     flag1 = True
     for table_name, table_content in schema.items():
-        if dialect == 'oracle':
-            flag, res = oracle_sql_execute(db_name, f"SELECT * FROM \"{table_name}\";")
-        elif dialect == 'mysql':
+        # if dialect == 'oracle':
+        #     flag, res = oracle_sql_execute(db_name, f"SELECT * FROM \"{table_name}\";")
+        if dialect == 'mysql':
             flag, res = mysql_sql_execute(db_name, f"SELECT * FROM `{table_name}`;")
         elif dialect == 'pg':
             flag, res = pg_sql_execute(db_name, f"SELECT * FROM \"{table_name}\";")

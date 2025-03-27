@@ -8,7 +8,7 @@ from typing import Dict
 from antlr_parser.Tree import TreeNode
 from antlr_parser.get_structure import get_pg_select_primary
 from antlr_parser.parse_tree import parse_tree
-from generator.element.Operand import Operand
+from sql_gen.generator.element.Operand import Operand
 from utils.db_connector import *
 from utils.tools import dialect_judge, add_quote
 
@@ -120,8 +120,6 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
                 normal_ops.append(Operand(add_quote('mysql', ele['col']), ele['type'], 'mysql'))
             return normal_ops, [], None
         else:
-            # 对于GROUP BY，聚合函数中可以使用的为SELECT * FROM xxx 去除GROUP BY时的所有列
-            # 非聚合函数所能用的则为 GROUP BY中，所包含的各表达式
             assert isinstance(group_by_node, TreeNode)
             normal_nodes = []
             aggregate_nodes = []
@@ -203,13 +201,6 @@ def parse_pg_group_by(group_list_node: TreeNode) -> List:
 
 
 def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
-    """
-        :param db_name: 所连接的数据库名
-        :param node: sql语句解析得到的 ANTLR 根节点
-        :return: tuple[List[Operand]]:非聚合函数可用列，
-                 tuple[List[Operand]]:聚合函数可用列
-                 TreeNode/None       :group_by的节点
-    """
     select_node = node
     simple_select_primary_node = get_pg_select_primary(select_node)
     clone_node = simple_select_primary_node.clone()

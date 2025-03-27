@@ -34,7 +34,6 @@ def load_config(config_file=None):
     config.read(config_file)
     return {
         'dbg': config.getboolean("MODE", 'dbg'),
-
         "gpt_api_base": config.get("API", 'gpt_api_base'),
         "gpt_api_key": config.get("API", 'gpt_api_key'),
         "llama3.1_api_base": config.get("API", 'llama3.1_api_base'),
@@ -50,10 +49,13 @@ def load_oracle_config(config_file=None):
 
     return {
         'oracle_instant_path': config.get("ORACLE_CONN", 'oracle_instant_path'),
-        'oracle_user': config.get("ORACLE_CONN", 'oracle_user'),
-        'oracle_pwd': config.get("ORACLE_CONN", 'oracle_pwd'),
+        # 'oracle_user': config.get("ORACLE_CONN", 'oracle_user'),
+        'usr_default_pwd': config.get("ORACLE_CONN", 'usr_default_pwd'),
         'oracle_host': config.get("ORACLE_CONN", 'oracle_host'),
         'oracle_port': config.getint("ORACLE_CONN", 'oracle_port'),
+        'oracle_sys_user': config.get("ORACLE_CONN", 'oracle_sys_user'),
+        'oracle_sys_pwd': config.get("ORACLE_CONN", 'usr_default_pwd'),
+        'oracle_sid': config.get("ORACLE_CONN", 'oracle_sid'),
     }
 
 

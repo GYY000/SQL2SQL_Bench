@@ -56,14 +56,7 @@ database_mapping = {
 
 def get_db_name(dialect, db_name):
     if db_name not in database_mapping:
-        if dialect == 'mysql':
-            assert False
-        elif dialect == 'oracle':
-            return 'helowin'
-        elif dialect == 'pg':
-            assert False
-        else:
-            assert False
+        assert False
     else:
         return database_mapping[db_name][dialect]
 
@@ -319,16 +312,60 @@ oracle_cursor_map = {}
 
 def oracle_db_connect(db_name):
     connection = oracledb.connect(
-        user=ora_config['oracle_user'],
-        password=ora_config['oracle_pwd'],
+        user=ora_config['oracle_sys_user'],
+        password=ora_config['oracle_sys_pwd'],
         host=ora_config['oracle_host'],
         port=ora_config['oracle_port'],
-        service_name=db_name
+        service_name=ora_config['oracle_sid']
+    )
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT USERNAME FROM DBA_USERS")
+    users = [user[0] for user in cursor.fetchall()]
+    if db_name.upper() not in users:
+        try:
+            print(f'CREATE usr {db_name}')
+            cursor.execute(f"CREATE USER {db_name} IDENTIFIED BY {ora_config['usr_default_pwd']}")
+            cursor.execute(f"GRANT CONNECT, RESOURCE TO {db_name}")
+            cursor.execute(f"GRANT CREATE SESSION TO {db_name}")
+            cursor.execute(f"GRANT CREATE TABLE TO {db_name}")
+            connection.commit()
+        except Exception as e:
+            print(f"Error creating user {db_name}: {e}")
+            return False, f"Error creating user {db_name}: {e}"
+    cursor.close()
+    connection.close()
+
+    connection = oracledb.connect(
+        user=db_name,
+        password=ora_config['usr_default_pwd'],
+        host=ora_config['oracle_host'],
+        port=ora_config['oracle_port'],
+        service_name=ora_config['oracle_sid']
     )
     cursor = connection.cursor()
     oracle_cursor_map[db_name] = cursor
     oracle_conn_map[db_name] = connection
     return connection, cursor
+
+
+def oracle_drop_db(db_name):
+    try:
+        connection = oracledb.connect(
+            user=ora_config['oracle_sys_user'],
+            password=ora_config['oracle_sys_pwd'],
+            host=ora_config['oracle_host'],
+            port=ora_config['oracle_port'],
+            service_name=ora_config['oracle_sid']
+        )
+        cursor = connection.cursor()
+        cursor.execute(f"DROP USER {db_name} CASCADE")
+        connection.commit()
+    except Exception as e:
+        print(f"Error dropping user {db_name}: {e}")
+        return False
+    cursor.close()
+    connection.close()
+    return True
 
 
 def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
@@ -367,7 +404,7 @@ def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
         return False, f"Error while executing Oracle query: {process.stdout}"
 
 
-def close_oracle_connnect(db_name: str):
+def close_oracle_connect(db_name: str):
     connection = oracle_conn_map[db_name]
     cursor = oracle_cursor_map[db_name]
     if connection:
