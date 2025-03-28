@@ -1,0 +1,41 @@
+COMMON: &common # Identifier
+  DEBUG: False
+
+  # Page settings
+  DEFAULT_PAGE_INDEX: 1
+  DEFAULT_PAGE_SIZE: 10
+
+  # File configuration
+  UPLOAD_FOLDER: './sources/'
+
+  # Business database connection
+  SQLALCHEMY_TRACK_MODIFICATIONS: False
+  SQLALCHEMY_ECHO: False
+  SQLALCHEMY_POOL_RECYCLE: 8
+  # Log configuration file path
+  LOGGING_CONFIG_PATH: ./config/logging.yaml
+  # Log file storage location
+  LOGGING_PATH: ./logs
+
+  # Response message
+  RESPONSE_MESSAGE: ./config/msg.yaml
+
+  # Whether to enable scheduled tasks, default is not enabled
+  SCHEDULER_OPEN: True
+
+  # Scheduled task configuration
+  SCHEDULER_API_ENABLED: True
+  SCHEDULER_TIMEZONE: 'Asia/Shanghai'
+
+
+DEVELOPMENT: &development
+  <<: *common # Inherit common, variables not redefined use common variable values
+  DEBUG: True
+  SQLALCHEMY_ECHO: False
+
+STAGING: &staging
+  <<: *common
+
+PRODUCTION: &production
+  <<: *common
+  SQLALCHEMY_ECHO: False

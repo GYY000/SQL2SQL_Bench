@@ -1,0 +1,36 @@
+version: 1
+disable_existing_loggers: False
+# Define log output format, can have multiple formats
+formatters:
+  simple:
+      format: "%(message)s"
+  error:
+      format: "%(asctime)s [%(name)s] [%(levelname)s] :%(levelno)s: %(message)s"
+
+# Define different handlers, output different levels of log messages
+handlers:
+  console:
+      class: logging.StreamHandler # Output to console
+      level: DEBUG
+      formatter: simple
+      stream: ext://flask.logging.wsgi_errors_stream # Listen to flask logs
+  info_file_handler:
+      class: logging.handlers.RotatingFileHandler # Output to file
+      level: INFO
+      formatter: simple
+      filename: ./logs/info.log
+      maxBytes: 10485760 # 10MB
+      backupCount: 20 #most 20 extensions
+      encoding: utf8
+  error_file_handler:
+      class: logging.handlers.RotatingFileHandler # Output to file
+      level: ERROR
+      formatter: error
+      filename: ./logs/errors.log
+      maxBytes: 10485760 # 10MB
+      backupCount: 20
+      encoding: utf8
+# Enable handler
+root:
+  level: INFO
+  handlers: [console,info_file_handler,error_file_handler]
