@@ -34,6 +34,7 @@ def load_config(config_file=None):
     config.read(config_file)
     return {
         'dbg': config.getboolean("MODE", 'dbg'),
+        'cloud_mode': config.getboolean("MODE", 'cloud_mode'),
         "gpt_api_base": config.get("API", 'gpt_api_base'),
         "gpt_api_key": config.get("API", 'gpt_api_key'),
         "llama3.1_api_base": config.get("API", 'llama3.1_api_base'),
