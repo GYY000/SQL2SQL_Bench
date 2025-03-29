@@ -1,0 +1,7 @@
+-- SQLines Data and SQLines Converter mapping file for user-defined functions that are converted to stored procedures
+
+-- Syntax (one mapping per line):
+-- schema.udf_name
+
+-- Uncomment
+-- SALES.GetContacts

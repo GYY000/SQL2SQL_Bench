@@ -1,0 +1,7 @@
+-- SQLines Converter information on table columns and their data types
+
+-- Syntax (one mapping per line):
+-- table, column, data_type
+
+-- Uncomment
+-- SALES.Contacts,id,int

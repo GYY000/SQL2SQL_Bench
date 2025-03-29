@@ -1,0 +1,8 @@
+-- Object mapping file
+-- Use -omapf option to define another file
+
+-- Syntax:
+-- source_name, target_name
+
+-- Examples (uncomment):
+-- SALES.ORDERS, SALES_DB.NEW_ORDERS

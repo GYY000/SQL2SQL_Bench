@@ -1,0 +1,24 @@
+-- Global data type mapping file for custom data type mappings 
+-- Use -dtmapf option to define another file
+
+-- Syntax:
+-- source_datatype(length, scale), target_datatype
+
+-- Examples (uncomment and edit to apply mapping or specify other mappings):
+
+-- Numeric with any length and scale 0
+-- NUMERIC(*, 0), INTEGER
+
+-- Number with length 10 and scale 0
+-- NUMBER(10,0), INT
+
+-- Number without length and scale
+-- NUMBER, DECIMAL
+
+-- Number with length 38 and without scale
+-- NUMBER(38), BIGINT
+
+-- Varchar with length 4000
+-- VARCHAR2(4000), TEXT
+
+-- JSON, VARCHAR(4000)
