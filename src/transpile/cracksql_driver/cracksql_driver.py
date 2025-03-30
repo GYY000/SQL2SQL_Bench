@@ -9,7 +9,7 @@ pg_config = load_pg_config()
 ora_config = load_oracle_config()
 
 
-def initkb_func():
+def init_kb_func():
     try:
         cracksql_config_path = os.path.join(get_proj_root_path(), 'src', 'transpile', 'cracksql_driver',
                                             'init_config.yaml')
@@ -82,4 +82,4 @@ def trans_func(sql, src_dialect, tgt_dialect, db_name, model_name):
         traceback.print_exc()
 
 
-initkb_func()
+init_kb_func()
