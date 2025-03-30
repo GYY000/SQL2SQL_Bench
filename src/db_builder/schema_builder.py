@@ -111,7 +111,7 @@ def mysql_create_table(table_schema, constraints):
         col_defs = col_defs + type_def
     create_stmt = f"CREATE TABLE `{table_name}` (\n{col_defs}"
     if primary_keys != '':
-        constraints.append(f"CONSTRAINT `{rename_constraints(f"PK_{table_name}")}` PRIMARY KEY ({primary_keys})")
+        constraints.append(f"CONSTRAINT `{rename_constraints(f'PK_{table_name}')}` PRIMARY KEY ({primary_keys})")
     for constraint in constraints:
         create_stmt += ',\n\t' + constraint
     create_stmt += '\n);'
@@ -127,7 +127,7 @@ def mysql_add_foreign_key(schema):
         column = fk['col']
         ref_table = fk['ref_table']
         ref_column = fk['ref_col']
-        res.append((f"ALTER TABLE `{table}` ADD CONSTRAINT `{rename_constraints(f"FK_{table}")}` "
+        res.append((f"ALTER TABLE `{table}` ADD CONSTRAINT `{rename_constraints(f'FK_{table}')}` "
                     f"FOREIGN KEY (`{column}`) REFERENCES `{ref_table}` (`{ref_column}`) "
                     f"ON DELETE CASCADE ON UPDATE NO ACTION;"))
     return res
@@ -144,7 +144,7 @@ def mysql_add_index(schema):
             if str_columns != '':
                 str_columns = str_columns + ', '
             str_columns = str_columns + '`' + col + '`'
-        res.append(f"CREATE INDEX {rename_constraints(f"IDX_{table}")} ON `{table}` ({str_columns});")
+        res.append(f"CREATE INDEX {rename_constraints(f'IDX_{table}')} ON `{table}` ({str_columns});")
     return res
 
 
@@ -174,7 +174,7 @@ def pg_create_table(table_schema: dict, constraints):
         col_defs = col_defs + type_def
     create_stmt = f"CREATE TABLE \"{table_name}\" (\n{col_defs}"
     if primary_keys != '':
-        constraints.append(f"CONSTRAINT \"{rename_constraints(f"PK_{table_name}")}\" PRIMARY KEY ({primary_keys})")
+        constraints.append(f"CONSTRAINT \"{rename_constraints(f'PK_{table_name}')}\" PRIMARY KEY ({primary_keys})")
     for constraint in constraints:
         create_stmt += ',\n\t' + constraint
     create_stmt += '\n);'
@@ -191,7 +191,7 @@ def pg_add_foreign_key(schema):
         ref_table = fk['ref_table']
         ref_column = fk['ref_col']
         res.append((
-            f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f"FK_{table}")} "
+            f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f'FK_{table}')} "
             f"FOREIGN KEY (\"{column}\")\n\t"
             f"REFERENCES \"{ref_table}\" (\"{ref_column}\") ON DELETE CASCADE ON UPDATE NO ACTION;"))
     return res
@@ -208,7 +208,7 @@ def pg_add_index(schema):
             if str_columns != '':
                 str_columns = str_columns + ', '
             str_columns = str_columns + '"' + col + '"'
-        res.append(f"CREATE INDEX {rename_constraints(f"IDX_{table}")} ON \"{table}\" ({str_columns});")
+        res.append(f"CREATE INDEX {rename_constraints(f'IDX_{table}')} ON \"{table}\" ({str_columns});")
     return res
 
 
@@ -237,7 +237,7 @@ def oracle_create_table(table_schema: dict, constraints):
         col_defs = col_defs + type_def
     create_stmt = f"CREATE TABLE \"{table_name}\" (\n{col_defs}"
     if primary_keys != '':
-        constraints.append(f"CONSTRAINT \"{rename_constraints(f"PK_{table_name}")}\" PRIMARY KEY ({primary_keys})")
+        constraints.append(f"CONSTRAINT \"{rename_constraints(f'PK_{table_name}')}\" PRIMARY KEY ({primary_keys})")
     for constraint in constraints:
         create_stmt += ',\n\t' + constraint
     create_stmt += '\n);'
@@ -254,7 +254,7 @@ def oracle_add_foreign_key(schema):
         ref_table = fk['ref_table']
         ref_column = fk['ref_col']
         res.append((
-            f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f"FK_{table}")} "
+            f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f'FK_{table}')} "
             f"FOREIGN KEY (\"{column}\")\n\t"
             f"REFERENCES \"{ref_table}\" (\"{ref_column}\");"))
     return res
@@ -271,7 +271,7 @@ def oracle_add_index(schema):
             if str_columns != '':
                 str_columns = str_columns + ', '
             str_columns = str_columns + '"' + col + '"'
-        res.append(f"CREATE INDEX {rename_constraints(f"IDX_{table}")} ON \"{table}\" ({str_columns});")
+        res.append(f"CREATE INDEX {rename_constraints(f'IDX_{table}')} ON \"{table}\" ({str_columns});")
     return res
 
 
@@ -529,8 +529,3 @@ def build_db(db_name: str, dialect: str, only_create: bool = False, build_fk: bo
             print('Index build failed')
             exit()
     print(f"{db_name} create successful")
-
-
-db_name = 'sale_history'
-drop_schema(db_name, 'mysql')
-build_db(db_name, 'mysql', False, False)
