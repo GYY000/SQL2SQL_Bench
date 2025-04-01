@@ -8,6 +8,7 @@ import os.path
 
 from tqdm import tqdm
 
+from sql_gen.generator.ele_type.type_def import BaseType
 from sql_gen.generator.ele_type.type_operation import load_col_type, build_value
 from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute, oracle_drop_db
 from utils.tools import get_proj_root_path, str_split
@@ -97,7 +98,7 @@ def mysql_create_table(table_schema, constraints):
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
-        if col['type'] is None:
+        if col['type'].get_type_name('mysql') is None:
             continue
         assert isinstance(col, dict)
         attributes = build_attributes(col['type'], col.get('attribute', None), 'mysql')
@@ -176,7 +177,7 @@ def pg_create_table(table_schema: dict, constraints):
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
-        if col['type'] is None:
+        if col['type'].get_type_name('pg') is None:
             continue
         attributes = build_attributes(col['type'], col['attribute'], 'pg')
         str_attribute = ''
@@ -255,9 +256,9 @@ def oracle_create_table(table_schema: dict, constraints):
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
-        if col['type'] is None:
+        assert isinstance(col['type'], BaseType)
+        if col['type'].get_type_name('oracle') is None:
             continue
-
         if 'attribute' in col and 'NOT NULL' in col['attribute']:
             type_def = f"\t\"{col_name}\" {col['type'].get_type_name('oracle')} NOT NULL"
         else:
@@ -442,6 +443,8 @@ def build_foreign_key(db_name, dialect) -> bool:
                 flag, res = pg_sql_execute(db_name, sql)
             elif dialect == 'mysql':
                 flag, res = mysql_sql_execute(db_name, sql)
+            else:
+                assert False
             if not flag:
                 print(f'{sql} may fail to execute')
                 exit()
@@ -461,6 +464,8 @@ def build_index(db_name, dialect) -> bool:
                 flag, res = pg_sql_execute(db_name, sql)
             elif dialect == 'mysql':
                 flag, res = mysql_sql_execute(db_name, sql)
+            else:
+                assert False
             if not flag:
                 print(f'{sql} may fail to execute')
                 return False
@@ -476,7 +481,7 @@ def build_insert(db_name: str, dialect: str, schema: dict):
                 continue
             else:
                 if dialect == 'oracle':
-                    flag, res = oracle_sql_execute(db_name, sql + ';')
+                    flag, res = oracle_sql_execute(db_name, sql)
                 elif dialect == 'pg':
                     flag, res = pg_sql_execute(db_name, sql)
                 elif dialect == 'mysql':
@@ -496,7 +501,7 @@ def build_insert(db_name: str, dialect: str, schema: dict):
             for row in tqdm(data):
                 value_str = ''
                 assert isinstance(row, dict)
-                columns_str = ''
+                # columns_str = ''
                 for key, value in row.items():
                     for col in table_content['cols']:
                         if col['col_name'] == key:

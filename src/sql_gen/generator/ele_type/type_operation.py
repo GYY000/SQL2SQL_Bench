@@ -13,9 +13,9 @@ from udfs.date_udf import date_format_udf
 from utils.tools import get_proj_root_path
 
 
-def build_create_type(type_def: dict, col_name: str, dialect: str):
+def load_col_type(type_def: dict, col_name: str, dialect: str):
+    # col_name are used for build VARRAY Type for Oracle
     type_name = type_def['type_name']
-    final_type = None
     add_constraint = None
     type_defs = []
     if type_name == 'INT':
@@ -43,10 +43,7 @@ def build_create_type(type_def: dict, col_name: str, dialect: str):
         else:
             final_type = DatetimeType()
     elif type_name == 'INTERVAL YEAR TO MONTH':
-        if dialect == 'mysql':
-            final_type = None
-        else:
-            final_type = IntervalYearMonthType()
+        final_type = IntervalYearMonthType()
     elif type_name == 'TIMESTAMPTZ':
         if 'fraction' in type_def:
             final_type = TimestamepTZType(type_def['fraction'])
@@ -74,15 +71,9 @@ def build_create_type(type_def: dict, col_name: str, dialect: str):
     elif type_name == 'UUID':
         final_type = UuidType()
     elif type_name == 'JSON':
-        if dialect == 'oracle':
-            final_type = None
-        else:
-            final_type = JsonType(type_def['structure'])
+        final_type = JsonType(type_def['structure'])
     elif type_name == 'JSONB':
-        if dialect == 'oracle':
-            final_type = None
-        else:
-            final_type = JsonbType(type_def['structure'])
+        final_type = JsonbType(type_def['structure'])
     elif type_name == 'POINT':
         final_type = PointType()
     elif type_name == 'XML':
@@ -90,16 +81,12 @@ def build_create_type(type_def: dict, col_name: str, dialect: str):
     elif type_name == 'BLOB':
         final_type = BlobType()
     elif type_name == 'ARRAY':
-        ele_type, ele_constraint, ele_type_defs = build_create_type(type_def['ele_type'], 'sub' + col_name, dialect)
+        ele_type, ele_constraint, ele_type_defs = load_col_type(type_def['ele_type'], 'sub' + col_name, dialect)
         final_type = ArrayType(ele_type, col_name, type_def['length'])
+        type_defs = type_defs + ele_type_defs
         if dialect == 'oracle':
-            final_type = f'{col_name}_varray_type'
-            type_def = f"CREATE TYPE {final_type} AS VARRAY({type_def['length']}) OF {ele_type};"
-            type_defs = type_defs + ele_type_defs
+            type_def = f"CREATE TYPE {f'{col_name}_varray_type'} AS VARRAY({type_def['length']}) OF {ele_type};"
             type_defs.append(type_def)
-        elif dialect == 'pg':
-            ele_type, ele_constraint, ele_type_defs = build_create_type(type_def['ele_type'], 'sub' + col_name, dialect)
-            type_defs = type_defs + ele_type_defs
     else:
         assert False
     return final_type, add_constraint, type_defs
@@ -131,18 +118,24 @@ def type_statistic():
         "BLOB": 0,
         "ARRAY": 0
     }
+    table_cnt = 0
     for file in os.listdir(os.path.join(get_proj_root_path(), 'data')):
         db_root_path = os.path.join(get_proj_root_path(), 'data', file)
         if os.path.exists(os.path.join(db_root_path, 'schema.json')):
             with open(os.path.join(db_root_path, 'schema.json'), 'r') as f:
                 schema = json.load(f)
-            for table in schema:
-                if 'table' in table:
-                    for col in table['cols']:
-                        col_type = col['type']['type_name']
-                        types[col_type] = types[col_type] + 1
+            table_cnt += len(schema)
+            for table, value in schema.items():
+                for col in value['cols']:
+                    col_type = col['type']['type_name']
+                    types[col_type] = types[col_type] + 1
     for type_name in types:
         print(f"{type_name}: {types[type_name]}")
+    cnt = 0
+    for key, value in types.items():
+        cnt += value
+    print(cnt)
+    print(table_cnt)
 
 
 def build_value(built_in_type: BaseType, value, dialect: str) -> str | None:
@@ -153,3 +146,6 @@ def build_value(built_in_type: BaseType, value, dialect: str) -> str | None:
     if isinstance(value, str):
         value = value.replace("'", "''")
     return built_in_type.gen_value(dialect, value)
+
+
+type_statistic()

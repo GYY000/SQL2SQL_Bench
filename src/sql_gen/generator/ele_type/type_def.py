@@ -29,7 +29,7 @@ class BaseType(dict, ABC):
         return 'BaseType'
 
     @abstractmethod
-    def get_type_name(self, dialect: str):
+    def get_type_name(self, dialect: str) -> str | None:
         return "BaseType"
 
     @abstractmethod
@@ -318,7 +318,7 @@ class IntervalYearMonthType(BaseType):
         if dialect == 'oracle' or dialect == 'pg':
             return 'INTERVAL YEAR TO MONTH'
         else:
-            assert False
+            return None
 
     def __str__(self):
         return "INTERVAL YEAR TO MONTH"
@@ -523,7 +523,7 @@ class JsonType(BaseType):
         elif dialect == 'pg':
             return 'JSON'
         else:
-            assert False
+            return None
 
     def __str__(self):
         return f"JSON"
@@ -550,7 +550,7 @@ class JsonbType(BaseType):
         elif dialect == 'pg':
             return 'JSONB'
         else:
-            assert False
+            return None
 
     def __str__(self):
         return f"JSONB"
