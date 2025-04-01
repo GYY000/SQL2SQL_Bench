@@ -146,6 +146,3 @@ def build_value(built_in_type: BaseType, value, dialect: str) -> str | None:
     if isinstance(value, str):
         value = value.replace("'", "''")
     return built_in_type.gen_value(dialect, value)
-
-
-type_statistic()

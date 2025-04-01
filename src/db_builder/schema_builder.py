@@ -179,7 +179,7 @@ def pg_create_table(table_schema: dict, constraints):
         col_name = col['col_name']
         if col['type'].get_type_name('pg') is None:
             continue
-        attributes = build_attributes(col['type'], col['attribute'], 'pg')
+        attributes = build_attributes(col['type'], col.get('attribute', None), 'pg')
         str_attribute = ''
         for attribute in attributes:
             str_attribute = str_attribute + ' '

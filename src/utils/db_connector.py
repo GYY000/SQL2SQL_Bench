@@ -50,6 +50,11 @@ database_mapping = {
         "mysql": "chinook",
         "pg": "chinook",
         "oracle": "chinook"
+    },
+    "bird": {
+        "mysql": "bird",
+        "pg": "bird",
+        "oracle": "bird"
     }
 }
 
