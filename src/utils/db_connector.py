@@ -8,10 +8,10 @@ from typing import List
 import mysql.connector
 
 import psycopg2
-from psycopg2 import Error
 
 import oracledb
 
+from sql_gen.generator.ele_type.type_operation import load_col_type
 from utils.tools import get_proj_root_path, load_mysql_config, load_pg_config, load_oracle_config
 
 mysql_conn_map = {}
@@ -110,7 +110,7 @@ def mysql_db_connect(dbname):
         mysql_cursor_map[dbname] = cursor
         if connection.is_connected():
             return connection, cursor
-    except Error as e:
+    except mysql.connector.Error as e:
         print(f"Error while connecting to MySQL: {e}")
 
 
@@ -154,23 +154,33 @@ def get_mysql_type_by_oid(type_code):
 
 
 def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
-    db_name = get_db_name('mysql', db_name)
-    if db_name not in mysql_conn_map:
-        mysql_db_connect(db_name)
-    connection = mysql_conn_map[db_name]
-    cursor = mysql_cursor_map[db_name]
     if is_table:
-        sql = f"SELECT * FROM {obj} LIMIT 1"
-    else:
-        sql = obj
+        table_name = obj
+        with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
+            schema = json.loads(file.read())
+        if table_name not in schema:
+            raise ValueError(f"Table {table_name} not found in schema")
+        else:
+            res = []
+            for col in schema[table_name]['cols']:
+                col_name = col['col']
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'mysql')
+                res.append({
+                    "col": col_name,
+                    "type": col_type
+                })
+            return True, res
 
     try:
+        db_name = get_db_name('mysql', db_name)
+        if db_name not in mysql_conn_map:
+            mysql_db_connect(db_name)
+        connection = mysql_conn_map[db_name]
+        cursor = mysql_cursor_map[db_name]
+        sql = obj
         cursor.execute(sql)
-        res = []
-
         columns = cursor.description
         res = []
-
         for column in columns:
             col_name = column[0]
             col_type_code = column[1]
@@ -214,7 +224,7 @@ def pg_db_connect(dbname):
             connection.commit()
         else:
             print(f"Database '{dbname}' already exists.")
-    except (Exception, Error) as error:
+    except (Exception, psycopg2.Error) as error:
         print(f"Error while connecting to PostgreSQL: {error}")
 
     try:
@@ -234,7 +244,7 @@ def pg_db_connect(dbname):
         if connection:
             return connection, cursor
 
-    except (Exception, Error) as error:
+    except (Exception, psycopg2.Error) as error:
         print(f"Error while connecting to PostgreSQL: {error}")
 
 
@@ -252,7 +262,7 @@ def pg_sql_execute(db_name: str, sql):
             rows = None
         connection.commit()
         return True, rows
-    except (Exception, Error) as error:
+    except (Exception, psycopg2.Error) as error:
         connection.rollback()
         return False, f"Error while executing PostgreSQL query: {error}"
 
@@ -281,16 +291,30 @@ def get_type_name_by_oid(oid):
 
 
 def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
-    db_name = get_db_name('pg', db_name)
-    if db_name not in pg_conn_map:
-        pg_db_connect(db_name)
-    connection = pg_conn_map[db_name]
-    cursor = pg_cursor_map[db_name]
     if is_table:
-        sql = f"SELECT * FROM {obj} LIMIT 1"
-    else:
-        sql = obj
+        table_name = obj
+        with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
+            schema = json.loads(file.read())
+        if table_name not in schema:
+            raise ValueError(f"Table {table_name} not found in schema")
+        else:
+            res = []
+            for col in schema[table_name]['cols']:
+                col_name = col['col']
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'pg')
+                res.append({
+                    "col": col_name,
+                    "type": col_type
+                })
+            return True, res
+
     try:
+        db_name = get_db_name('pg', db_name)
+        if db_name not in pg_conn_map:
+            pg_db_connect(db_name)
+        connection = pg_conn_map[db_name]
+        cursor = pg_cursor_map[db_name]
+        sql = obj
         cursor.execute(sql)
         res = []
         if cursor.description:
@@ -301,7 +325,7 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
                 })
         connection.commit()
         return True, res
-    except (Exception, Error) as error:
+    except (Exception, psycopg2.Error) as error:
         connection.rollback()
         return False, [f"Error while executing PostgreSQL query: {error}"]
 
@@ -417,16 +441,29 @@ oracle_cursor_local_map = {}
 
 
 def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
+    if is_table:
+        table_name = obj
+        with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
+            schema = json.loads(file.read())
+        if table_name not in schema:
+            raise ValueError(f"Table {table_name} not found in schema")
+        else:
+            res = []
+            for col in schema[table_name]['cols']:
+                col_name = col['col']
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'oracle')
+                res.append({
+                    "col": col_name,
+                    "type": col_type
+                })
+            return True, res
     try:
         db_name = get_db_name('oracle', db_name)
         if db_name not in oracle_conn_map:
             oracle_db_connect(db_name)
         connection = oracle_conn_map[db_name]
         cursor = oracle_cursor_map[db_name]
-        if is_table:
-            sql = f"SELECT * FROM {obj}"
-        else:
-            sql = obj
+        sql = obj
         cursor.execute(sql)
         res = []
         for column in cursor.description:

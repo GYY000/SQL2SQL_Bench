@@ -8,7 +8,7 @@ import os.path
 
 from tqdm import tqdm
 
-from sql_gen.generator.ele_type.type_operation import build_create_type, build_value
+from sql_gen.generator.ele_type.type_operation import load_col_type, build_value
 from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute, oracle_drop_db
 from utils.tools import get_proj_root_path, str_split
 
@@ -124,11 +124,26 @@ def mysql_add_foreign_key(schema):
     if 'foreign_key' not in schema:
         return res
     for fk in schema['foreign_key']:
-        column = fk['col']
+        ori_column = fk['col']
         ref_table = fk['ref_table']
-        ref_column = fk['ref_col']
+        ori_ref_column = fk['ref_col']
+        if isinstance(ori_column, list):
+            column = ''
+            for column in ori_column:
+                if column != '':
+                    column = column + ', '
+                column = column + '`' + column + '`'
+            assert isinstance(ori_ref_column, list)
+            ref_column = ''
+            for ref_column in ori_ref_column:
+                if ref_column != '':
+                    ref_column = ref_column + ', '
+                ref_column = ref_column + '`' + ref_column + '`'
+        else:
+            column = '`' + ori_column + '`'
+            ref_column = '`' + ori_ref_column + '`'
         res.append((f"ALTER TABLE `{table}` ADD CONSTRAINT `{rename_constraints(f'FK_{table}')}` "
-                    f"FOREIGN KEY (`{column}`) REFERENCES `{ref_table}` (`{ref_column}`) "
+                    f"FOREIGN KEY ({column}) REFERENCES `{ref_table}` ({ref_column}) "
                     f"ON DELETE CASCADE ON UPDATE NO ACTION;"))
     return res
 
@@ -187,13 +202,28 @@ def pg_add_foreign_key(schema):
     if 'foreign_key' not in schema:
         return res
     for fk in schema['foreign_key']:
-        column = fk['col']
+        ori_column = fk['col']
         ref_table = fk['ref_table']
-        ref_column = fk['ref_col']
+        ori_ref_column = fk['ref_col']
+        if isinstance(ori_column, list):
+            column = ''
+            for column in ori_column:
+                if column != '':
+                    column = column + ', '
+                column = column + '"' + column + '"'
+            assert isinstance(ori_ref_column, list)
+            ref_column = ''
+            for ref_column in ori_ref_column:
+                if ref_column != '':
+                    ref_column = ref_column + ', '
+                ref_column = ref_column + '"' + ref_column + '"'
+        else:
+            column = '"' + ori_column + '"'
+            ref_column = '"' + ori_ref_column + '"'
         res.append((
             f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f'FK_{table}')} "
-            f"FOREIGN KEY (\"{column}\")\n\t"
-            f"REFERENCES \"{ref_table}\" (\"{ref_column}\") ON DELETE CASCADE ON UPDATE NO ACTION;"))
+            f"FOREIGN KEY ({column})\n\t"
+            f"REFERENCES \"{ref_table}\" ({ref_column}) ON DELETE CASCADE ON UPDATE NO ACTION;"))
     return res
 
 
@@ -250,13 +280,28 @@ def oracle_add_foreign_key(schema):
     if 'foreign_key' not in schema:
         return res
     for fk in schema['foreign_key']:
-        column = fk['col']
+        ori_column = fk['col']
         ref_table = fk['ref_table']
-        ref_column = fk['ref_col']
+        ori_ref_column = fk['ref_col']
+        if isinstance(ori_column, list):
+            column = ''
+            for column in ori_column:
+                if column != '':
+                    column = column + ', '
+                column = column + '"' + column + '"'
+            assert isinstance(ori_ref_column, list)
+            ref_column = ''
+            for ref_column in ori_ref_column:
+                if ref_column != '':
+                    ref_column = ref_column + ', '
+                ref_column = ref_column + '"' + ref_column + '"'
+        else:
+            column = '"' + ori_column + '"'
+            ref_column = '"' + ori_ref_column + '"'
         res.append((
             f"ALTER TABLE \"{table}\"\nADD CONSTRAINT {rename_constraints(f'FK_{table}')} "
-            f"FOREIGN KEY (\"{column}\")\n\t"
-            f"REFERENCES \"{ref_table}\" (\"{ref_column}\");"))
+            f"FOREIGN KEY ({column})\n\t"
+            f"REFERENCES \"{ref_table}\" ({ref_column});"))
     return res
 
 
@@ -497,7 +542,7 @@ def schema_build(db_name, dialect):
         add_constraints[table_name] = []
         type_defs[table_name] = []
         for col in value['cols']:
-            built_in_type, add_constraint, col_type_defs = build_create_type(col['type'], col['col_name'], dialect)
+            built_in_type, add_constraint, col_type_defs = load_col_type(col['type'], col['col_name'], dialect)
             col['type'] = built_in_type
             if add_constraint is not None:
                 add_constraints[table_name].append(add_constraint)
