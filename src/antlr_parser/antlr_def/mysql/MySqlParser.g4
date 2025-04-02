@@ -972,7 +972,7 @@ tableSource
 
 tableSourceItem
     : tableName (PARTITION '(' uidList ')')? (AS? alias = uid)? (indexHint (',' indexHint)*)? # atomTableItem
-    | (selectStatement | '(' parenthesisSubquery = selectStatement ')') AS? alias = uid ('(' uidList ')')?    # subqueryTableItem
+    | (LATERAL)? (selectStatement | '(' parenthesisSubquery = selectStatement ')') AS? alias = uid ('(' uidList ')')?    # subqueryTableItem
     | '(' tableSources ')'                                                                    # tableSourcesItem
     ;
 
