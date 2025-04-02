@@ -359,17 +359,17 @@ def serializedATN():
         1,117,5,117,3742,8,117,10,117,12,117,3745,9,117,1,118,1,118,5,118,
         3749,8,118,10,118,12,118,3752,9,118,1,118,1,118,1,118,5,118,3757,
         8,118,10,118,12,118,3760,9,118,1,118,1,118,1,118,3,118,3765,8,118,
-        1,119,1,119,1,119,1,119,1,119,1,119,3,119,3773,8,119,1,119,3,119,
-        3776,8,119,1,119,3,119,3779,8,119,1,119,1,119,1,119,5,119,3784,8,
-        119,10,119,12,119,3787,9,119,3,119,3789,8,119,1,119,3,119,3792,8,
-        119,1,119,1,119,1,119,1,119,1,119,3,119,3799,8,119,1,119,3,119,3802,
-        8,119,1,119,1,119,1,119,1,119,1,119,3,119,3809,8,119,1,119,1,119,
-        1,119,1,119,3,119,3815,8,119,1,120,1,120,1,120,1,120,3,120,3821,
-        8,120,1,120,1,120,1,120,1,120,1,121,1,121,1,121,1,121,1,121,3,121,
-        3832,8,121,1,122,3,122,3835,8,122,1,122,1,122,3,122,3839,8,122,1,
-        122,1,122,5,122,3843,8,122,10,122,12,122,3846,9,122,1,122,1,122,
-        1,122,1,122,5,122,3852,8,122,10,122,12,122,3855,9,122,1,122,1,122,
-        3,122,3859,8,122,1,122,1,122,3,122,3863,8,122,1,122,1,122,5,122,
+        1,119,3,119,3768,8,119,1,119,1,119,1,119,1,119,1,119,1,119,3,119,
+        3776,8,119,1,119,3,119,3779,8,119,1,119,3,119,3782,8,119,1,119,1,
+        119,1,119,5,119,3787,8,119,10,119,12,119,3790,9,119,3,119,3792,8,
+        119,1,119,3,119,3795,8,119,1,119,1,119,1,119,1,119,1,119,3,119,3802,
+        8,119,1,119,3,119,3805,8,119,1,119,1,119,1,119,1,119,1,119,3,119,
+        3812,8,119,1,119,3,119,3815,8,119,1,119,1,119,1,119,1,119,3,119,
+        3821,8,119,1,120,1,120,1,120,1,120,3,120,3827,8,120,1,120,1,120,
+        1,120,1,120,1,121,1,121,1,121,1,121,1,121,3,121,3838,8,121,1,122,
+        3,122,3841,8,122,1,122,1,122,1,122,5,122,3846,8,122,10,122,12,122,
+        3849,9,122,1,122,1,122,1,122,1,122,5,122,3855,8,122,10,122,12,122,
+        3858,9,122,1,122,1,122,3,122,3862,8,122,1,122,1,122,1,122,5,122,
         3867,8,122,10,122,12,122,3870,9,122,1,122,1,122,1,122,3,122,3875,
         8,122,3,122,3877,8,122,1,122,1,122,3,122,3881,8,122,1,123,1,123,
         1,123,1,123,1,123,1,123,1,123,3,123,3890,8,123,1,124,1,124,1,124,
@@ -867,8 +867,8 @@ def serializedATN():
         1,0,0,0,208,3516,1,0,0,0,210,3524,1,0,0,0,212,3532,1,0,0,0,214,3534,
         1,0,0,0,216,3570,1,0,0,0,218,3625,1,0,0,0,220,3634,1,0,0,0,222,3654,
         1,0,0,0,224,3666,1,0,0,0,226,3670,1,0,0,0,228,3703,1,0,0,0,230,3724,
-        1,0,0,0,232,3734,1,0,0,0,234,3738,1,0,0,0,236,3764,1,0,0,0,238,3814,
-        1,0,0,0,240,3816,1,0,0,0,242,3831,1,0,0,0,244,3880,1,0,0,0,246,3889,
+        1,0,0,0,232,3734,1,0,0,0,234,3738,1,0,0,0,236,3764,1,0,0,0,238,3820,
+        1,0,0,0,240,3822,1,0,0,0,242,3837,1,0,0,0,244,3880,1,0,0,0,246,3889,
         1,0,0,0,248,3899,1,0,0,0,250,3909,1,0,0,0,252,3965,1,0,0,0,254,3967,
         1,0,0,0,256,3994,1,0,0,0,258,4000,1,0,0,0,260,4008,1,0,0,0,262,4025,
         1,0,0,0,264,4041,1,0,0,0,266,4078,1,0,0,0,268,4084,1,0,0,0,270,4093,
@@ -2035,48 +2035,48 @@ def serializedATN():
         3,244,122,0,3756,3755,1,0,0,0,3757,3760,1,0,0,0,3758,3756,1,0,0,
         0,3758,3759,1,0,0,0,3759,3761,1,0,0,0,3760,3758,1,0,0,0,3761,3762,
         5,1134,0,0,3762,3765,1,0,0,0,3763,3765,3,262,131,0,3764,3746,1,0,
-        0,0,3764,3753,1,0,0,0,3764,3763,1,0,0,0,3765,237,1,0,0,0,3766,3772,
-        3,552,276,0,3767,3768,5,129,0,0,3768,3769,5,1133,0,0,3769,3770,3,
-        616,308,0,3770,3771,5,1134,0,0,3771,3773,1,0,0,0,3772,3767,1,0,0,
-        0,3772,3773,1,0,0,0,3773,3778,1,0,0,0,3774,3776,5,12,0,0,3775,3774,
-        1,0,0,0,3775,3776,1,0,0,0,3776,3777,1,0,0,0,3777,3779,3,584,292,
-        0,3778,3775,1,0,0,0,3778,3779,1,0,0,0,3779,3788,1,0,0,0,3780,3785,
-        3,240,120,0,3781,3782,5,1135,0,0,3782,3784,3,240,120,0,3783,3781,
-        1,0,0,0,3784,3787,1,0,0,0,3785,3783,1,0,0,0,3785,3786,1,0,0,0,3786,
-        3789,1,0,0,0,3787,3785,1,0,0,0,3788,3780,1,0,0,0,3788,3789,1,0,0,
-        0,3789,3815,1,0,0,0,3790,3792,5,94,0,0,3791,3790,1,0,0,0,3791,3792,
-        1,0,0,0,3792,3798,1,0,0,0,3793,3799,3,200,100,0,3794,3795,5,1133,
-        0,0,3795,3796,3,200,100,0,3796,3797,5,1134,0,0,3797,3799,1,0,0,0,
-        3798,3793,1,0,0,0,3798,3794,1,0,0,0,3799,3801,1,0,0,0,3800,3802,
-        5,12,0,0,3801,3800,1,0,0,0,3801,3802,1,0,0,0,3802,3803,1,0,0,0,3803,
-        3808,3,584,292,0,3804,3805,5,1133,0,0,3805,3806,3,616,308,0,3806,
-        3807,5,1134,0,0,3807,3809,1,0,0,0,3808,3804,1,0,0,0,3808,3809,1,
-        0,0,0,3809,3815,1,0,0,0,3810,3811,5,1133,0,0,3811,3812,3,234,117,
-        0,3812,3813,5,1134,0,0,3813,3815,1,0,0,0,3814,3766,1,0,0,0,3814,
-        3791,1,0,0,0,3814,3810,1,0,0,0,3815,239,1,0,0,0,3816,3817,7,49,0,
-        0,3817,3820,7,20,0,0,3818,3819,5,65,0,0,3819,3821,3,242,121,0,3820,
-        3818,1,0,0,0,3820,3821,1,0,0,0,3821,3822,1,0,0,0,3822,3823,5,1133,
-        0,0,3823,3824,3,616,308,0,3824,3825,5,1134,0,0,3825,241,1,0,0,0,
-        3826,3832,5,90,0,0,3827,3828,5,124,0,0,3828,3832,5,19,0,0,3829,3830,
-        5,73,0,0,3830,3832,5,19,0,0,3831,3826,1,0,0,0,3831,3827,1,0,0,0,
-        3831,3829,1,0,0,0,3832,243,1,0,0,0,3833,3835,7,50,0,0,3834,3833,
-        1,0,0,0,3834,3835,1,0,0,0,3835,3836,1,0,0,0,3836,3838,5,90,0,0,3837,
-        3839,5,94,0,0,3838,3837,1,0,0,0,3838,3839,1,0,0,0,3839,3840,1,0,
-        0,0,3840,3844,3,238,119,0,3841,3843,3,246,123,0,3842,3841,1,0,0,
-        0,3843,3846,1,0,0,0,3844,3842,1,0,0,0,3844,3845,1,0,0,0,3845,3881,
-        1,0,0,0,3846,3844,1,0,0,0,3847,3848,5,171,0,0,3848,3853,3,238,119,
-        0,3849,3850,5,118,0,0,3850,3852,3,688,344,0,3851,3849,1,0,0,0,3852,
-        3855,1,0,0,0,3853,3851,1,0,0,0,3853,3854,1,0,0,0,3854,3881,1,0,0,
-        0,3855,3853,1,0,0,0,3856,3858,7,51,0,0,3857,3859,5,126,0,0,3858,
-        3857,1,0,0,0,3858,3859,1,0,0,0,3859,3860,1,0,0,0,3860,3862,5,90,
-        0,0,3861,3863,5,94,0,0,3862,3861,1,0,0,0,3862,3863,1,0,0,0,3863,
-        3864,1,0,0,0,3864,3868,3,238,119,0,3865,3867,3,246,123,0,3866,3865,
-        1,0,0,0,3867,3870,1,0,0,0,3868,3866,1,0,0,0,3868,3869,1,0,0,0,3869,
+        0,0,3764,3753,1,0,0,0,3764,3763,1,0,0,0,3765,237,1,0,0,0,3766,3768,
+        5,94,0,0,3767,3766,1,0,0,0,3767,3768,1,0,0,0,3768,3769,1,0,0,0,3769,
+        3775,3,552,276,0,3770,3771,5,129,0,0,3771,3772,5,1133,0,0,3772,3773,
+        3,616,308,0,3773,3774,5,1134,0,0,3774,3776,1,0,0,0,3775,3770,1,0,
+        0,0,3775,3776,1,0,0,0,3776,3781,1,0,0,0,3777,3779,5,12,0,0,3778,
+        3777,1,0,0,0,3778,3779,1,0,0,0,3779,3780,1,0,0,0,3780,3782,3,584,
+        292,0,3781,3778,1,0,0,0,3781,3782,1,0,0,0,3782,3791,1,0,0,0,3783,
+        3788,3,240,120,0,3784,3785,5,1135,0,0,3785,3787,3,240,120,0,3786,
+        3784,1,0,0,0,3787,3790,1,0,0,0,3788,3786,1,0,0,0,3788,3789,1,0,0,
+        0,3789,3792,1,0,0,0,3790,3788,1,0,0,0,3791,3783,1,0,0,0,3791,3792,
+        1,0,0,0,3792,3821,1,0,0,0,3793,3795,5,94,0,0,3794,3793,1,0,0,0,3794,
+        3795,1,0,0,0,3795,3801,1,0,0,0,3796,3802,3,200,100,0,3797,3798,5,
+        1133,0,0,3798,3799,3,200,100,0,3799,3800,5,1134,0,0,3800,3802,1,
+        0,0,0,3801,3796,1,0,0,0,3801,3797,1,0,0,0,3802,3804,1,0,0,0,3803,
+        3805,5,12,0,0,3804,3803,1,0,0,0,3804,3805,1,0,0,0,3805,3806,1,0,
+        0,0,3806,3811,3,584,292,0,3807,3808,5,1133,0,0,3808,3809,3,616,308,
+        0,3809,3810,5,1134,0,0,3810,3812,1,0,0,0,3811,3807,1,0,0,0,3811,
+        3812,1,0,0,0,3812,3821,1,0,0,0,3813,3815,5,94,0,0,3814,3813,1,0,
+        0,0,3814,3815,1,0,0,0,3815,3816,1,0,0,0,3816,3817,5,1133,0,0,3817,
+        3818,3,234,117,0,3818,3819,5,1134,0,0,3819,3821,1,0,0,0,3820,3767,
+        1,0,0,0,3820,3794,1,0,0,0,3820,3814,1,0,0,0,3821,239,1,0,0,0,3822,
+        3823,7,49,0,0,3823,3826,7,20,0,0,3824,3825,5,65,0,0,3825,3827,3,
+        242,121,0,3826,3824,1,0,0,0,3826,3827,1,0,0,0,3827,3828,1,0,0,0,
+        3828,3829,5,1133,0,0,3829,3830,3,616,308,0,3830,3831,5,1134,0,0,
+        3831,241,1,0,0,0,3832,3838,5,90,0,0,3833,3834,5,124,0,0,3834,3838,
+        5,19,0,0,3835,3836,5,73,0,0,3836,3838,5,19,0,0,3837,3832,1,0,0,0,
+        3837,3833,1,0,0,0,3837,3835,1,0,0,0,3838,243,1,0,0,0,3839,3841,7,
+        50,0,0,3840,3839,1,0,0,0,3840,3841,1,0,0,0,3841,3842,1,0,0,0,3842,
+        3843,5,90,0,0,3843,3847,3,238,119,0,3844,3846,3,246,123,0,3845,3844,
+        1,0,0,0,3846,3849,1,0,0,0,3847,3845,1,0,0,0,3847,3848,1,0,0,0,3848,
+        3881,1,0,0,0,3849,3847,1,0,0,0,3850,3851,5,171,0,0,3851,3856,3,238,
+        119,0,3852,3853,5,118,0,0,3853,3855,3,688,344,0,3854,3852,1,0,0,
+        0,3855,3858,1,0,0,0,3856,3854,1,0,0,0,3856,3857,1,0,0,0,3857,3881,
+        1,0,0,0,3858,3856,1,0,0,0,3859,3861,7,51,0,0,3860,3862,5,126,0,0,
+        3861,3860,1,0,0,0,3861,3862,1,0,0,0,3862,3863,1,0,0,0,3863,3864,
+        5,90,0,0,3864,3868,3,238,119,0,3865,3867,3,246,123,0,3866,3865,1,
+        0,0,0,3867,3870,1,0,0,0,3868,3866,1,0,0,0,3868,3869,1,0,0,0,3869,
         3881,1,0,0,0,3870,3868,1,0,0,0,3871,3876,5,113,0,0,3872,3874,7,51,
         0,0,3873,3875,5,126,0,0,3874,3873,1,0,0,0,3874,3875,1,0,0,0,3875,
         3877,1,0,0,0,3876,3872,1,0,0,0,3876,3877,1,0,0,0,3877,3878,1,0,0,
-        0,3878,3879,5,90,0,0,3879,3881,3,238,119,0,3880,3834,1,0,0,0,3880,
-        3847,1,0,0,0,3880,3856,1,0,0,0,3880,3871,1,0,0,0,3881,245,1,0,0,
+        0,3878,3879,5,90,0,0,3879,3881,3,238,119,0,3880,3840,1,0,0,0,3880,
+        3850,1,0,0,0,3880,3859,1,0,0,0,3880,3871,1,0,0,0,3881,245,1,0,0,
         0,3882,3883,5,118,0,0,3883,3890,3,688,344,0,3884,3885,5,187,0,0,
         3885,3886,5,1133,0,0,3886,3887,3,616,308,0,3887,3888,5,1134,0,0,
         3888,3890,1,0,0,0,3889,3882,1,0,0,0,3889,3884,1,0,0,0,3890,247,1,
@@ -3415,8 +3415,8 @@ def serializedATN():
         3536,3539,3542,3547,3550,3557,3561,3564,3568,3572,3575,3578,3583,
         3589,3593,3603,3609,3613,3619,3623,3629,3632,3644,3648,3652,3660,
         3664,3672,3675,3679,3682,3690,3695,3698,3701,3705,3708,3717,3722,
-        3731,3736,3743,3750,3758,3764,3772,3775,3778,3785,3788,3791,3798,
-        3801,3808,3814,3820,3831,3834,3838,3844,3853,3858,3862,3868,3874,
+        3731,3736,3743,3750,3758,3764,3767,3775,3778,3781,3788,3791,3794,
+        3801,3804,3811,3814,3820,3826,3837,3840,3847,3856,3861,3868,3874,
         3876,3880,3889,3899,3909,3915,3920,3924,3927,3930,3933,3936,3942,
         3948,3951,3954,3957,3960,3963,3965,3971,3977,3980,3983,3986,3989,
         3992,3996,4002,4006,4014,4018,4021,4023,4036,4039,4046,4056,4059,
@@ -26483,6 +26483,8 @@ class MySqlParser ( Parser ):
         def tableName(self):
             return self.getTypedRuleContext(MySqlParser.TableNameContext,0)
 
+        def LATERAL(self):
+            return self.getToken(MySqlParser.LATERAL, 0)
         def PARTITION(self):
             return self.getToken(MySqlParser.PARTITION, 0)
         def LR_BRACKET(self):
@@ -26531,6 +26533,8 @@ class MySqlParser ( Parser ):
 
         def RR_BRACKET(self):
             return self.getToken(MySqlParser.RR_BRACKET, 0)
+        def LATERAL(self):
+            return self.getToken(MySqlParser.LATERAL, 0)
 
         def enterRule(self, listener:ParseTreeListener):
             if hasattr( listener, "enterTableSourcesItem" ):
@@ -26548,62 +26552,70 @@ class MySqlParser ( Parser ):
         self.enterRule(localctx, 238, self.RULE_tableSourceItem)
         self._la = 0 # Token type
         try:
-            self.state = 3814
+            self.state = 3820
             self._errHandler.sync(self)
-            la_ = self._interp.adaptivePredict(self._input,541,self._ctx)
+            la_ = self._interp.adaptivePredict(self._input,543,self._ctx)
             if la_ == 1:
                 localctx = MySqlParser.AtomTableItemContext(self, localctx)
                 self.enterOuterAlt(localctx, 1)
-                self.state = 3766
+                self.state = 3767
+                self._errHandler.sync(self)
+                la_ = self._interp.adaptivePredict(self._input,532,self._ctx)
+                if la_ == 1:
+                    self.state = 3766
+                    self.match(MySqlParser.LATERAL)
+
+
+                self.state = 3769
                 self.tableName()
-                self.state = 3772
+                self.state = 3775
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==129:
-                    self.state = 3767
-                    self.match(MySqlParser.PARTITION)
-                    self.state = 3768
-                    self.match(MySqlParser.LR_BRACKET)
-                    self.state = 3769
-                    self.uidList()
                     self.state = 3770
+                    self.match(MySqlParser.PARTITION)
+                    self.state = 3771
+                    self.match(MySqlParser.LR_BRACKET)
+                    self.state = 3772
+                    self.uidList()
+                    self.state = 3773
                     self.match(MySqlParser.RR_BRACKET)
 
 
-                self.state = 3778
+                self.state = 3781
                 self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,534,self._ctx)
+                la_ = self._interp.adaptivePredict(self._input,535,self._ctx)
                 if la_ == 1:
-                    self.state = 3775
+                    self.state = 3778
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
                     if _la==12:
-                        self.state = 3774
+                        self.state = 3777
                         self.match(MySqlParser.AS)
 
 
-                    self.state = 3777
+                    self.state = 3780
                     localctx.alias = self.uid()
 
 
-                self.state = 3788
+                self.state = 3791
                 self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,536,self._ctx)
+                la_ = self._interp.adaptivePredict(self._input,537,self._ctx)
                 if la_ == 1:
-                    self.state = 3780
+                    self.state = 3783
                     self.indexHint()
-                    self.state = 3785
+                    self.state = 3788
                     self._errHandler.sync(self)
-                    _alt = self._interp.adaptivePredict(self._input,535,self._ctx)
+                    _alt = self._interp.adaptivePredict(self._input,536,self._ctx)
                     while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                         if _alt==1:
-                            self.state = 3781
+                            self.state = 3784
                             self.match(MySqlParser.COMMA)
-                            self.state = 3782
+                            self.state = 3785
                             self.indexHint() 
-                        self.state = 3787
+                        self.state = 3790
                         self._errHandler.sync(self)
-                        _alt = self._interp.adaptivePredict(self._input,535,self._ctx)
+                        _alt = self._interp.adaptivePredict(self._input,536,self._ctx)
 
 
 
@@ -26612,51 +26624,51 @@ class MySqlParser ( Parser ):
             elif la_ == 2:
                 localctx = MySqlParser.SubqueryTableItemContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
-                self.state = 3791
+                self.state = 3794
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==94:
-                    self.state = 3790
-                    self.match(MySqlParser.LATERAL)
-
-
-                self.state = 3798
-                self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,538,self._ctx)
-                if la_ == 1:
                     self.state = 3793
-                    self.selectStatement()
-                    pass
-
-                elif la_ == 2:
-                    self.state = 3794
-                    self.match(MySqlParser.LR_BRACKET)
-                    self.state = 3795
-                    localctx.parenthesisSubquery = self.selectStatement()
-                    self.state = 3796
-                    self.match(MySqlParser.RR_BRACKET)
-                    pass
+                    self.match(MySqlParser.LATERAL)
 
 
                 self.state = 3801
                 self._errHandler.sync(self)
+                la_ = self._interp.adaptivePredict(self._input,539,self._ctx)
+                if la_ == 1:
+                    self.state = 3796
+                    self.selectStatement()
+                    pass
+
+                elif la_ == 2:
+                    self.state = 3797
+                    self.match(MySqlParser.LR_BRACKET)
+                    self.state = 3798
+                    localctx.parenthesisSubquery = self.selectStatement()
+                    self.state = 3799
+                    self.match(MySqlParser.RR_BRACKET)
+                    pass
+
+
+                self.state = 3804
+                self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==12:
-                    self.state = 3800
+                    self.state = 3803
                     self.match(MySqlParser.AS)
 
 
-                self.state = 3803
+                self.state = 3806
                 localctx.alias = self.uid()
-                self.state = 3808
+                self.state = 3811
                 self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,540,self._ctx)
+                la_ = self._interp.adaptivePredict(self._input,541,self._ctx)
                 if la_ == 1:
-                    self.state = 3804
+                    self.state = 3807
                     self.match(MySqlParser.LR_BRACKET)
-                    self.state = 3805
+                    self.state = 3808
                     self.uidList()
-                    self.state = 3806
+                    self.state = 3809
                     self.match(MySqlParser.RR_BRACKET)
 
 
@@ -26665,11 +26677,19 @@ class MySqlParser ( Parser ):
             elif la_ == 3:
                 localctx = MySqlParser.TableSourcesItemContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
-                self.state = 3810
+                self.state = 3814
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if _la==94:
+                    self.state = 3813
+                    self.match(MySqlParser.LATERAL)
+
+
+                self.state = 3816
                 self.match(MySqlParser.LR_BRACKET)
-                self.state = 3811
+                self.state = 3817
                 self.tableSources()
-                self.state = 3812
+                self.state = 3818
                 self.match(MySqlParser.RR_BRACKET)
                 pass
 
@@ -26745,7 +26765,7 @@ class MySqlParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 3816
+            self.state = 3822
             localctx.indexHintAction = self._input.LT(1)
             _la = self._input.LA(1)
             if not(_la==66 or _la==78 or _la==186):
@@ -26753,7 +26773,7 @@ class MySqlParser ( Parser ):
             else:
                 self._errHandler.reportMatch(self)
                 self.consume()
-            self.state = 3817
+            self.state = 3823
             localctx.keyFormat = self._input.LT(1)
             _la = self._input.LA(1)
             if not(_la==81 or _la==91):
@@ -26761,21 +26781,21 @@ class MySqlParser ( Parser ):
             else:
                 self._errHandler.reportMatch(self)
                 self.consume()
-            self.state = 3820
+            self.state = 3826
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==65:
-                self.state = 3818
+                self.state = 3824
                 self.match(MySqlParser.FOR)
-                self.state = 3819
+                self.state = 3825
                 self.indexHintType()
 
 
-            self.state = 3822
+            self.state = 3828
             self.match(MySqlParser.LR_BRACKET)
-            self.state = 3823
+            self.state = 3829
             self.uidList()
-            self.state = 3824
+            self.state = 3830
             self.match(MySqlParser.RR_BRACKET)
         except RecognitionException as re:
             localctx.exception = re
@@ -26824,26 +26844,26 @@ class MySqlParser ( Parser ):
         localctx = MySqlParser.IndexHintTypeContext(self, self._ctx, self.state)
         self.enterRule(localctx, 242, self.RULE_indexHintType)
         try:
-            self.state = 3831
+            self.state = 3837
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [90]:
                 self.enterOuterAlt(localctx, 1)
-                self.state = 3826
+                self.state = 3832
                 self.match(MySqlParser.JOIN)
                 pass
             elif token in [124]:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 3827
+                self.state = 3833
                 self.match(MySqlParser.ORDER)
-                self.state = 3828
+                self.state = 3834
                 self.match(MySqlParser.BY)
                 pass
             elif token in [73]:
                 self.enterOuterAlt(localctx, 3)
-                self.state = 3829
+                self.state = 3835
                 self.match(MySqlParser.GROUP)
-                self.state = 3830
+                self.state = 3836
                 self.match(MySqlParser.BY)
                 pass
             else:
@@ -26886,8 +26906,6 @@ class MySqlParser ( Parser ):
         def tableSourceItem(self):
             return self.getTypedRuleContext(MySqlParser.TableSourceItemContext,0)
 
-        def LATERAL(self):
-            return self.getToken(MySqlParser.LATERAL, 0)
         def joinSpec(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(MySqlParser.JoinSpecContext)
@@ -26954,8 +26972,6 @@ class MySqlParser ( Parser ):
             return self.getToken(MySqlParser.RIGHT, 0)
         def OUTER(self):
             return self.getToken(MySqlParser.OUTER, 0)
-        def LATERAL(self):
-            return self.getToken(MySqlParser.LATERAL, 0)
         def joinSpec(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(MySqlParser.JoinSpecContext)
@@ -27017,11 +27033,11 @@ class MySqlParser ( Parser ):
             if token in [34, 83, 90]:
                 localctx = MySqlParser.InnerJoinContext(self, localctx)
                 self.enterOuterAlt(localctx, 1)
-                self.state = 3834
+                self.state = 3840
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==34 or _la==83:
-                    self.state = 3833
+                    self.state = 3839
                     _la = self._input.LA(1)
                     if not(_la==34 or _la==83):
                         self._errHandler.recoverInline(self)
@@ -27030,79 +27046,63 @@ class MySqlParser ( Parser ):
                         self.consume()
 
 
-                self.state = 3836
+                self.state = 3842
                 self.match(MySqlParser.JOIN)
-                self.state = 3838
-                self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,545,self._ctx)
-                if la_ == 1:
-                    self.state = 3837
-                    self.match(MySqlParser.LATERAL)
-
-
-                self.state = 3840
+                self.state = 3843
                 self.tableSourceItem()
-                self.state = 3844
+                self.state = 3847
                 self._errHandler.sync(self)
-                _alt = self._interp.adaptivePredict(self._input,546,self._ctx)
+                _alt = self._interp.adaptivePredict(self._input,547,self._ctx)
                 while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                     if _alt==1:
-                        self.state = 3841
+                        self.state = 3844
                         self.joinSpec() 
-                    self.state = 3846
+                    self.state = 3849
                     self._errHandler.sync(self)
-                    _alt = self._interp.adaptivePredict(self._input,546,self._ctx)
+                    _alt = self._interp.adaptivePredict(self._input,547,self._ctx)
 
                 pass
             elif token in [171]:
                 localctx = MySqlParser.StraightJoinContext(self, localctx)
                 self.enterOuterAlt(localctx, 2)
-                self.state = 3847
+                self.state = 3850
                 self.match(MySqlParser.STRAIGHT_JOIN)
-                self.state = 3848
+                self.state = 3851
                 self.tableSourceItem()
-                self.state = 3853
+                self.state = 3856
                 self._errHandler.sync(self)
-                _alt = self._interp.adaptivePredict(self._input,547,self._ctx)
+                _alt = self._interp.adaptivePredict(self._input,548,self._ctx)
                 while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                     if _alt==1:
-                        self.state = 3849
+                        self.state = 3852
                         self.match(MySqlParser.ON)
-                        self.state = 3850
+                        self.state = 3853
                         self.expression(0) 
-                    self.state = 3855
+                    self.state = 3858
                     self._errHandler.sync(self)
-                    _alt = self._interp.adaptivePredict(self._input,547,self._ctx)
+                    _alt = self._interp.adaptivePredict(self._input,548,self._ctx)
 
                 pass
             elif token in [97, 148]:
                 localctx = MySqlParser.OuterJoinContext(self, localctx)
                 self.enterOuterAlt(localctx, 3)
-                self.state = 3856
+                self.state = 3859
                 _la = self._input.LA(1)
                 if not(_la==97 or _la==148):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                self.state = 3858
+                self.state = 3861
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==126:
-                    self.state = 3857
+                    self.state = 3860
                     self.match(MySqlParser.OUTER)
 
 
-                self.state = 3860
+                self.state = 3863
                 self.match(MySqlParser.JOIN)
-                self.state = 3862
-                self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,549,self._ctx)
-                if la_ == 1:
-                    self.state = 3861
-                    self.match(MySqlParser.LATERAL)
-
-
                 self.state = 3864
                 self.tableSourceItem()
                 self.state = 3868

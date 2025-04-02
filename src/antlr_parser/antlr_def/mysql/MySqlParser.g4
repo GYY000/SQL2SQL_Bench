@@ -971,9 +971,9 @@ tableSource
     ;
 
 tableSourceItem
-    : tableName (PARTITION '(' uidList ')')? (AS? alias = uid)? (indexHint (',' indexHint)*)? # atomTableItem
-    | (LATERAL)? (selectStatement | '(' parenthesisSubquery = selectStatement ')') AS? alias = uid ('(' uidList ')')?    # subqueryTableItem
-    | '(' tableSources ')'                                                                    # tableSourcesItem
+    : LATERAL? tableName (PARTITION '(' uidList ')')? (AS? alias = uid)? (indexHint (',' indexHint)*)? # atomTableItem
+    | LATERAL? (selectStatement | '(' parenthesisSubquery = selectStatement ')') AS? alias = uid ('(' uidList ')')?    # subqueryTableItem
+    | LATERAL? '(' tableSources ')'                                                                    # tableSourcesItem
     ;
 
 indexHint
@@ -987,9 +987,9 @@ indexHintType
     ;
 
 joinPart
-    : (INNER | CROSS)? JOIN LATERAL? tableSourceItem joinSpec*      # innerJoin
+    : (INNER | CROSS)? JOIN tableSourceItem joinSpec*      # innerJoin
     | STRAIGHT_JOIN tableSourceItem (ON expression)*                # straightJoin
-    | (LEFT | RIGHT) OUTER? JOIN LATERAL? tableSourceItem joinSpec* # outerJoin
+    | (LEFT | RIGHT) OUTER? JOIN tableSourceItem joinSpec* # outerJoin
     | NATURAL ((LEFT | RIGHT) OUTER?)? JOIN tableSourceItem         # naturalJoin
     ;
 
