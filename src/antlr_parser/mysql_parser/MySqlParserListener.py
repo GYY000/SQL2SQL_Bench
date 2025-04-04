@@ -251,12 +251,12 @@ class MySqlParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by MySqlParser#commonTableExpressions.
-    def enterCommonTableExpressions(self, ctx:MySqlParser.CommonTableExpressionsContext):
+    # Enter a parse tree produced by MySqlParser#commonTableExpression.
+    def enterCommonTableExpression(self, ctx:MySqlParser.CommonTableExpressionContext):
         pass
 
-    # Exit a parse tree produced by MySqlParser#commonTableExpressions.
-    def exitCommonTableExpressions(self, ctx:MySqlParser.CommonTableExpressionsContext):
+    # Exit a parse tree produced by MySqlParser#commonTableExpression.
+    def exitCommonTableExpression(self, ctx:MySqlParser.CommonTableExpressionContext):
         pass
 
 

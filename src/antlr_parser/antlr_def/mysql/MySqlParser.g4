@@ -294,13 +294,11 @@ createTrigger
     ;
 
 withClause
-    : WITH RECURSIVE? commonTableExpressions
+    : WITH RECURSIVE? commonTableExpression (',' commonTableExpression)*
     ;
 
-commonTableExpressions
-    : cteName ('(' cteColumnName (',' cteColumnName)* ')')? AS '(' dmlStatement ')' (
-        ',' commonTableExpressions
-    )?
+commonTableExpression
+    : cteName ('(' cteColumnName (',' cteColumnName)* ')')? AS '(' dmlStatement ')'
     ;
 
 cteName
@@ -1968,7 +1966,7 @@ signalConditionInformation
     ;
 
 withStatement
-    : WITH RECURSIVE? commonTableExpressions (',' commonTableExpressions)*
+    : WITH RECURSIVE? commonTableExpression (',' commonTableExpression)*
     ;
 
 tableStatement
