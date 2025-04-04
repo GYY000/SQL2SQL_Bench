@@ -88,7 +88,25 @@ class BoolType(BaseType):
                     return 'False'
 
 
-class DecimalType(BaseType):
+class FloatGeneralType(BaseType):
+    def __init__(self, type_name=None, attributes: dict = None):
+        super().__init__(type_name if type_name is not None else 'FLOAT', attributes)
+
+    def get_type_name(self, dialect: str):
+        return f'FLOAT'
+
+    def __str__(self):
+        return f"FLOAT"
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        if value is None:
+            assert False
+        else:
+            assert isinstance(value, float) or isinstance(value, str)
+            return str(float(value))
+
+
+class DecimalType(FloatGeneralType):
     def __init__(self, precision, scale):
         super().__init__("DECIMAL", {"precision": precision, "scale": scale})
         self.precision = precision
@@ -103,15 +121,8 @@ class DecimalType(BaseType):
     def __str__(self):
         return f"DECIMAL({self.precision},{self.scale})"
 
-    def gen_value(self, dialect: str, value=None) -> str | None:
-        if value is None:
-            assert False
-        else:
-            assert isinstance(value, float) or isinstance(value, str)
-            return str(float(value))
 
-
-class DoubleType(BaseType):
+class DoubleType(FloatGeneralType):
     def __init__(self):
         super().__init__("DOUBLE")
 
@@ -127,13 +138,6 @@ class DoubleType(BaseType):
 
     def __str__(self):
         return "DOUBLE"
-
-    def gen_value(self, dialect: str, value=None) -> str | None:
-        if value is None:
-            assert False
-        else:
-            assert isinstance(value, float) or isinstance(value, str)
-            return str(value)
 
 
 class DateType(BaseType):
@@ -329,18 +333,18 @@ class IntervalYearMonthType(BaseType):
         else:
             assert isinstance(value, dict)
             if dialect == 'pg':
-                if value['sign']:
+                if not value['sign']:
                     value['year'] = -1 * value['year']
                 return f"'{value['year']} years {value['month']} months'::INTERVAL YEAR TO MONTH"
             elif dialect == 'oracle':
-                if value['sign']:
+                if not value['sign']:
                     value['year'] = -1 * value['year']
                 return f"to_yminterval('{value['year']}-{value['month']}')"
             else:
                 return None
 
 
-class TimestamepTZType(BaseType):
+class TimestampTZType(BaseType):
     def __init__(self, fraction=None):
         super().__init__("TIMESTAMPTZ", {"fraction": fraction})
         self.fraction = fraction
@@ -370,8 +374,26 @@ class TimestamepTZType(BaseType):
                 return f'TIMESTAMP WITH TIME ZONE({self.fraction})'
 
 
+class StringGeneralType(BaseType):
+    def __init__(self, type_name=None, attributes: dict = None):
+        super().__init__(type_name if type_name is not None else 'STRING', attributes)
+
+    def get_type_name(self, dialect: str):
+        return "string"
+
+    def __str__(self):
+        return "string"
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        if value is None:
+            assert False
+        else:
+            assert isinstance(value, str)
+            return f"\'{value}\'"
+
+
 class VarcharType(BaseType):
-    def __init__(self, length):
+    def __init__(self, length=None):
         super().__init__("VARCHAR", {"length": length})
         self.length = length
 
@@ -537,7 +559,7 @@ class JsonType(BaseType):
             elif dialect == 'pg':
                 return "\'" + json.dumps(value) + "\'::json"
             else:
-                assert False
+                return None
 
 
 class JsonbType(BaseType):
@@ -564,7 +586,7 @@ class JsonbType(BaseType):
             elif dialect == 'pg':
                 return "\'" + json.dumps(value) + "\'::jsonb"
             else:
-                assert False
+                return None
 
 
 class PointType(BaseType):
@@ -685,3 +707,23 @@ class ArrayType(BaseType):
                     return f"ARRAY[{ele_str}]"
                 else:
                     assert False
+
+
+class NullType(BaseType):
+    def __init__(self):
+        super().__init__("NULL")
+
+    def get_type_name(self, dialect: str):
+        if dialect == 'mysql':
+            return 'NULL'
+        elif dialect == 'pg':
+            return 'NULL'
+        elif dialect == 'oracle':
+            return 'NULL'
+
+    def __str__(self):
+        return f"NULL"
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        assert value is None
+        return 'NULL'

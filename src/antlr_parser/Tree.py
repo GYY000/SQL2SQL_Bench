@@ -331,6 +331,16 @@ class TreeNode:
             else:
                 return None, ori_sql[:i + j]
 
+    def get_children_by_path(self, path: list):
+        if len(path) == 0:
+            return [self]
+        else:
+            res = []
+            for child in self.children:
+                if child.value == path[0]:
+                    res = res + child.get_children_by_path(path[1:])
+            return res
+
     def clone(self):
         new_node = TreeNode(self.value, self.dialect, self.is_terminal)
         new_node.model_get = self.model_get

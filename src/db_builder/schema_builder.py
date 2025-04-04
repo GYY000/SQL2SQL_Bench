@@ -10,7 +10,8 @@ from tqdm import tqdm
 
 from sql_gen.generator.ele_type.type_def import BaseType
 from sql_gen.generator.ele_type.type_operation import load_col_type, build_value
-from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute, oracle_drop_db
+from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute, oracle_drop_db, pg_drop_db, \
+    mysql_drop_db
 from utils.tools import get_proj_root_path, str_split
 
 id_number = {}
@@ -359,32 +360,15 @@ def dump_schema(schema: dict, constraints: dict, schema_type_defs: dict, dialect
 def drop_schema(db_name, dialect):
     if dialect == 'oracle':
         oracle_drop_db(db_name)
-    with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
-        schema = json.loads(file.read())
-    for table_name, value in schema.items():
-        # if dialect == 'oracle':
-        #     oracle_sql_execute(db_name, f"DROP TABLE \"{table_name}\" CASCADE CONSTRAINTS;")
-        if dialect == 'mysql':
-            mysql_sql_execute(db_name, f"DROP TABLE `{table_name}` CASCADE;")
-        elif dialect == 'pg':
-            pg_sql_execute(db_name, f"DROP TABLE \"{table_name}\" CASCADE;")
-        else:
-            assert False
-    flag1 = True
-    for table_name, table_content in schema.items():
-        # if dialect == 'oracle':
-        #     flag, res = oracle_sql_execute(db_name, f"SELECT * FROM \"{table_name}\";")
-        if dialect == 'mysql':
-            flag, res = mysql_sql_execute(db_name, f"SELECT * FROM `{table_name}`;")
-        elif dialect == 'pg':
-            flag, res = pg_sql_execute(db_name, f"SELECT * FROM \"{table_name}\";")
-        else:
-            assert False
-        flag1 = flag1 and not flag
-        if flag:
-            print(f'{table_name} may fail to drop')
-    if flag1:
-        print(f'{db_name} drop successfully')
+        return
+    elif dialect == 'pg':
+        pg_drop_db(db_name)
+        return
+    elif dialect == 'mysql':
+        mysql_drop_db(db_name)
+        return
+    else:
+        assert False
 
 
 def create_schema(db_name, dialect, schema=None):

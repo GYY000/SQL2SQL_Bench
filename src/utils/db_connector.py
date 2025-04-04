@@ -34,17 +34,17 @@ database_mapping = {
     "hr_order_entry": {
         "mysql": "order_entry",
         "pg": "order_entry",
-        "oracle": "tpch"
+        "oracle": "order_entry"
     },
     "sale_history": {
         "mysql": "sale_his",
         "pg": "sale_his",
-        "oracle": "orcl"
+        "oracle": "sale_his"
     },
     "snap": {
         "mysql": "snap",
         "pg": "snap",
-        "oracle": "tpch"
+        "oracle": "snap"
     },
     "chinook": {
         "mysql": "chinook",
@@ -55,6 +55,16 @@ database_mapping = {
         "mysql": "bird",
         "pg": "bird",
         "oracle": "bird"
+    },
+    "tpch": {
+        "mysql": "tpch",
+        "pg": "tpch",
+        "oracle": "tpch"
+    },
+    "tpcds": {
+        "mysql": "tpcds",
+        "pg": "tpcds",
+        "oracle": "tpcds"
     }
 }
 
@@ -77,6 +87,42 @@ def sql_execute(dialect: str, db_name: str, sql: str):
         raise ValueError(f"{dialect} is not supported")
 
 
+def show_mysql_databases():
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_config['mysql_host'],
+            port=mysql_config['mysql_port'],
+            user=mysql_config['mysql_user'],
+            password=mysql_config['mysql_pwd']
+        )
+        cursor = connection.cursor()
+        cursor.execute("SHOW DATABASES")
+        databases = [db[0] for db in cursor.fetchall()]
+        return databases
+    except mysql.connector.Error as err:
+        print(f"error raised: {err}")
+        return None
+
+
+def mysql_drop_db(db_name: str):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_config['mysql_host'],
+            port=mysql_config['mysql_port'],
+            user=mysql_config['mysql_user'],
+            password=mysql_config['mysql_pwd']
+        )
+        db_name = get_db_name('mysql', db_name)
+        cursor = connection.cursor()
+        cursor.execute(f"DROP DATABASE `{db_name}`")
+        connection.commit()
+        cursor.close()
+        connection.close()
+        print(f"Database '{db_name}' dropped successfully!")
+    except mysql.connector.Error as err:
+        print(f"error raised: {err}")
+
+
 def mysql_db_connect(dbname):
     try:
         # 建立连接
@@ -95,8 +141,6 @@ def mysql_db_connect(dbname):
             cursor.execute(f"CREATE DATABASE `{dbname}`")
             print(f"Database '{dbname}' create successfully!")
             connection.commit()
-        else:
-            print(f"Database '{dbname}' already exists")
         cursor.close()
         connection.close()
     except mysql.connector.Error as err:
@@ -150,7 +194,8 @@ mysql_types = None
 def get_mysql_type_by_oid(type_code):
     global mysql_types
     if mysql_types is None:
-        with open(os.path.join(get_proj_root_path(), 'src', 'schema', 'mysql_types.json'), 'r') as file:
+        with open(os.path.join(get_proj_root_path(), 'src', 'sql_gen', 'generator', 'ele_type', 'mysql_types.json'),
+                  'r') as file:
             mysql_types = json.loads(file.read())
     if str(type_code) in mysql_types:
         return mysql_types[str(type_code)]
@@ -187,6 +232,7 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
         columns = cursor.description
         res = []
         for column in columns:
+            print(column)
             col_name = column[0]
             col_type_code = column[1]
             col_type = get_mysql_type_by_oid(col_type_code)
@@ -206,7 +252,47 @@ pg_conn_map = {}
 pg_cursor_map = {}
 
 
+def show_pg_databases():
+    try:
+        connection = psycopg2.connect(
+            host=pg_config['pg_host'],
+            port=pg_config['pg_port'],
+            user=pg_config['pg_user'],
+            password=pg_config['pg_pwd'],
+            database='postgres'
+        )
+        cursor = connection.cursor()
+        cursor.execute("SELECT datname FROM pg_database;")
+        databases = [db[0] for db in cursor.fetchall()]
+        return databases
+    except (Exception, psycopg2.Error) as error:
+        print(f"Error while connecting to PostgreSQL: {error}")
+        return None
+
+
+def pg_drop_db(db_name: str):
+    try:
+        db_name = get_db_name('pg', db_name)
+        connection = psycopg2.connect(
+            host=pg_config['pg_host'],
+            port=pg_config['pg_port'],
+            user=pg_config['pg_user'],
+            password=pg_config['pg_pwd'],
+            database='postgres'
+        )
+        connection.autocommit = True
+        cursor = connection.cursor()
+        cursor.execute(f"DROP DATABASE \"{db_name}\";")
+        connection.commit()
+        cursor.close()
+        connection.close()
+        print(f"Database '{db_name}' dropped successfully!")
+    except (Exception, psycopg2.Error) as error:
+        print(f"Error while connecting to PostgreSQL: {error}")
+
+
 def pg_db_connect(dbname):
+    flag = False
     try:
         connection = psycopg2.connect(
             host=pg_config['pg_host'],
@@ -227,8 +313,7 @@ def pg_db_connect(dbname):
             cursor.execute(f"CREATE DATABASE \"{dbname}\";")
             print(f"Database '{dbname}' created successfully!")
             connection.commit()
-        else:
-            print(f"Database '{dbname}' already exists.")
+            flag = True
     except (Exception, psycopg2.Error) as error:
         print(f"Error while connecting to PostgreSQL: {error}")
 
@@ -246,6 +331,9 @@ def pg_db_connect(dbname):
         pg_conn_map[dbname] = connection
         pg_cursor_map[dbname] = cursor
         cursor.execute("SET lc_messages TO 'en_US.UTF-8';")
+        if flag:
+            cursor.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+        connection.commit()
         if connection:
             return connection, cursor
 
@@ -287,7 +375,8 @@ pg_types = None
 def get_type_name_by_oid(oid):
     global pg_types
     if pg_types is None:
-        with open(os.path.join(get_proj_root_path(), 'src', 'schema', 'pg_types.json'), 'r') as file:
+        with open(os.path.join(get_proj_root_path(), 'src', 'sql_gen', 'generator', 'ele_type', 'pg_types.json'),
+                  'r') as file:
             pg_types = json.loads(file.read())
     if str(oid) in pg_types:
         return pg_types[str(oid)]
@@ -324,6 +413,7 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
         res = []
         if cursor.description:
             for column in cursor.description:
+                print(column)
                 res.append({
                     "col": column.name,
                     "type": get_type_name_by_oid(column.type_code)
@@ -337,6 +427,24 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
 
 oracle_conn_map = {}
 oracle_cursor_map = {}
+
+
+def show_oracle_databases():
+    try:
+        connection = oracledb.connect(
+            user=ora_config['oracle_sys_user'],
+            password=ora_config['oracle_sys_pwd'],
+            host=ora_config['oracle_host'],
+            port=ora_config['oracle_port'],
+            service_name=ora_config['oracle_sid']
+        )
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT USERNAME FROM DBA_USERS")
+        users = [user[0] for user in cursor.fetchall()]
+        return users
+    except Exception as e:
+        print(f"Error while connecting to Oracle: {e}")
+        return None
 
 
 def oracle_db_connect(db_name):
@@ -379,6 +487,7 @@ def oracle_db_connect(db_name):
 
 def oracle_drop_db(db_name):
     try:
+        db_name = get_db_name('oracle', db_name)
         connection = oracledb.connect(
             user=ora_config['oracle_sys_user'],
             password=ora_config['oracle_sys_pwd'],
@@ -388,6 +497,7 @@ def oracle_drop_db(db_name):
         )
         cursor = connection.cursor()
         cursor.execute(f"DROP USER {db_name} CASCADE")
+        print(f"Drop {db_name} successfully!")
         connection.commit()
     except Exception as e:
         print(f"Error dropping user {db_name}: {e}")
@@ -407,7 +517,10 @@ def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
         cursor = oracle_cursor_map[db_name]
         try:
             cursor.execute(sql)
-            if "SELECT" in sql.upper():
+            if sql.startswith('INSERT'):
+                connection.commit()
+                return True, []
+            elif "SELECT" in sql.upper():
                 result = cursor.fetchall()
                 return True, result
             else:
