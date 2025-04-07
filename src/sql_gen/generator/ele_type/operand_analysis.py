@@ -10,6 +10,8 @@ from antlr_parser.Tree import TreeNode
 from antlr_parser.mysql_tree import rename_column_mysql, fetch_main_select_from_select_stmt_mysql, \
     fetch_all_simple_select_from_select_stmt_mysql, \
     analyze_mysql_table_sources
+from antlr_parser.oracle_tree import fetch_main_select_from_subquery_oracle, general_element_only_oracle, \
+    rename_column_oracle, fetch_all_simple_select_from_subquery_oracle, analyze_table_refs_oracle, parse_oracle_group_by
 from antlr_parser.parse_tree import parse_tree
 from antlr_parser.pg_tree import get_pg_main_select_node_from_select_stmt, fetch_main_select_from_select_stmt_pg, \
     only_column_ref_pg, \
@@ -17,7 +19,7 @@ from antlr_parser.pg_tree import get_pg_main_select_node_from_select_stmt, fetch
 from sql_gen.generator.ele_type.type_conversion import type_mapping
 from sql_gen.generator.ele_type.type_operation import load_col_type
 from sql_gen.generator.element.Operand import ColumnOp, Operand
-from utils.db_connector import get_mysql_type, get_pg_type
+from utils.db_connector import get_mysql_type, get_pg_type, get_oracle_type
 from utils.tools import get_proj_root_path
 
 
@@ -28,23 +30,48 @@ def build_ctes(ctes: dict, dialect: str):
         quote = '"'
     if len(ctes['cte_list']) == 0:
         return ''
-    with_clauses = 'WITH '
-    if ctes['is_recursive']:
-        with_clauses = 'WITH RECURSIVE '
-    for cte in ctes['cte_list']:
-        if cte['column_list'] is None:
-            cte_str = f'{quote}{cte["cte_name"]}{quote} AS ({cte["query"]})'
-        else:
-            cols = ''
-            for col in cte['column_list']:
-                if cols != '':
-                    cols += ', '
-                cols += f'{quote}{col}{quote}'
-            cte_str = f'{quote}{cte["cte_name"]}{quote} ({cols}) AS ({cte["query"]})'
-        if with_clauses == 'WITH ' or with_clauses == 'WITH RECURSIVE ':
-            with_clauses += cte_str
-        else:
-            with_clauses += f',\n {cte_str}'
+    if dialect == 'oracle':
+        with_clauses = 'WITH '
+        for cte in ctes['cte_list']:
+            if cte['search_clause'] is None:
+                search_clause = ''
+            else:
+                search_clause = cte['search_clause']
+            if cte['cycle_clause'] is None:
+                cycle_clause = ''
+            else:
+                cycle_clause = cte['cycle_clause']
+            if cte['column_list'] is None:
+                cte_str = f'{quote}{cte["cte_name"]}{quote} AS ({cte["query"]}) {search_clause} {cycle_clause}'
+            else:
+                cols = ''
+                for col in cte['column_list']:
+                    if cols != '':
+                        cols += ', '
+                    cols += f'{quote}{col}{quote}'
+                cte_str = f'{quote}{cte["cte_name"]}{quote} ({cols}) AS ({cte["query"]}) {search_clause} {cycle_clause}'
+            if with_clauses == 'WITH ' or with_clauses == 'WITH RECURSIVE ':
+                with_clauses += cte_str
+            else:
+                with_clauses += f',\n {cte_str}'
+    else:
+        with_clauses = 'WITH '
+        if ctes['is_recursive']:
+            with_clauses = 'WITH RECURSIVE '
+        for cte in ctes['cte_list']:
+            if cte['column_list'] is None:
+                cte_str = f'{quote}{cte["cte_name"]}{quote} AS ({cte["query"]})'
+            else:
+                cols = ''
+                for col in cte['column_list']:
+                    if cols != '':
+                        cols += ', '
+                    cols += f'{quote}{col}{quote}'
+                cte_str = f'{quote}{cte["cte_name"]}{quote} ({cols}) AS ({cte["query"]})'
+            if with_clauses == 'WITH ' or with_clauses == 'WITH RECURSIVE ':
+                with_clauses += cte_str
+            else:
+                with_clauses += f',\n {cte_str}'
     return with_clauses
 
 
@@ -234,22 +261,106 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                 "cte_list": res
             }
     elif dialect == 'oracle':
-        pass
+        select_stmt_node = root_node.get_children_by_path(['unit_statement', 'data_manipulation_language_statements',
+                                                           'select_statement', 'select_only_statement'])
+        assert len(select_stmt_node) == 1
+        select_stmt_node = select_stmt_node[0]
+        with_clause_node = select_stmt_node.get_child_by_value('with_clause')
+        cte_nodes = with_clause_node.get_children_by_value('with_factoring_clause')
+        for cte_node in cte_nodes:
+            assert cte_node.get_child_by_value('subquery_factoring_clause') is not None
+            query_factoring_clause_node = cte_node.get_child_by_value('subquery_factoring_clause')
+            query_body_node = query_factoring_clause_node.get_child_by_value('subquery')
+            search_clause = query_factoring_clause_node.get_child_by_value('search_clause')
+            cycle_clause = query_factoring_clause_node.get_child_by_value('cycle_clause')
+            if search_clause is not None:
+                search_clause = str(search_clause)
+            if cycle_clause is not None:
+                cycle_clause = str(cycle_clause)
+            cte_name = str(query_factoring_clause_node.get_child_by_value('query_name')).strip('"')
+            column_list = None
+            if query_factoring_clause_node.get_child_by_value('paren_column_list') is not None:
+                column_alias_list_node = (query_factoring_clause_node.get_child_by_value('paren_column_list').
+                                          get_child_by_value('column_list'))
+                rename_dict = {}
+                column_list = []
+                for idx, col_node in enumerate(column_alias_list_node.get_children_by_value('column_name')):
+                    col_name = str(col_node).strip('"')
+                    if col_name in rename_dict:
+                        new_name = f"{col_name}_{rename_dict[col_name]}"
+                        assert len(col_node.children) == 1
+                        assert isinstance(col_node, TreeNode)
+                        col_node.children[0].value = new_name
+                        rename_dict[col_name] = rename_dict[col_name] + 1
+                        col_node.children[0].is_terminal = True
+                    else:
+                        new_name = col_name
+                        rename_dict[col_name] = 1
+                    column_list.append(new_name)
+            with_clauses = build_ctes(
+                {
+                    "is_recursive": is_recursive,
+                    "cte_list": res + [
+                        {
+                            'cte_name': cte_name,
+                            'query': str(query_body_node),
+                            'column_list': column_list,
+                            'search_clause': search_clause,
+                            'cycle_clause': cycle_clause,
+                            'cte_name_type_pairs': []
+                        }
+                    ]
+                }, dialect
+            )
+            get_type_query = f"{with_clauses}\n SELECT * FROM \"{cte_name}\" LIMIT 1"
+            flag, cte_types = get_oracle_type(get_type_query, db_name, False)
+            if not flag:
+                raise ValueError(cte_types[0])
+            select_main_node = fetch_main_select_from_subquery_oracle(query_body_node)
+            selected_list_nodes = select_main_node.get_child_by_value('selected_list')
+            assert selected_list_nodes is not None
+            if selected_list_nodes.get_child_by_value('*') is not None:
+                print('* is not Support yet')
+                assert False
+            select_elements = selected_list_nodes.get_children_by_value('select_list_elements')
+            assert len(select_elements) == len(cte_types)
+            if column_list is not None:
+                assert len(column_list) == len(cte_types)
+                col_names = set()
+                for i in range(len(column_list)):
+                    assert column_list[i].strip('"') == cte_types[i]['col']
+                    assert cte_types[i]['col'] not in col_names
+                    col_names.add(cte_types[i]['col'])
+            else:
+                for i in range(len(select_elements)):
+                    j = i + 1
+                    expr_node = select_elements[i].get_child_by_value('expression')
+                    assert expr_node is not None
+                    if not general_element_only_oracle(expr_node):
+                        if select_elements[i].get_child_by_value('column_alias') is None:
+                            cte_types[i]['col'] = rename_column_oracle(select_elements[i], name_dict)
+                    while j < len(cte_types):
+                        if cte_types[i]['col'] == cte_types[j]['col']:
+                            cte_types[j]['col'] = rename_column_oracle(select_elements[j], name_dict,
+                                                                          cte_types[i]['col'])
+                        j = j + 1
+            res.append({
+                'cte_name': cte_name,
+                'query': str(query_body_node),
+                'column_list': column_list,
+                'search_clause': search_clause,
+                'cycle_clause': cycle_clause,
+                'cte_name_type_pairs': cte_types
+            })
+            return True, {
+                "is_recursive": is_recursive,
+                "cte_list": res
+            }
     else:
         assert False
 
 
 def build_from_elem(elem_dict, dialect: str):
-    """
-    {
-        "type": "subquery/table",
-        "name": "table_name or subquery_alias",
-        'alias': final_name, # if it's a table
-        "column_names": None or [] # if renaming columns,
-        "sub_query_node": None or TreeNode, # if it's a subquery
-        "lateral": "subquery content" # if it's a lateral subquery
-    }
-    """
     quote = '`'
     if dialect == 'pg' or dialect == 'oracle':
         quote = '"'
@@ -272,6 +383,8 @@ def build_from_elem(elem_dict, dialect: str):
             if elem_dict['alias'] is not None:
                 return f"{quote}{elem_dict['name']}{quote} ({cols}) AS {quote}{elem_dict['alias']}{quote}"
             return f"{quote}{elem_dict['name']}{quote} ({cols})"
+    elif elem_dict['type'] == 'other':
+        return f"{str(elem_dict['content'])}"
     else:
         assert False
 
@@ -404,7 +517,44 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
             ele_cnt = j
         return True, final_cols, str(simple_select_node)
     elif dialect == 'oracle':
-        pass
+        assert simple_select_node.value == 'query_block'
+        from_clause_node = simple_select_node.get_child_by_value('from_clause')
+        if from_clause_node is None:
+            return True, [], str(simple_select_node)
+        table_ref_list_node = from_clause_node.get_child_by_value('table_ref_list')
+        table_refs = table_ref_list_node.get_child_by_value('table_ref')
+        if len(table_refs) == 1 and str(table_refs[0]).lower() == 'dual':
+            return True, [], str(simple_select_node)
+        table_elements = analyze_table_refs_oracle(table_refs)
+        with_clauses = build_ctes(ctes, dialect)
+        from_elems = ''
+        ele_cnt = 0
+        final_cols = []
+        for i in range(len(table_elements)):
+            if from_elems != '':
+                from_elems += ',\n'
+            from_elems += build_from_elem(table_elements[i], dialect)
+            sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
+            flag, types = get_oracle_type(sql, db_name, False)
+            if not flag:
+                print(sql)
+                print(types)
+                assert False
+            j = ele_cnt
+            newly_added_cols = []
+            while j < len(types):
+                owner_name = table_elements[i]['name']
+                if 'alias' in table_elements[i] and table_elements[i]['alias'] is not None:
+                    owner_name = table_elements[i]['alias']
+                col = ColumnOp(types[j]['col'], owner_name,
+                               type_mapping(dialect, types[j]['type']))
+                j += 1
+                newly_added_cols.append(col)
+            final_cols = final_cols + newly_added_cols
+            ele_cnt = j
+        return True, final_cols, str(simple_select_node)
+
+
     else:
         assert False
 
@@ -462,7 +612,7 @@ def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, diale
         select_elements_node.is_terminal = True
         clone_node.rm_child_by_value('group_clause')
         clone_node.rm_child_by_value('having_clause')
-        flag, res = get_pg_type(str(clone_node), db_name, False)
+        flag, res = get_pg_type(f"{build_ctes(ctes, dialect)}\n {str(clone_node)}", db_name, False)
         if not flag:
             print(str(clone_node))
             assert False
@@ -472,7 +622,31 @@ def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, diale
             group_by_cols.append(Operand(str(expr_list[idx]), type_mapping(dialect, col['type'])))
         return True, group_by_cols
     elif dialect == 'oracle':
-        pass
+        group_by_node = simple_select_node.get_child_by_value('group_by_clause')
+        if group_by_node is None:
+            return True, None
+        items = group_by_node.get_children_by_value('group_by_elements')
+        expr_list = parse_oracle_group_by(items)
+        clone_node = simple_select_node.clone()
+        select_elements_node = clone_node.get_child_by_value('selected_list')
+        assert isinstance(select_elements_node, TreeNode)
+        new_str = ''
+        for node in expr_list:
+            if new_str != '':
+                new_str = new_str + ', '
+            new_str = new_str + str(node)
+        select_elements_node.value = ' ' + new_str + ' '
+        select_elements_node.is_terminal = True
+        clone_node.rm_child_by_value('group_by_clause')
+        flag, res = get_oracle_type(f"{build_ctes(ctes, dialect)}\n {str(clone_node)}", db_name, False)
+        if not flag:
+            print(f"{build_ctes(ctes, dialect)}\n {str(clone_node)}")
+            assert False
+        group_by_cols = []
+        assert len(expr_list) == len(res)
+        for idx, col in enumerate(res):
+            group_by_cols.append(Operand(str(expr_list[idx]), type_mapping(dialect, col['type'])))
+        return True, group_by_cols
     else:
         assert False
 
@@ -534,6 +708,26 @@ def analysis_sql(db_name, sql, dialect: str):
             "root_node": root_node
         }
     elif dialect == 'oracle':
-        pass
+        subquery_node = root_node.get_children_by_path(['unit_statement', 'data_manipulation_language_statements',
+                                                           'select_statement', 'select_only_statement', 'subquery'])
+        if len(subquery_node) != 1:
+            print('FOR UPDATE haven\'t been supported yet')
+            assert False
+        select_stmt_node = subquery_node[0]
+        simple_select_nodes = fetch_all_simple_select_from_subquery_oracle(select_stmt_node)
+        for simple_select_node in simple_select_nodes:
+            flag_select, cols, rewrite_sql = analysis_usable_cols_sql(db_name, simple_select_node, dialect, ctes)
+            flag_group_by, group_by_cols = analysis_group_by_simple_select(db_name, simple_select_node, dialect, ctes)
+            select_stmts.append({
+                "select_root_node": simple_select_node,
+                "type": 'UNION', # Haven't been used yet
+                "cols": cols,
+                "group_by_cols": group_by_cols
+            })
+        return {
+            "cte": ctes,
+            "select_stmts": select_stmts,
+            "root_node": root_node
+        }
     else:
         assert False
