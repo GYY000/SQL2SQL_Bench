@@ -21,25 +21,6 @@ from utils.db_connector import get_mysql_type, get_pg_type
 from utils.tools import get_proj_root_path
 
 
-def analysis_table(db_name, table_name: str, dialect: str, cte_maps: dict):
-    for cte in cte_maps['cte_list']:
-        if cte['cte_name'] == table_name:
-            return cte['cte_name_type_pairs']
-    if table_name in cte_maps['cte_map']:
-        return cte_maps['column_list'][table_name]
-    with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
-        schema = json.load(file)
-
-    table = schema[table_name]
-    res = []
-    for col in table['cols']:
-        column_name = col['col_name']
-        table_name = table_name
-        base_type, _, _ = load_col_type(col['type'], column_name, dialect)
-        res.append(ColumnOp(column_name, table_name, base_type))
-    return res
-
-
 def build_ctes(ctes: dict, dialect: str):
     if dialect == 'mysql':
         quote = '`'
@@ -172,6 +153,8 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
         for cte_node in cte_nodes:
             cte_name = str(cte_node.get_child_by_value('name')).strip('"')
             query_body_node = cte_node.get_children_by_path(['preparablestmt', 'selectstmt'])
+            assert len(query_body_node) == 1
+            query_body_node = query_body_node[0]
             alias_nodes = cte_node.get_children_by_path(['opt_name_list', 'name_list', 'name'])
             column_list = None
             if len(alias_nodes) > 0:
@@ -205,15 +188,15 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                 }, dialect
             )
             get_type_query = f"{with_clauses}\n SELECT * FROM \"{cte_name}\" LIMIT 1"
-            flag, cte_types = get_mysql_type(get_type_query, db_name, False)
+            flag, cte_types = get_pg_type(get_type_query, db_name, False)
             if not flag:
                 raise ValueError(cte_types[0])
-            assert len(query_body_node) == 1
             select_main_node = fetch_main_select_from_select_stmt_pg(query_body_node)
             target_list_node = select_main_node.get_child_by_value('target_list')
-            if target_list_node is not None:
+            if target_list_node is None:
                 target_list_node = select_main_node.get_children_by_path(['opt_target_list', 'target_list'])
-                assert target_list_node is not None
+                assert len(target_list_node) == 1
+                target_list_node = target_list_node[0]
             select_elements = target_list_node.get_children_by_value('target_el')
             assert len(select_elements) == len(cte_types)
             if column_list is not None:
@@ -237,7 +220,7 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                                 cte_types[i]['col'] = rename_column_pg(select_elements[i], name_dict)
                         while j < len(cte_types):
                             if cte_types[i]['col'] == cte_types[j]['col']:
-                                cte_types[j]['col'] = rename_column_mysql(select_elements[j], name_dict,
+                                cte_types[j]['col'] = rename_column_pg(select_elements[j], name_dict,
                                                                           cte_types[i]['col'])
                             j += 1
             res.append({
@@ -402,7 +385,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
                 from_elems += ',\n'
             from_elems += build_from_elem(table_elements[i], dialect)
             sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
-            flag, types = get_mysql_type(sql, db_name, False)
+            flag, types = get_pg_type(sql, db_name, False)
             if not flag:
                 print(sql)
                 print(types)
@@ -427,10 +410,12 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
 
 
 def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, dialect: str, ctes: dict) -> tuple[
-    bool, list]:
+    bool, list | None]:
     if dialect == 'mysql':
         select_list = []
         group_by_node = simple_select_node.get_child_by_value('groupByClause')
+        if group_by_node is None:
+            return True, None
         items = group_by_node.get_children_by_value('groupByItem')
         for expression_node in items:
             assert isinstance(expression_node, TreeNode)
@@ -459,6 +444,8 @@ def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, diale
         return True, group_by_cols
     elif dialect == 'pg':
         group_by_node = simple_select_node.get_child_by_value('group_clause')
+        if group_by_node is None:
+            return True, None
         items = group_by_node.get_child_by_value('group_by_list')
         expr_list = parse_pg_group_by(items)
         clone_node = simple_select_node.clone()
@@ -550,7 +537,3 @@ def analysis_sql(db_name, sql, dialect: str):
         pass
     else:
         assert False
-
-
-sql = "WITH cte_example AS (SELECT id, name, age FROM users WHERE age > 30) SELECT name, age FROM cte_example ORDER BY age DESC;"
-print(analysis_sql('bird', sql, 'mysql'))

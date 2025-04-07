@@ -106,24 +106,25 @@ def rename_column_pg(target_el_node: TreeNode, name_dict: dict, extend_name=None
     name_dict[extend_name] = idx + 1
     if target_el_node.get_child_by_value('collable') is not None:
         uid_node = target_el_node.get_child_by_value('collable')
-        new_name_node = TreeNode(f"`{extend_name}_{idx}`", 'mysql', True)
+        new_name_node = TreeNode(f"\"{extend_name}_{idx}\"", 'mysql', True)
         assert isinstance(uid_node, TreeNode)
         uid_node.children = [new_name_node]
     elif target_el_node.get_child_by_value('identifier') is not None:
         uid_node = target_el_node.get_child_by_value('identifier')
-        new_name_node = TreeNode(f"`{extend_name}_{idx}`", 'mysql', True)
+        new_name_node = TreeNode(f"\"{extend_name}_{idx}\"", 'mysql', True)
         assert isinstance(uid_node, TreeNode)
         uid_node.children = [new_name_node]
     else:
         target_el_node.add_child(TreeNode('AS', 'mysql', True))
-        target_el_node.add_child(TreeNode(f"`{extend_name}_{idx}`", 'mysql', True))
+        target_el_node.add_child(TreeNode(f"\"{extend_name}_{idx}\"", 'mysql', True))
     return f"{extend_name}_{idx}"
 
 
 def analyze_pg_table_refs(table_refs: list):
     res = []
+    name_dict = {}
     for table_ref in table_refs:
-        res = res + analyze_table_ref(table_ref, {})
+        res = res + analyze_table_ref(table_ref, name_dict)
     return res
 
 
@@ -232,7 +233,7 @@ def analyze_table_ref(table_ref: TreeNode, name_dict: dict):
         if table_name is None:
             table_name = ori_table_name
         if table_name in name_dict:
-            table_name = rename_table(table_ref, None, name_dict)
+            table_name = rename_table(table_ref, table_ref.get_child_by_value('relation_expr'), name_dict)
         else:
             name_dict[table_name] = 1
         if table_name is not None:
@@ -303,6 +304,7 @@ def rename_table(father_node: TreeNode, son_node: TreeNode | None, name_dict, va
         table_alias_node.add_child(TreeNode('AS', 'pg', True))
         table_alias_node.add_child(TreeNode(f"\"{value}\"", 'pg', True))
         opt_alias_node = TreeNode('opt_alias_clause', 'pg', False)
+        opt_alias_node.add_child(table_alias_node)
         father_node.insert_after_node(opt_alias_node, son_node.value)
         return value
     else:
