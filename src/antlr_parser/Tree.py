@@ -360,6 +360,33 @@ class TreeNode:
                 self.children.remove(child)
                 break
 
+    def insert_after_node(self, insert_node, after_node_value: str, times: int = 1):
+        for child in self.children:
+            if child.value == after_node_value:
+                times = times - 1
+                if times > 0:
+                    continue
+                child_index = self.children.index(child)
+                self.children.insert(child_index + 1, insert_node)
+                insert_node.father = self
+                return
+        raise ValueError("Cannot find the after node")
+
+    def find_all_nodes_of_values(self, values: list):
+        res = []
+        for child in self.children:
+            if child.value in values:
+                res.append(child)
+        return res
+
+    def get_node_until(self, value: str):
+        if self.value == value:
+            return [self]
+        res = []
+        for child in self.children:
+            res = res + child.get_node_until(value)
+        return res
+
 
 def merge_tree(sub_tree_node: TreeNode, father_tree_node: TreeNode,
                rel_father_tree_node: TreeNode, start_index_i=0, start_index_j=-1):

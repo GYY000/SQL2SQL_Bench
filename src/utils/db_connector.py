@@ -220,7 +220,6 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
                     "type": col_type
                 })
             return True, res
-
     try:
         db_name = get_db_name('mysql', db_name)
         if db_name not in mysql_conn_map:
@@ -232,7 +231,6 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
         columns = cursor.description
         res = []
         for column in columns:
-            print(column)
             col_name = column[0]
             col_type_code = column[1]
             col_type = get_mysql_type_by_oid(col_type_code)
@@ -244,6 +242,7 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
         connection.commit()
         return True, res
     except mysql.connector.Error as e:
+        print(obj)
         connection.rollback()
         return False, [str(e)]
 

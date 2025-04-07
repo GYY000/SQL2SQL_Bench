@@ -46,9 +46,9 @@ def load_col_type(type_def: dict, col_name: str, dialect: str):
         final_type = IntervalYearMonthType()
     elif type_name == 'TIMESTAMPTZ':
         if 'fraction' in type_def:
-            final_type = TimestamepTZType(type_def['fraction'])
+            final_type = TimestampTZType(type_def['fraction'])
         else:
-            final_type = TimestamepTZType()
+            final_type = TimestampTZType()
     elif type_name == 'VARCHAR':
         final_type = VarcharType(type_def['length'])
     elif type_name == 'ENUM':
