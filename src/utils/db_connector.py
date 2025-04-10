@@ -170,7 +170,7 @@ def mysql_sql_execute(db_name: str, sql):
     connection = mysql_conn_map[db_name]
     cursor = mysql_cursor_map[db_name]
     try:
-        cursor.execute(sql.strip(';'))
+        cursor.execute(sql.strip().strip(';'))
         rows = cursor.fetchall()
         connection.commit()
         return True, rows
@@ -347,7 +347,7 @@ def pg_sql_execute(db_name: str, sql):
     connection = pg_conn_map[db_name]
     cursor = pg_cursor_map[db_name]
     try:
-        cursor.execute(sql.strip(';'))
+        cursor.execute(sql.strip().strip(';'))
         if cursor.description:
             rows = cursor.fetchall()
         else:
@@ -507,7 +507,7 @@ def oracle_drop_db(db_name):
 
 
 def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
-    sql = sql.strip(';')
+    sql = sql.strip().strip(';')
     db_name = get_db_name('oracle', db_name)
     if not sql_plus_flag:
         if db_name not in oracle_conn_map:
