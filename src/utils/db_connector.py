@@ -65,6 +65,11 @@ database_mapping = {
         "mysql": "tpcds",
         "pg": "tpcds",
         "oracle": "tpcds"
+    },
+    "test": {
+        "mysql": "test",
+        "pg": "test",
+        "oracle": "test"
     }
 }
 
@@ -113,6 +118,8 @@ def mysql_drop_db(db_name: str):
             password=mysql_config['mysql_pwd']
         )
         db_name = get_db_name('mysql', db_name)
+        if db_name in mysql_conn_map:
+            close_mysql_connnect(db_name)
         cursor = connection.cursor()
         cursor.execute(f"DROP DATABASE `{db_name}`")
         connection.commit()
@@ -185,6 +192,8 @@ def close_mysql_connnect(dbname: str):
     if connection.is_connected():
         cursor.close()
         connection.close()
+        del mysql_conn_map[dbname]
+        del mysql_cursor_map[dbname]
         print("MySQL connection is closed")
 
 
@@ -247,6 +256,16 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
         return False, [str(e)]
 
 
+def mysql_test(ddls: list[str], sql: str):
+    test_db_name = 'test'
+    mysql_db_connect(test_db_name)
+    for ddl in ddls:
+        mysql_sql_execute(test_db_name, ddl)
+    flag, res = mysql_sql_execute(test_db_name, sql)
+    mysql_drop_db(test_db_name)
+    return flag, res
+
+
 pg_conn_map = {}
 pg_cursor_map = {}
 
@@ -281,6 +300,8 @@ def pg_drop_db(db_name: str):
         )
         connection.autocommit = True
         cursor = connection.cursor()
+        if db_name in pg_conn_map:
+            close_pg_connnect(db_name)
         cursor.execute(f"DROP DATABASE \"{db_name}\";")
         connection.commit()
         cursor.close()
@@ -365,6 +386,8 @@ def close_pg_connnect(db_name: str):
     if connection:
         cursor.close()
         connection.close()
+        pg_conn_map.pop(db_name)
+        pg_cursor_map.pop(db_name)
         print("PostgreSQL connection is closed")
 
 
@@ -422,6 +445,16 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
     except (Exception, psycopg2.Error) as error:
         connection.rollback()
         return False, [f"Error while executing PostgreSQL query: {error}"]
+
+
+def pg_test(ddls: list[str], sql: str):
+    test_db_name = 'test'
+    pg_db_connect(test_db_name)
+    for ddl in ddls:
+        pg_sql_execute(test_db_name, ddl)
+    flag, res = pg_sql_execute(test_db_name, sql)
+    pg_drop_db(test_db_name)
+    return flag, res
 
 
 oracle_conn_map = {}
@@ -494,6 +527,8 @@ def oracle_drop_db(db_name):
             port=ora_config['oracle_port'],
             service_name=ora_config['oracle_sid']
         )
+        if db_name in oracle_conn_map:
+            close_oracle_connect(db_name)
         cursor = connection.cursor()
         cursor.execute(f"DROP USER {db_name} CASCADE")
         print(f"Drop {db_name} successfully!")
@@ -551,6 +586,8 @@ def close_oracle_connect(db_name: str):
     if connection:
         cursor.close()
         connection.close()
+        oracle_conn_map.pop(db_name)
+        oracle_cursor_map.pop(db_name)
 
 
 oracle_conn_local_map = {}
@@ -595,3 +632,13 @@ def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
         return True, res
     except Exception as e:
         raise e
+
+
+def oracle_test(ddls: list[str], sql: str):
+    test_db_name = 'test'
+    oracle_db_connect(test_db_name)
+    for ddl in ddls:
+        oracle_sql_execute(test_db_name, ddl)
+    flag, res = oracle_sql_execute(test_db_name, sql)
+    oracle_drop_db(test_db_name)
+    return flag, res
