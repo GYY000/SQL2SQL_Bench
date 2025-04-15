@@ -37,15 +37,24 @@ dialect_pairs = {
     "oracle_pg"
 }
 
+statistics = {}
+
 
 def statistic():
     root_path = get_proj_root_path()
     all_count = 0
     for dialect_pair in dialect_pairs:
         dialect_pair_count = 0
+        statistics[dialect_pair] = {
+            "count": 0
+        }
         for ele in file_map_path:
             category_count = 0
+
             if isinstance(ele, dict):
+                statistics[dialect_pair][ele["category"]] = {
+                    "count": 0
+                }
                 category = ele["category"]
                 sub_categories = ele["sub_categories"]
                 for sub_category in sub_categories:
@@ -57,18 +66,37 @@ def statistic():
                     else:
                         sub_category_count = 0
                     category_count += sub_category_count
-                    print(f"\t\t{sub_category} count: ", sub_category_count)
+                    statistics[dialect_pair][category][sub_category] = sub_category_count
             else:
                 category = ele
+                statistics[dialect_pair][category] = {
+                    "count": 0
+                }
                 file_path = f"{root_path}/conv_point/{category}/{dialect_pair}.json"
                 if os.path.exists(file_path):
                     with open(file_path, "r", encoding="utf-8") as file:
                         json_content = json.load(file)
                         category_count = len(json_content)
             dialect_pair_count += category_count
-            print(f"\t{category} count: ", category_count)
+            statistics[dialect_pair][category]["count"] = category_count
         all_count += dialect_pair_count
-        print(f"{dialect_pair} count: ", dialect_pair_count)
+        statistics[dialect_pair]["count"] = dialect_pair_count
+    for dialect_pair in dialect_pairs:
+        print(f"stat {dialect_pair}: {statistics[dialect_pair]['count']} ")
+        for key, value in statistics[dialect_pair].items():
+            if key == "count":
+                continue
+            else:
+                if isinstance(value, dict):
+                    print(f"\t{key}: {value['count']}")
+                    for sub_key, sub_value in value.items():
+                        if sub_key == "count":
+                            continue
+                        else:
+                            print(f"\t\t{sub_key}: {sub_value}")
+                else:
+                    print(f"\t{key}: {value}")
     print('ALL count: ', all_count)
+
 
 statistic()
