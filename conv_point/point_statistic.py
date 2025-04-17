@@ -8,22 +8,9 @@ import os
 
 from utils.tools import get_proj_root_path
 
-file_map_path = [
-    {
-        "category": "data_type",
-        "sub_categories": [
-            "explicit_conv",
-            "implicit_conv"
-        ]
-    },
-    {
-        "category": "function_operator",
-        "sub_categories": [
-            "aggregate_function",
-            "operator",
-            "value_function"
-        ]
-    },
+category_paths = [
+    "data_type",
+    "function_operator",
     "functional_keyword",
     "literal"
 ]
@@ -40,62 +27,66 @@ dialect_pairs = {
 statistics = {}
 
 
+def statistic_folder(folder_path, dialect_pair, folder_name, hierarchy_level=1):
+    all_num = 0
+    all_stats = []
+    flag = True
+    for file in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, file)
+        if os.path.isdir(file_path):
+            stats = statistic_folder(file_path, dialect_pair, file, hierarchy_level + 1)
+            all_num += stats["number"]
+            all_stats.append(stats)
+        else:
+            flag = False
+            break
+    if not flag:
+        file_path = f"{folder_path}/{dialect_pair}.json"
+        with open(file_path, "r", encoding="utf-8") as file:
+            json_content = json.load(file)
+            all_num = len(json_content)
+        return {
+            "name": folder_name,
+            "number": all_num,
+            "level": hierarchy_level
+        }
+    return {
+        "name": folder_name,
+        "number": all_num,
+        "stats": all_stats,
+        "level": hierarchy_level,
+    }
+
+
+def print_summary(stats):
+    indent = "\t" * stats["level"]
+    if 'stats' in stats:
+        print(f"{indent}{stats['name']} ({stats['number']}):")
+        for sub_stats in stats["stats"]:
+            print_summary(sub_stats)
+    else:
+        print(f"{indent}{stats['name']} ({stats['number']})")
+
 def statistic():
     root_path = get_proj_root_path()
     all_count = 0
+    all_statistics = []
     for dialect_pair in dialect_pairs:
         dialect_pair_count = 0
-        statistics[dialect_pair] = {
-            "count": 0
+        dialect_stats = {
+            "name": dialect_pair,
+            "stats": [],
+            "level": 0
         }
-        for ele in file_map_path:
-            category_count = 0
-
-            if isinstance(ele, dict):
-                statistics[dialect_pair][ele["category"]] = {
-                    "count": 0
-                }
-                category = ele["category"]
-                sub_categories = ele["sub_categories"]
-                for sub_category in sub_categories:
-                    sub_category_file_path = f"{root_path}/conv_point/{category}/{sub_category}"
-                    file_path = f"{sub_category_file_path}/{dialect_pair}.json"
-                    if os.path.exists(file_path):
-                        with open(file_path, "r", encoding="utf-8") as file:
-                            sub_category_count = len(json.load(file))
-                    else:
-                        sub_category_count = 0
-                    category_count += sub_category_count
-                    statistics[dialect_pair][category][sub_category] = sub_category_count
-            else:
-                category = ele
-                statistics[dialect_pair][category] = {
-                    "count": 0
-                }
-                file_path = f"{root_path}/conv_point/{category}/{dialect_pair}.json"
-                if os.path.exists(file_path):
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        json_content = json.load(file)
-                        category_count = len(json_content)
-            dialect_pair_count += category_count
-            statistics[dialect_pair][category]["count"] = category_count
+        for category_path in category_paths:
+            folder_path = os.path.join(root_path, 'conv_point', category_path)
+            stats = statistic_folder(folder_path, dialect_pair, category_path)
+            dialect_pair_count += stats["number"]
+            dialect_stats["stats"].append(stats)
+        dialect_stats['number'] = dialect_pair_count
         all_count += dialect_pair_count
-        statistics[dialect_pair]["count"] = dialect_pair_count
-    for dialect_pair in dialect_pairs:
-        print(f"stat {dialect_pair}: {statistics[dialect_pair]['count']} ")
-        for key, value in statistics[dialect_pair].items():
-            if key == "count":
-                continue
-            else:
-                if isinstance(value, dict):
-                    print(f"\t{key}: {value['count']}")
-                    for sub_key, sub_value in value.items():
-                        if sub_key == "count":
-                            continue
-                        else:
-                            print(f"\t\t{sub_key}: {sub_value}")
-                else:
-                    print(f"\t{key}: {value}")
+        print_summary(dialect_stats)
+
     print('ALL count: ', all_count)
 
 
