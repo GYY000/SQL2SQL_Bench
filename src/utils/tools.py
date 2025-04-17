@@ -37,6 +37,8 @@ def load_config(config_file=None):
         'cloud_mode': config.getboolean("MODE", 'cloud_mode'),
         "gpt_api_base": config.get("API", 'gpt_api_base'),
         "gpt_api_key": config.get("API", 'gpt_api_key'),
+        "moonshot_api_base": config.get("API", 'moonshot_api_base'),
+        "moonshot_api_key": config.get("API", 'moonshot_api_key'),
         "llama3.1_api_base": config.get("API", 'llama3.1_api_base'),
         "llama3.2_api_base": config.get("API", 'llama3.2_api_base')
     }
@@ -233,3 +235,65 @@ def extract_parameters(func_expr: str):
             cur_str = cur_str + func_expr[i]
         i = i + 1
     return res
+
+
+def date_format_trans(format_str: str):
+    return ((format_str.replace('YYYY', '%Y').
+             replace('yyyy', '%Y').replace('MM', '%m').
+             replace('DD', '%d')).replace('dd', '%d').replace('MONTH', '%M').
+            replace('MON', '%b').replace('HH24', '%H').replace('MI', '%i').
+            replace('SS', '%S').replace('FF', '%f').replace('DY', '%a').
+            replace('AM', '%p').replace('HH', '%I').replace('RR', '%y'))
+
+
+def gen_interval(dialect, units:list, values: list, sign=False):
+    year = 0
+    month = 0
+    day = 0
+    hour = 0
+    minute = 0
+    second = 0
+    millisecond = 0
+    for idx, unit in enumerate(units):
+        if unit == 'millennium':
+            year = year + values[idx] * 1000
+        elif unit == 'century':
+            year = year + values[idx] * 100
+        elif unit == 'decade':
+            year = year + values[idx] * 10
+        elif unit == 'year':
+            year = year + values[idx]
+        elif unit == 'quarter':
+            month = month + values[idx] * 3
+        elif unit == 'month':
+            month = month + values[idx]
+        elif unit == 'week':
+            day = day + values[idx] * 7
+        elif unit == 'day':
+            day = day + values[idx]
+        elif unit == 'hour':
+            hour = hour + values[idx]
+        elif unit == 'minute':
+            minute = minute + values[idx]
+        elif unit == 'second':
+            second = second + values[idx]
+        elif unit == 'millisecond':
+            millisecond = millisecond + values[idx]
+        else:
+            assert False
+    if sign:
+        year = year * -1
+        month = month * -1
+        day = day * -1
+        hour = hour * -1
+        minute = minute * -1
+        second = second * -1
+        millisecond = millisecond * -1
+    if dialect == 'oracle':
+        "microsecond, second, minute, hour, day, week, month, quarter, year, decade, century, millennium"
+        if day == 0 and hour == 0 and minute == 0 and second == 0 and millisecond == 0:
+            return f"INTERVAL '{year}' YEAR TO MONTH"
+
+
+
+

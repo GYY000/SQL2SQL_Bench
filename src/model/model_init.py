@@ -17,6 +17,8 @@ gpt_api_base = config['gpt_api_base']
 gpt_api_key = config['gpt_api_key']
 llama_3_1_api_base = config['llama3.1_api_base']
 llama_3_2_api_base = config['llama3.2_api_base']
+moonshot_api_base = config['moonshot_api_base']
+moonshot_api_key = config['moonshot_api_key']
 
 
 def init_model(model_id):
@@ -28,6 +30,12 @@ def init_model(model_id):
         api_key = gpt_api_key
 
         model = LLMModel(model_id, openai_conf)
+        model.load_model(api_base, api_key)
+
+    elif "moonshot" in model_id:
+        api_base = moonshot_api_base
+        api_key = moonshot_api_key
+        model = LLMModel(model_id)
         model.load_model(api_base, api_key)
 
     elif model_id == "llama3.1":
