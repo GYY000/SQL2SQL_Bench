@@ -12,7 +12,8 @@ category_paths = [
     "data_type",
     "function_operator",
     "functional_keyword",
-    "literal"
+    "literal",
+    "object_name"
 ]
 
 dialect_pairs = {

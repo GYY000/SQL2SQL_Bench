@@ -46,3 +46,15 @@ def gen_trans_str():
 
 def gen_nested_replace():
     pass
+
+
+def gen_reg_pattern():
+    pass
+
+
+def gen_xml_path():
+    pass
+
+
+def gen_count_literal():
+    pass
