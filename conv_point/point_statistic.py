@@ -9,7 +9,6 @@ import os
 from utils.tools import get_proj_root_path
 
 category_paths = [
-    "data_type",
     "function_operator",
     "functional_keyword",
     "literal",
@@ -68,6 +67,7 @@ def print_summary(stats):
     else:
         print(f"{indent}{stats['name']} ({stats['number']})")
 
+
 def statistic():
     root_path = get_proj_root_path()
     all_count = 0
@@ -87,7 +87,6 @@ def statistic():
         dialect_stats['number'] = dialect_pair_count
         all_count += dialect_pair_count
         print_summary(dialect_stats)
-
     print('ALL count: ', all_count)
 
 
