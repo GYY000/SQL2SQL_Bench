@@ -5,18 +5,13 @@
 # @Time: 2025/1/10 22:54
 from typing import List
 
-from generator.element.Pattern import ValueSlot, Pattern
+from sql_gen.generator.ele_type.type_def import BaseType
+from sql_gen.generator.element.Pattern import Pattern, ValueSlot
 
 
 class Point:
-    def __init__(self, src_pattern: Pattern, tgt_pattern: Pattern, slots: List, point_type: str):
+    def __init__(self, src_pattern: Pattern, tgt_pattern: Pattern, slots: List, point_type: str, return_type: BaseType | None, predicate: str | None):
         self.src_pattern = src_pattern
         self.tgt_pattern = tgt_pattern
         self.slots = slots
         self.point_type = point_type
-
-    def instr_full_content(self, col_pairs: List):
-        for value_slot in self.slots:
-            assert isinstance(value_slot, ValueSlot)
-            value_slot.prefill(col_pairs)
-        return self.src_pattern.fulfill_pattern(True), self.tgt_pattern.fulfill_pattern(False)

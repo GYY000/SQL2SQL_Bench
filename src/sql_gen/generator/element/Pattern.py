@@ -3,10 +3,12 @@
 # @Module: Pattern$
 # @Author: 10379
 # @Time: 2024/12/25 0:13
-from typing import List, Dict
+from typing import List
 from abc import ABC, abstractmethod
 
-from generator.element.Type import Type, MySQLType, PostgresType, OracleType, ListType, get_dialect_by_type, type_match
+from sql_gen.generator.ele_type.type_def import ListType, BaseType, QueryType, TableType, OptionType, AliasType, \
+    AnyValueType
+from sql_gen.generator.element.Operand import Operand
 
 
 class Slot(ABC):
@@ -16,137 +18,9 @@ class Slot(ABC):
     def __str__(self):
         return 'slot'
 
-
-class ValueSlot(Slot):
-    def __init__(self, name: str, src_type: Type = None, tgt_type: Type = None):
-        super().__init__()
-        if tgt_type is None:
-            raise ValueError('target_type can\'t be None')
-        self.src_type = src_type
-        self.tgt_type = tgt_type
-        self.name = name
-        self.src_value = None
-        self.tgt_value = None
-
-    def fulfill(self, src_flag):
-        """
-        :param src_flag: whether to get the value of source dialect or the target dialect
-        :return: the string value of this operand
-        """
-        assert self.is_fulfilled()
-        if src_flag:
-            return self.src_value
-        else:
-            return self.tgt_value
-
-    def prefill(self, col_pairs: List):
-        if self.src_type is None:
-            return False
-        else:
-            # deal with List
-            src_dialect = get_dialect_by_type(self.src_type)
-            tgt_dialect = get_dialect_by_type(self.tgt_type)
-            for col in col_pairs:
-                if type_match(col[src_dialect].op_type, self.src_type) and type_match(col[tgt_dialect].op_type,
-                                                                                      self.tgt_type):
-                    self.src_value = col[src_dialect].value
-                    self.tgt_value = col[tgt_dialect].value
-            if self.src_value is not None:
-                return True
-            else:
-                return False
-
-    def is_fulfilled(self):
-        return self.src_value is not None
-
-
-class Pattern:
-    def __init__(self):
-        self.elements = []
-        # self.for_slots = []
-
-    def add_keyword(self, keyword: str):
-        self.elements.append(keyword)
-
-    def add_slot(self, slot: Slot):
-        self.elements.append(slot)
-
-    def fulfill_pattern(self, src_flag: bool):
-        res = ''
-        for ele in self.elements:
-            if isinstance(ele, Slot):
-                if isinstance(ele, ValueSlot):
-                    if not ele.is_fulfilled():
-                        raise ValueError(f"Slot {ele.name} haven't been fulfilled "
-                                         f"before construction please check the define order of the slots")
-                    else:
-                        res = res + " " + ele.fulfill(src_flag)
-                elif isinstance(ele, ForSlot):
-                    res = res + "\n" + ele.fulfill(src_flag)
-            else:
-                if res != '':
-                    res = res + ' '
-                res = res + ele
-        return res
-
-
-class ForSlot(Slot):
-    def __init__(self, pattern: Pattern, sub_ele_slots: List[ValueSlot], ele_slots: List[ValueSlot]):
-        super().__init__()
-        if len(sub_ele_slots) != len(ele_slots):
-            raise ValueError("The number of sub_elements in "
-                             "for list is not equal to the number of elements in the for list")
-        if len(sub_ele_slots) != len(ele_slots):
-            raise ValueError("The number of elements in for list is zero")
-        self.slots = []
-        self.pattern = pattern
-        self.sub_ele_slots = sub_ele_slots
-        self.ele_slots = ele_slots
-
-    def __str__(self):
-        sub_elements = ''
-        for ele in self.sub_ele_slots:
-            if sub_elements != '':
-                sub_elements = sub_elements + ', '
-            sub_elements = sub_elements + ele.name
-        elements = ''
-        for ele in self.ele_slots:
-            if elements != '':
-                elements = elements + ', '
-            elements = elements + ele.name
-        split_lines = str(self.pattern).splitlines()
-        patterns = ''
-        for line in split_lines:
-            patterns = patterns + "\t\t" + line + '\n'
-        return f"{{\n\tFor {sub_elements} in {elements}:\n{patterns}}}"
-
-    def fulfill(self, src_flag: bool):
-        for slot in self.ele_slots:
-            assert isinstance(slot, ValueSlot)
-            if not slot.is_fulfilled():
-                raise ValueError(f"Slot {slot.name} haven't been fulfilled "
-                                 f"before construction please check the define order of the slots")
-        i = 0
-        res = ''
-        if src_flag:
-            for i in range(len(self.ele_slots[0].src_value)):
-                for j in range(len(self.ele_slots)):
-                    assert isinstance(self.ele_slots[j].src_type, ListType)
-                    self.sub_ele_slots[j].src_value = self.ele_slots[j].src_value[i]
-                if res != '':
-                    res = res + "\n" + self.pattern.fulfill_pattern(src_flag)
-                else:
-                    res = res + self.pattern.fulfill_pattern(src_flag)
-        else:
-            for i in range(len(self.ele_slots[0].tgt_value)):
-                for j in range(len(self.ele_slots)):
-                    assert isinstance(self.ele_slots[j].tgt_type, ListType)
-                    self.sub_ele_slots[j].tgt_value = self.ele_slots[j].tgt_value[i]
-                if res != '':
-                    res = res + "\n" + self.pattern.fulfill_pattern(src_flag)
-                else:
-                    res = res + self.pattern.fulfill_pattern(src_flag)
-        return res
+    @abstractmethod
+    def extend(self, used_id) -> str:
+        pass
 
 
 class UdfFunction:
@@ -163,64 +37,170 @@ class UdfFunction:
             params = params + str(slot)
         return f"{self.func_name}({params.strip()})"
 
-# class MySQLValueSlot(ValueSlot):
-#     def __init__(self, name: str, value_type: MySQLType):
-#         super().__init__(name, value_type)
-#
-#     def fulfill(self, cols, tgt_dialect: str):
-#         """
-#             ANY_VALUE = 0
-#             INT = 1
-#             BOOL = 2
-#             FLOAT = 3
-#             DATE = 4
-#             TIME = 5
-#             TIMESTAMP = 6
-#             TEXT = 7
-#             JSON = 8
-#             POINT = 9
-#             NULL = 10
-#             YEAR = 11
-#         """
-#         if self.value_type == MySQLType.ANY_VALUE:
-#             pass
-#         elif self.value_type == MySQLType.INT:
-#             pass
-#         elif self.value_type == MySQLType.BOOL:
-#             pass
-#         elif self.value_type == MySQLType.FLOAT:
-#             pass
-#         elif self.value_type == MySQLType.DATE:
-#             pass
-#         elif self.value_type == MySQLType.TIME:
-#             pass
-#         elif self.value_type == MySQLType.TIMESTAMP:
-#             pass
-#         elif self.value_type == MySQLType.TEXT:
-#             pass
-#         elif self.value_type == MySQLType.JSON:
-#             pass
-#         elif self.value_type == MySQLType.POINT:
-#             pass
-#         elif self.value_type == MySQLType.NULL:
-#             pass
-#         elif self.value_type == MySQLType.YEAR:
-#             pass
-#         else:
-#             raise ValueError
-#
-#
-# class PostgresValueSlot(ValueSlot):
-#     def __init__(self, name: str, value_type: PostgresType):
-#         super().__init__(name, value_type)
-#
-#     def fulfill(self, cols, tgt_dialect: str):
-#         pass
-#
-#
-# class OracleValueSlot(ValueSlot):
-#     def __init__(self, name: str, value_type: OracleType):
-#         super().__init__(name, value_type)
-#
-#     def fulfill(self, cols, tgt_dialect: str):
-#         pass
+
+class ValueSlot(Slot):
+    def __init__(self, name: str, slot_type: BaseType = None, udf_func: UdfFunction = None):
+        super().__init__()
+        self.slot_type = slot_type
+        self.name = name
+        self.value = None
+        self.udf_func = udf_func
+
+    def __str__(self):
+        if self.udf_func is not None:
+            return f"<{self.name}: @{str(self.udf_func)}>"
+        else:
+            return f"<{self.name}: {self.slot_type}>"
+
+    def fill_value(self, op: Operand):
+        if self.value is not None:
+            assert isinstance(self.value, Operand)
+            assert self.value.value == op.value
+        else:
+            self.value = op
+
+    def is_fulfilled(self):
+        return self.value is not None
+
+    def extend(self, used_id) -> str:
+        assert not isinstance(self.slot_type, QueryType)
+        assert not isinstance(self.slot_type, TableType)
+        # ALIAS TABLE QUERY LIST OPTION ANY_VALUE
+        if isinstance(self.slot_type, ListType):
+            return f"[{self.name}_{used_id}]"
+        elif isinstance(self.slot_type, QueryType):
+            assert False
+        elif isinstance(self.slot_type, TableType):
+            assert False
+        elif isinstance(self.slot_type, AnyValueType):
+            return f"[{self.name}_{used_id}]"
+        elif isinstance(self.slot_type, OptionType):
+            return f"{self.name}_{used_id}"
+        elif isinstance(self.slot_type, AliasType):
+            return f"{self.name}_{used_id}"
+        else:
+            return f"element{used_id}"
+
+
+class StringLiteralSlot(Slot):
+    def __init__(self, literal):
+        super().__init__()
+        self.literal = literal
+
+    def __str__(self):
+        return f"'{self.literal}'"
+
+
+class NumberLiteralSlot(Slot):
+    def __init__(self, num):
+        super().__init__()
+        self.num = num
+
+    def __str__(self):
+        return str(self.num)
+
+
+class Pattern:
+    def __init__(self):
+        self.elements = []
+        # self.for_slots = []
+
+    def add_keyword(self, keyword: str):
+        self.elements.append(keyword)
+
+    def add_slot(self, slot: Slot):
+        self.elements.append(slot)
+
+    def fulfill_pattern(self, alias_id_map):
+        res = ''
+        for ele in self.elements:
+            if isinstance(ele, Slot):
+                if isinstance(ele, ValueSlot):
+                    if not ele.is_fulfilled():
+                        if isinstance(ele.slot_type, AliasType):
+                            ele.value = Operand(f'ALIAS_{alias_id_map["ALIAS"] + 1}', AliasType())
+                            alias_id_map['ALIAS'] = alias_id_map['ALIAS'] + 1
+                        else:
+                            raise ValueError(f"Slot {ele.name} haven't been fulfilled "
+                                             f"before construction please check the define order of the slots")
+                    else:
+                        res = res + " " + ele.value.str_value()
+                elif isinstance(ele, ForSlot):
+                    res = res + "\n" + ele.fulfill()
+            else:
+                if res != '':
+                    res = res + ' '
+                res = res + ele
+        return res
+
+    def extend_pattern(self):
+        res = ''
+        slot_map = {}
+        used_id = 0
+        for ele in self.elements:
+            if isinstance(ele, str):
+                res = res + ele
+            else:
+                assert isinstance(ele, Slot)
+                if ele in slot_map:
+                    res = res + " " + slot_map[ele]
+                else:
+                    used_id = used_id + 1
+                    extended_ele = ele.extend(used_id)
+                    slot_map[ele] = extended_ele
+                res = res + " " + str(slot_map[ele])
+        return res, slot_map
+
+
+class ForSlot(Slot):
+    def __init__(self, pattern: Pattern, sub_ele_slots: List[ValueSlot], ele_slots: List[ValueSlot], strip_str):
+        super().__init__()
+        if len(sub_ele_slots) != len(ele_slots):
+            raise ValueError("The number of sub_elements in "
+                             "for list is not equal to the number of elements in the for list")
+        if len(sub_ele_slots) != len(ele_slots):
+            raise ValueError("The number of elements in for list is zero")
+        self.slots = []
+        self.pattern = pattern
+        self.sub_ele_slots = sub_ele_slots
+        self.ele_slots = ele_slots
+        self.strip_str = strip_str
+
+    def __str__(self):
+        sub_elements = ''
+        for ele in self.sub_ele_slots:
+            if sub_elements != '':
+                sub_elements = sub_elements + ', '
+            sub_elements = sub_elements + ele.name
+        elements = ''
+        for ele in self.ele_slots:
+            if elements != '':
+                elements = elements + ', '
+            elements = elements + ele.name
+        split_lines = str(self.pattern).splitlines()
+        patterns = ''
+        for line in split_lines:
+            patterns = patterns + "\t\t" + line + '\n'
+        return f"{{\n\tFor {sub_elements} in {elements} ADD '{self.strip_str}':\n{patterns}}}"
+
+    def fulfill(self):
+        for slot in self.ele_slots:
+            assert isinstance(slot, ValueSlot)
+            if not slot.is_fulfilled():
+                raise ValueError(f"Slot {slot.name} haven't been fulfilled "
+                                 f"before construction please check the define order of the slots")
+        i = 0
+        res = ''
+        for i in range(len(self.ele_slots[0].value)):
+            for j in range(len(self.ele_slots)):
+                assert isinstance(self.ele_slots[j].slot_type, ListType)
+                self.sub_ele_slots[j].value = self.ele_slots[j].value[i]
+            if res != '':
+                res = res + "\n" + self.pattern.fulfill_pattern()
+            else:
+                res = res + self.pattern.fulfill_pattern()
+        return res
+
+
+def extend(self):
+    pass

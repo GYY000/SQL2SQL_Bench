@@ -31,6 +31,54 @@ def parse_tree(src_sql: str, dialect: str) -> (str, int, int, str):
         raise ValueError("use one of" + str(map_parser) + " as argument")
 
 
+def parse_function_tree(function_expr: str, dialect: str) -> (str, int, int, str):
+    if dialect == 'pg':
+        try:
+            input_stream = InputStream(function_expr)
+            lexer = PostgreSQLLexer(input_stream)
+            lexer.addErrorListener(CustomErrorListener())
+            stream = CommonTokenStream(lexer)
+            parser = PostgreSQLParser(stream)
+            parser.addErrorListener(CustomErrorListener())
+            tree = parser.a_expr()
+            return tree, None, None, None
+        except SelfParseError as e:
+            return None, e.line, e.column, e.msg
+        except Exception as e:
+            print(f"An error occurred: {e}", file=sys.stderr)
+            raise e
+    elif dialect == 'mysql':
+        try:
+            input_stream = InputStream(function_expr)
+            lexer = MySqlLexer(input_stream)
+            lexer.addErrorListener(CustomErrorListener())
+            stream = CommonTokenStream(lexer)
+            parser = MySqlParser(stream)
+            parser.addErrorListener(CustomErrorListener())
+            tree = parser.expression()
+            return tree, None, None, None
+        except SelfParseError as e:
+            return None, e.line, e.column, e.msg
+        except Exception as e:
+            print(f"An error occurred: {e}", file=sys.stderr)
+            raise e
+    elif dialect == 'oracle':
+        try:
+            input_stream = InputStream(function_expr)
+            lexer = PlSqlLexer(input_stream)
+            lexer.addErrorListener(CustomErrorListener())
+            stream = CommonTokenStream(lexer)
+            parser = PlSqlParser(stream)
+            parser.addErrorListener(CustomErrorListener())
+            tree = parser.expression()
+            return tree, None, None, None
+        except SelfParseError as e:
+            return None, e.line, e.column, e.msg
+        except Exception as e:
+            print(f"An error occurred: {e}", file=sys.stderr)
+            raise e
+
+
 def parse_pg_tree(src_sql: str) -> (str, int, int, str):
     try:
         input_stream = InputStream(src_sql)

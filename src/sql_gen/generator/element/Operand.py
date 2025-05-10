@@ -11,7 +11,7 @@ class Operand:
         self.value = value
         self.op_type = base_type
 
-    def str_value(self, dialect: str):
+    def str_value(self):
         return self.value
 
     def __str__(self):
@@ -22,18 +22,21 @@ class Operand:
 
 
 class ColumnOp(Operand):
-    def __init__(self, column_name: str, table_name: str, base_type: BaseType):
+    def __init__(self, dialect: str, column_name: str, table_name: str, base_type: BaseType):
         super().__init__(column_name, base_type)
         self.table_name = table_name
-
-    def str_value(self, dialect: str):
+        self.dialect = dialect
+        self.column_name = column_name
         if dialect == 'mysql':
-            return f"`{self.table_name}`.`{self.value}`"
+            self.value = f"`{table_name}`.`{self.column_name}`"
         elif dialect == 'oracle' or dialect == 'pg':
-            return f"\"{self.table_name}\".\"{self.value}\""
+            self.value = f"\"{self.table_name}\".\"{self.column_name}\""
         else:
             print(f"{dialect} is not supported yet")
             assert False
+
+    def str_value(self):
+        return self.value
 
     def __str__(self):
         return f"value: {self.table_name}.{self.value} type: {self.op_type}"

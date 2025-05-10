@@ -3,6 +3,7 @@ import sys
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from antlr_parser.parse_tree import get_parser, parse_tree
+from sql_gen.generator.element.Pattern import Slot
 from utils.tools import self_split, remove_all_space
 
 parser_map = {}
@@ -28,42 +29,51 @@ class TreeNode:
         self.dialect = dialect
         self.is_terminal = is_terminal
         self.model_get = model_get
+        self.slot = None
 
     def to_tree_rep(self):
         if len(self.children) != 0:
-            res = '(' + self.value
+            res = '(' + self.get_value_rep()
             for child in self.children:
                 res = res + " " + str(child.to_tree_rep())
             res = res + ")"
         else:
-            return self.value
+            return self.get_value_rep()
         return res
 
+    def get_value_rep(self):
+        if self.slot is not None:
+            return str(self.slot)
+        return self.value
+
     def __str__(self):
-        if self.value == '<EOF>':
+        if self.get_value_rep() == '<EOF>':
             return ''
         res = ''
         flag = False
         flag_paren = True
         if self.is_terminal:
-            res = self.value
+            res = self.get_value_rep()
             return res
         if self.dialect == 'mysql':
-            if self.value in ['comparisonOperator', 'logicalOperator', 'bitOperator', 'multOperator', 'jsonOperator']:
+            if self.get_value_rep() in ['comparisonOperator', 'logicalOperator', 'bitOperator', 'multOperator',
+                                        'jsonOperator']:
                 for child in self.children:
                     sub_str = str(child)
                     res = res + sub_str.strip()
                 return res
-            if (self.value == 'functionCall' and len(self.children) != 0
-                    and (self.children[0].value == 'scalarFunctionName' or self.children[0].value == 'fullId')):
+            if (self.get_value_rep() == 'functionCall' and len(self.children) != 0
+                    and (self.children[0].get_value_rep() == 'scalarFunctionName' or self.children[
+                        0].get_value_rep() == 'fullId')):
                 flag_paren = False
-            elif (self.value == 'specificFunction' or self.value == 'passwordFunctionClause' or
-                  self.value == 'aggregateWindowedFunction' or self.value == 'nonAggregateWindowedFunction' or self.value == 'dataType'):
+            elif (self.get_value_rep() == 'specificFunction' or self.get_value_rep() == 'passwordFunctionClause' or
+                  self.get_value_rep() == 'aggregateWindowedFunction' or self.get_value_rep() == 'nonAggregateWindowedFunction'
+                  or self.get_value_rep() == 'dataType'):
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
-                    if child.is_terminal and child.value == '(':
-                        res = res + child.value
+                    if child.is_terminal and child.get_value_rep() == '(':
+                        res = res + child.get_value_rep()
                         flag = True
                     else:
                         sub_str = str(child)
@@ -77,15 +87,15 @@ class TreeNode:
                                 flag = True
                 return res
         elif self.dialect == 'pg':
-            if ((self.value == 'func_application' or self.value == 'func_expr_common_subexpr')
+            if ((self.get_value_rep() == 'func_application' or self.get_value_rep() == 'func_expr_common_subexpr')
                     and len(self.children) != 0):
                 flag_paren = False
-            if self.father is not None and self.father.value == 'simpletypename':
+            if self.father is not None and self.father.get_value_rep() == 'simpletypename':
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
-                    if child.is_terminal and child.value == '(':
-                        res = res + child.value
+                    if child.is_terminal and child.get_value_rep() == '(':
+                        res = res + child.get_value_rep()
                         flag = True
                     else:
                         sub_str = str(child)
@@ -99,18 +109,18 @@ class TreeNode:
                                 flag = True
                 return res
         elif self.dialect == 'oracle':
-            if self.value in ['relational_operator']:
+            if self.get_value_rep() in ['relational_operator']:
                 for child in self.children:
                     sub_str = str(child)
                     res = res + sub_str.strip()
                 return res
-            if (self.value == 'string_function' or self.value == 'json_function'
-                    or self.value == 'other_function' or self.value == 'numeric_function' or self.value == 'datatype'):
+            if (self.get_value_rep() == 'string_function' or self.get_value_rep() == 'json_function'
+                    or self.get_value_rep() == 'other_function' or self.get_value_rep() == 'numeric_function' or self.get_value_rep() == 'datatype'):
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
-                    if child.is_terminal and child.value == '(':
-                        res = res + child.value
+                    if child.is_terminal and child.get_value_rep() == '(':
+                        res = res + child.get_value_rep()
                         flag = True
                     else:
                         sub_str = str(child)
@@ -129,9 +139,9 @@ class TreeNode:
                     flag = False
                 if sub_str != '':
                     if (flag and not res.endswith('.')
-                            and not child.value == 'function_argument'
-                            and not child.value == 'function_argument_analytic'
-                            and not child.value == 'function_argument_modeling'):
+                            and not child.get_value_rep() == 'function_argument'
+                            and not child.get_value_rep() == 'function_argument_analytic'
+                            and not child.get_value_rep() == 'function_argument_modeling'):
                         res = res + " " + sub_str.strip()
                     else:
                         res = res + sub_str
@@ -264,14 +274,14 @@ class TreeNode:
             while ori_sql[i] == ' ':
                 i = i + 1
             j, k = 0, 0
-            while j < len(root_node.value):
-                while (root_node.value[j] == ' '
-                       or root_node.value[j] == '\n' or root_node.value[j] == '\t'):
+            while j < len(root_node.get_value_rep()):
+                while (root_node.get_value_rep()[j] == ' '
+                       or root_node.get_value_rep()[j] == '\n' or root_node.get_value_rep()[j] == '\t'):
                     j = j + 1
                 while (ori_sql[i + k] == ' '
                        or ori_sql[i + k] == '\n' or ori_sql[i + k] == '\t'):
                     k = k + 1
-                assert root_node.value[j] == ori_sql[i + k]
+                assert root_node.get_value_rep()[j] == ori_sql[i + k]
                 j = j + 1
                 k = k + 1
             if i <= column < i + j:
@@ -282,7 +292,7 @@ class TreeNode:
     def get_children_by_value(self, value: str):
         res = []
         for child in self.children:
-            if child.value == value:
+            if child.get_value_rep() == value:
                 res.append(child)
         return res
 
@@ -308,41 +318,18 @@ class TreeNode:
         assert ori_res == node_res
         return TreeNode.locate_node_exec(root_node, column, ori_sql, '')
 
-    @staticmethod
-    def no_space_loc(root_node, column: int, ori_sql: str, now_str: str):
-        cur_str = now_str
-        if len(root_node.children) != 0:
-            for child in root_node.children:
-                node, cur_str = TreeNode.no_space_loc(child, column, ori_sql, cur_str)
-                if node is not None:
-                    return node, cur_str
-            return None, cur_str
-        elif not root_node.is_terminal:
-            return None, now_str
-        else:
-            i = len(now_str)
-            j = 0
-            node_value = remove_all_space(root_node.value)
-            while j < len(node_value):
-                assert node_value[j] == ori_sql[i + j]
-                j = j + 1
-            if i <= column < i + j:
-                return root_node, ori_sql[:i + j]
-            else:
-                return None, ori_sql[:i + j]
-
     def get_children_by_path(self, path: list):
         if len(path) == 0:
             return [self]
         else:
             res = []
             for child in self.children:
-                if child.value == path[0]:
+                if child.get_value_rep() == path[0]:
                     res = res + child.get_children_by_path(path[1:])
             return res
 
     def clone(self):
-        new_node = TreeNode(self.value, self.dialect, self.is_terminal)
+        new_node = TreeNode(self.get_value_rep(), self.dialect, self.is_terminal)
         new_node.model_get = self.model_get
         for child in self.children:
             new_node.add_child(child.clone())
@@ -356,13 +343,13 @@ class TreeNode:
 
     def rm_child_by_value(self, value: str):
         for child in self.children:
-            if child.value == value:
+            if child.get_value_rep() == value:
                 self.children.remove(child)
                 break
 
     def insert_after_node(self, insert_node, after_node_value: str, times: int = 1):
         for child in self.children:
-            if child.value == after_node_value:
+            if child.get_value_rep() == after_node_value:
                 times = times - 1
                 if times > 0:
                     continue
@@ -375,12 +362,12 @@ class TreeNode:
     def find_all_nodes_of_values(self, values: list):
         res = []
         for child in self.children:
-            if child.value in values:
+            if child.get_value_rep() in values:
                 res.append(child)
         return res
 
     def get_node_until(self, value: str):
-        if self.value == value:
+        if self.get_value_rep() == value:
             return [self]
         res = []
         for child in self.children:
@@ -388,60 +375,8 @@ class TreeNode:
         return res
 
 
-def merge_tree(sub_tree_node: TreeNode, father_tree_node: TreeNode,
-               rel_father_tree_node: TreeNode, start_index_i=0, start_index_j=-1):
-    # 本身就只是需要一棵关键词子树而已所以不用过于复杂，此处使用BFS遍历实现两棵关键词子树的合并
-    # 关键在于同层决定顺序
-    i = start_index_i
-    j = start_index_j
-    while i < len(rel_father_tree_node.children):
-        if (j + 1 < len(father_tree_node.children) and
-                rel_father_tree_node.children[i].value == father_tree_node.children[j + 1].value):
-            j = j + 1
-        if sub_tree_node.value == rel_father_tree_node.children[i].value:
-            break
-        i = i + 1
-    if (j <= len(father_tree_node.children) - 1 and
-            sub_tree_node.value == father_tree_node.children[j].value):
-        i1 = 0
-        j1 = -1
-        for child in sub_tree_node.children:
-            # child node also need to combine
-            i1, j1 = merge_tree(child, father_tree_node.children[j],
-                                rel_father_tree_node.children[i], i1, j1)
-    else:
-        father_tree_node.children.insert(j, sub_tree_node)
-        sub_tree_node.father = father_tree_node
-    return i + 1, j + 1
-
-
-def lift_node(node, all_pieces, tree_node, piece):
-    node = node.father
-    flag = False
-    terminate_flag = False
-    for enum_piece in all_pieces:
-        if node == enum_piece['Node']:
-            enum_piece['TrackPieces'].append(piece)
-            piece = enum_piece
-            flag = True
-            break
-    if not flag:
-        new_node = TreeNode(node.value, node.dialect, False)
-        new_node.add_child(tree_node)
-        tree_node = new_node
-    else:
-        if piece['Tree'] is None:
-            return True, node, None, piece
-        merge_tree(tree_node, piece['Tree'], node)
-        tree_node = piece['Tree']
-        terminate_flag = True
-    if node.father is None or len(node.children) > 1:
-        terminate_flag = True
-    return terminate_flag, node, tree_node, piece
-
-
 def try_fetch_nodes_by_route(root_node: TreeNode, path: list):
-    if root_node.value == path[0]:
+    if root_node.get_value_rep() == path[0]:
         if len(path) == 1:
             return [root_node]
         else:

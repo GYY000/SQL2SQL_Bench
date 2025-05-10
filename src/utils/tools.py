@@ -241,9 +241,9 @@ def date_format_trans(format_str: str):
     return ((format_str.replace('YYYY', '%Y').
              replace('yyyy', '%Y').replace('MM', '%m').
              replace('DD', '%d')).replace('dd', '%d').replace('MONTH', '%M').
-            replace('MON', '%b').replace('HH24', '%H').replace('MI', '%i').
+            replace('MON', '%b').replace('HH24', '%H').replace('MI', '%M').
             replace('SS', '%S').replace('FF', '%f').replace('DY', '%a').
-            replace('AM', '%p').replace('HH', '%I').replace('RR', '%y'))
+            replace('AM', '%p').replace('PM', '%p').replace('HH', '%I').replace('RR', '%y'))
 
 
 def gen_interval(dialect, units:list, values: list, sign=False):

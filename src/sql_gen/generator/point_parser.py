@@ -3,223 +3,389 @@
 # @Module: point_parser$
 # @Author: 10379
 # @Time: 2024/12/25 12:40
+import json
 from typing import List, Dict
 
-from sql_gen.generator.element.Pattern import Pattern, ForSlot, Slot, UdfFunction, ValueSlot
+from sql_gen.generator.ele_type.Attribute import AttributeContainer
+from sql_gen.generator.ele_type.type_def import OptionType, ListType, BaseType
+from sql_gen.generator.ele_type.type_operation import gen_type_through_str
+from sql_gen.generator.element.Pattern import Pattern, ForSlot, UdfFunction, ValueSlot, StringLiteralSlot, \
+    NumberLiteralSlot
 from sql_gen.generator.element.Point import Point
-from sql_gen.generator.element.Type import Type, ListType, MySQLType, PostgresType, OracleType, gen_type
-
-slots_defs = [[]]
+from utils.tools import get_proj_root_path
 
 
-def get_slot_by_name(name: str):
-    i = len(slots_defs) - 1
+def get_slot_by_name(name: str, value_slot_defs: List[List[ValueSlot]]):
+    i = len(value_slot_defs) - 1
     while i >= 0:
-        for j in range(len(slots_defs[i])):
-            if name == slots_defs[i][j].name:
-                return slots_defs[j][j]
+        for j in range(len(value_slot_defs[i])):
+            if name == value_slot_defs[i][j].name:
+                return value_slot_defs[i][j]
         i = i - 1
     raise ValueError(f"can't find var def of {name}")
 
 
-def parse_point(point: Dict, src_dialect: str, tgt_dialect: str) -> Point:
-    src_pattern = point[src_dialect]
-    tgt_pattern = point[tgt_dialect]
-
-    slots_ori_def = point['slots_def']
-    for ori_def in slots_ori_def:
-        name = ori_def['name']
-        src_type = ori_def[f"{src_dialect}_type"]
-        tgt_type = ori_def[f"{tgt_dialect}_type"]
-        if "gen_func" in ori_def:
-            pass
-        # TODO: check for unique
-        slots_defs[0].append(ValueSlot(name, gen_type(src_dialect, src_type), gen_type(tgt_dialect, tgt_type)))
-
-    splits = split(src_pattern)
-    src_pattern, _ = parse_pattern(splits, 0, len(splits), src_dialect)
-
-    splits = split(tgt_pattern)
-    tgt_pattern, _ = parse_pattern(splits, 0, len(splits), tgt_dialect)
-
-    return Point(src_pattern, tgt_pattern, slots_defs[0], point['type'])
+def check_dup_name(name: str, value_slot_defs: List[List[ValueSlot]]):
+    slot_layer = value_slot_defs[len(value_slot_defs) - 1]
+    for i in range(len(slot_layer)):
+        if name == slot_layer[i].name:
+            return True
+    return False
 
 
-def split(pattern: str):
-    res = []
-    i = 0
-    cur_str = ""
-    while i < len(pattern):
-        if pattern[i] == '\"':
-            if cur_str != '':
-                res.append(cur_str)
-            cur_str = '\"'
-            i = i + 1
-            while pattern[i] != "\"":
-                if pattern[i] == '\\':
-                    cur_str = cur_str + pattern[i]
-                    i = i + 1
-                cur_str = cur_str + pattern[i]
-                i = i + 1
-            cur_str = cur_str + pattern[i]
-            i = i + 1
-            res.append(cur_str)
-            cur_str = ''
-        elif pattern[i] == '\'':
-            if cur_str != '':
-                res.append(cur_str)
-            cur_str = '\''
-            i = i + 1
-            while pattern[i] != "\'":
-                if pattern[i] == '\\':
-                    cur_str = cur_str + pattern[i]
-                    i = i + 1
-                cur_str = cur_str + pattern[i]
-                i = i + 1
-            cur_str = cur_str + pattern[i]
-            i = i + 1
-            res.append(cur_str)
-            cur_str = ''
-        elif pattern[i:].startswith('::'):
-            if cur_str != '':
-                res.append(cur_str)
-                cur_str = ''
-            res.append("::")
-            i = i + 2
-        elif pattern[i] in ['@', '{', '}', ',', ':', '(', ')', '[', ']']:
-            if cur_str != '':
-                res.append(cur_str)
-                cur_str = ''
-            res.append(pattern[i])
-            i = i + 1
-        elif pattern[i] == ' ' or pattern[i] == '\n' or pattern[i] == '\t':
-            if cur_str != '':
-                res.append(cur_str)
-                cur_str = ''
-            i = i + 1
+def find_same_layer_bracket(string: str, pos: int, char: str):
+    if char == '(':
+        rev_char = ')'
+    elif char == '[':
+        rev_char = ']'
+    elif char == '{':
+        rev_char = '}'
+    else:
+        assert False
+    layer = 0
+    while pos < len(string):
+        if string[pos] == char:
+            layer = layer + 1
+        elif string[pos] == rev_char:
+            layer = layer - 1
+        if layer == 0:
+            return pos
+        pos = pos + 1
+    return -1
+
+
+def load_str(str_to_read: str, index_begin):
+    while str_to_read[index_begin].isspace():
+        index_begin = index_begin + 1
+    assert str_to_read[index_begin] == '\'' or str_to_read[index_begin] == '\"'
+    quote_begin = str_to_read[index_begin]
+    index_begin = index_begin + 1
+    res = ''
+    while str_to_read[index_begin] != quote_begin:
+        if str_to_read[index_begin] == '\\':
+            index_begin = index_begin + 1
+            if str_to_read[index_begin] == 'n':
+                res = res + '\n'
+            elif str_to_read[index_begin] == 't':
+                res = res + '\t'
+            elif str_to_read[index_begin] == 'r':
+                res = res + '\r'
+            elif str_to_read[index_begin] == 'b':
+                res = res + '\b'
+            elif str_to_read[index_begin] == 'f':
+                res = res + '\f'
+            elif str_to_read[index_begin] in ['\\', '\'', '\"']:
+                res = res + str_to_read[index_begin]
+            elif str_to_read[index_begin] == 'u':
+                res = res + chr(int(str_to_read[index_begin + 1:index_begin + 5], 16))
+                index_begin = index_begin + 4
         else:
-            cur_str = cur_str + pattern[i]
-            i = i + 1
-    if cur_str != '':
-        res.append(cur_str)
-    return res
+            res = res + str_to_read[index_begin]
+        index_begin = index_begin + 1
+    return res, index_begin + 1
 
 
-def parse_pattern(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Pattern, int]:
+def parse_point(point: Dict) -> Point:
+    src_dialect = point['Dialect']['Src']
+    tgt_dialect = point['Dialect']['Tgt']
+    for key, value in point.items():
+        assert key in ['Dialect', 'Desc', 'Return', 'SrcPattern', 'TgtPattern', 'Type', 'Condition']
+    # print(point)
+    src_pattern = point['SrcPattern']
+    tgt_pattern = point['TgtPattern']
+    point_type = point['Type']
+    return_type = None
+    predicate = None
+    if point_type == 'FUNCTION' or point_type == 'AGGREGATE_FUNCTION':
+        assert 'Return' in point
+        return_type = point['Return']
+    if 'Condition' in point:
+        predicate = point['Condition']
+    slot_defs = [[]]
+    src_pattern, _ = parse_pattern(src_pattern, 0, src_dialect, slot_defs)
+    tgt_pattern, _ = parse_pattern(tgt_pattern, 0, tgt_dialect, slot_defs)
+
+    return Point(src_pattern, tgt_pattern, slot_defs[0], point_type, return_type, predicate)
+
+
+def parse_pattern(pattern_str: str, index_begin: int, dialect: str, slot_defs) -> tuple[Pattern, int]:
     i = index_begin
     pattern = Pattern()
-    while i < index_end:
-        token = tokens[i]
-        if token == '[':
-            slot, i = parse_slot(tokens, i, index_end, src_dialect)
+    cur_str = ''
+    while i < len(pattern_str):
+        token = pattern_str[i]
+        if token == '\\':
+            i = i + 1
+            cur_str = cur_str + pattern_str[i]
+            i = i + 1
+        elif token == '<':
+            if cur_str != '':
+                pattern.add_keyword(cur_str)
+                cur_str = ''
+            slot, i = parse_slot(pattern_str, i, dialect, slot_defs)
             pattern.add_slot(slot)
         elif token == '{':
-            for_slot, i = parse_for_loop(tokens, i, index_end, src_dialect)
+            if cur_str != '':
+                pattern.add_keyword(cur_str)
+                cur_str = ''
+            for_slot, i = parse_for_loop(pattern_str, i, dialect, slot_defs)
             pattern.add_slot(for_slot)
         else:
-            pattern.add_keyword(tokens[i])
+            cur_str = cur_str + token
             i = i + 1
     return pattern, i
 
 
-def parse_for_loop(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[ForSlot, int]:
-    assert tokens[index_begin] == '{'
-    # parse_for_loop
+def parse_for_loop(pattern_str, index_begin: int, dialect: str, slot_defs: List) -> tuple[ForSlot, int]:
+    while pattern_str[index_begin].isspace():
+        index_begin = index_begin + 1
+    assert pattern_str[index_begin] == '{'
     i = index_begin + 1
-    while tokens[i] != 'for':
+    assert pattern_str[i:].startswith('for')
+    i = i + 3
+    while pattern_str[i].isspace():
         i = i + 1
-    ele_names = []
-    i = i + 1
-    while tokens[i] != 'in':
-        ele_name = tokens[i]
+    sub_value_slots = []
+    while not pattern_str[i:].startswith('in'):
+        assert pattern_str[i] == '<'
         i = i + 1
-        assert tokens[i] == ',' or tokens[i] == 'in'
-        ele_names.append(ele_name)
+        name = ''
+        while i < len(pattern_str) and pattern_str[i] != '>':
+            name = name + pattern_str[i]
+            i = i + 1
+        assert pattern_str[i] == '>'
+        i = i + 1
+        while pattern_str[i].isspace():
+            i = i + 1
+        if pattern_str[i] == ',':
+            i = i + 1
+        while pattern_str[i].isspace():
+            i = i + 1
+        sub_value_slots.append(ValueSlot(name))
+    i = i + 2
+    while pattern_str[i].isspace():
+        i = i + 1
+    slots = []
+    while not pattern_str[i:].startswith('ADD') and not pattern_str[i:].startswith(':'):
+        assert pattern_str[i] == '<'
+        slot, i = parse_slot(pattern_str, i, dialect, slot_defs)
+        while pattern_str[i].isspace():
+            i = i + 1
+        assert pattern_str[i] == ',' or pattern_str[i:].startswith('ADD') or pattern_str[i:].startswith(':')
+        slots.append(slot)
+        if pattern_str[i] == ',':
+            i = i + 1
+        while pattern_str[i].isspace():
+            i = i + 1
 
-    ele_slots = []
-    assert tokens[i] == 'in'
-
-    while tokens[i] != ':':
-        i = i + 1
-        slot, i = parse_slot(tokens, i, index_end, src_dialect)
-        ele_slots.append(slot)
-        assert tokens[i] == ',' or tokens[i] == ':'
+    strip_str = ''
+    if pattern_str[i:].startswith('ADD'):
+        strip_str, i = load_str(pattern_str, i + 3)
+        while pattern_str[i].isspace():
+            i = i + 1
+    assert pattern_str[i] == ':'
     i = i + 1
-    # find the corresponding }
-    j = i
     flag = 0
+    j = i
     while True:
-        if tokens[j] == '{':
+        if pattern_str[j] == '\\':
+            j = j + 1
+        elif pattern_str[j] == '{':
             flag = flag + 1
-        elif tokens[j] == '}':
+        elif pattern_str[j] == '}':
             if flag == 0:
                 break
             else:
                 flag = flag - 1
         j = j + 1
+    new_def_layer = []
+    assert len(sub_value_slots) == len(slots)
+    for k in range(len(sub_value_slots)):
+        assert isinstance(slots[k].slot_type, ListType) or slots[k].udf_func is not None
+        if slots[k].udf_func is None:
+            sub_value_slots[k].slot_type = slots[k].slot_type.element_type
+        new_def_layer.append(sub_value_slots[k])
+    slot_defs.append(new_def_layer)
+    pattern, i = parse_pattern(pattern_str[i:j], 0, dialect, slot_defs)
+    slot_defs.pop()
+    return ForSlot(pattern, sub_value_slots, slots, strip_str), j + 1
 
-    new_slots = []
-    for ele_name in ele_names:
-        new_slots.append(ValueSlot(ele_name))
-    slots_defs.append(new_slots)
-    pattern, i = parse_pattern(tokens, i, j, src_dialect)
-    assert tokens[i] == '}'
-    slots_defs.pop()
-    return ForSlot(pattern, new_slots, ele_slots), i + 1
 
-
-def parse_slot(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[ValueSlot, int]:
-    i = index_begin
-    assert tokens[index_begin] == '['
+def parse_slot(pattern_str: str, index_begin: int, dialect: str,
+               slot_defs: List) -> tuple[ValueSlot, int]:
+    assert pattern_str[index_begin] == '<'
     i = index_begin + 1
-    name = ""
-    while tokens[i] != ']' and i < index_end:
-        name = name + tokens[i] + " "
+    while pattern_str[i] != ':' and pattern_str[i] != '>' and i < len(pattern_str):
         i = i + 1
-    assert tokens[i] == ']'
-    return get_slot_by_name(name.strip()), i + 1
-    # slot_type, i = parse_type(tokens, i, index_end, src_dialect)
-    # assert tokens[i] == ']'
-    # if src_dialect == 'mysql':
-    #     assert isinstance(slot_type, MySQLType)
-    #     return MySQLValueSlot(name.strip(), slot_type), i + 1
-    # elif src_dialect == 'pg':
-    #     assert isinstance(slot_type, PostgresType)
-    #     return PostgresValueSlot(name.strip(), slot_type), i + 1
-    # elif src_dialect == 'oracle':
-    #     assert isinstance(slot_type, OracleType)
-    #     return OracleValueSlot(name.strip(), slot_type), i + 1
-    # else:
-    #     assert False
-
-
-def parse_function(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[UdfFunction, int]:
-    assert tokens[index_begin] == '@'
-    name = ''
-    i = index_begin
-    while tokens[i] != '(':
-        name = name + tokens[i] + " "
-    name = name.strip()
-    assert tokens[i] == '('
-    slots = []
-    while tokens[i] != ')':
+    if i == len(pattern_str):
+        raise ValueError(
+            f'Translation Point Syntax Error for slot definition. '
+            f'Point definition is {pattern_str}\\ Position is {index_begin}')
+    name = pattern_str[index_begin + 1: i].strip()
+    if pattern_str[i] == ':':
+        if check_dup_name(name, slot_defs):
+            raise ValueError(f"Duplicate name {name} for slot definition at position: {pattern_str[index_begin:]}")
         i = i + 1
-        slot, i = parse_slot(tokens, i, index_end, src_dialect)
-        slots.append(slot)
-        assert tokens[i] == ',' or tokens[i] == ')'
-    i = i + 1
-    return UdfFunction(name, slots), i
-
-
-def parse_type(tokens: List[str], index_begin: int, index_end: int, src_dialect: str) -> tuple[Type, int]:
-    i = index_begin
-    if tokens[i] == 'List':
-        i = i + 1
-        assert tokens[i] == '['
-        i = i + 1
-        ele_type, i = parse_type(tokens, i, index_end, src_dialect)
-        assert tokens[i] == ']'
-        i = i + 1
-        return ListType(ele_type), i
+        while pattern_str[i].isspace():
+            i = i + 1
+        if pattern_str[i] == '@':
+            udf_function, i = parse_function(pattern_str, i, dialect, slot_defs)
+            value_slot = ValueSlot(name, None, udf_function)
+        else:
+            slot_type, i = parse_type(pattern_str, i)
+            value_slot = ValueSlot(name, slot_type)
+        slot_defs[len(slot_defs) - 1].append(value_slot)
     else:
-        return gen_type(src_dialect, tokens[i]), i + 1
+        value_slot = get_slot_by_name(name, slot_defs)
+    while pattern_str[i].isspace():
+        i = i + 1
+    assert pattern_str[i] == '>'
+    return value_slot, i + 1
+
+
+function_name = set()
+
+
+def parse_function(pattern_str: str, index_begin: int, dialect: str, slot_defs: List) -> tuple[UdfFunction, int]:
+    assert pattern_str[index_begin] == '@'
+    name = ''
+    i = index_begin + 1
+    while pattern_str[i] != '(':
+        name = name + pattern_str[i]
+        i = i + 1
+    name = name.strip()
+    assert pattern_str[i] == '('
+    slots = []
+    i = i + 1
+    while pattern_str[i].isspace():
+        i = i + 1
+    while pattern_str[i] != ')':
+        if pattern_str[i] == '\'':
+            cur_str = ''
+            i = i + 1
+            while pattern_str[i] != '\'':
+                if pattern_str[i] == '\\' and pattern_str[i + 1] == '\'':
+                    cur_str = cur_str + '\''
+                    i = i + 2
+                else:
+                    cur_str = cur_str + pattern_str[i]
+                    i = i + 1
+            i = i + 1
+            slots.append(StringLiteralSlot(cur_str))
+        elif pattern_str[i].isdigit():
+            num = 0
+            while pattern_str[i].isdigit():
+                num = num * 10 + int(pattern_str[i])
+                i = i + 1
+            val = 0.1
+            if pattern_str == '.':
+                while pattern_str[i].isdigit():
+                    num = num + int(pattern_str[i]) * val
+                    val = val * 0.1
+                    i = i + 1
+            i = i + 1
+            slots.append(NumberLiteralSlot(num))
+        else:
+            slot, i = parse_slot(pattern_str, i, dialect, slot_defs)
+            slots.append(slot)
+        while pattern_str[i].isspace():
+            i = i + 1
+        if pattern_str[i] == ',':
+            i = i + 1
+            while pattern_str[i].isspace():
+                i = i + 1
+        else:
+            assert pattern_str[i] == ')'
+    function_name.add(name)
+    print(function_name)
+    print(len(function_name))
+    return UdfFunction(name, slots), i + 1
+
+
+def parse_type(pattern_str: str, index_begin: int) -> tuple[BaseType, int]:
+    # considering OPTION
+    i = index_begin
+    while pattern_str[i].isspace():
+        i = i + 1
+    type_def_begin = i
+    # !LIST type and OPTION type have no attributes
+    if pattern_str[type_def_begin:].startswith('LIST'):
+        assert pattern_str[type_def_begin + len('LIST')] == '['
+        i = find_same_layer_bracket(pattern_str, type_def_begin + len('LIST'), '[')
+        element_type, _ = parse_type(pattern_str[type_def_begin + len('LIST') + 1: i], 0)
+        while pattern_str[i].isspace():
+            i = i + 1
+        assert pattern_str[i] == ']'
+        return ListType(element_type), i + 1
+    elif pattern_str[type_def_begin:].startswith('OPTION'):
+        assert pattern_str[type_def_begin + + len('OPTION')] == '['
+        # parse option values
+        i = type_def_begin + len('OPTION')
+        option_map = {}
+        while pattern_str[i] != ']':
+            # TODO:change here to enable number input
+            i = i + 1
+            key_str, i = load_str(pattern_str, i)
+            while pattern_str[i].isspace():
+                i = i + 1
+            assert pattern_str[i] == ',' or pattern_str[i] == ':' or pattern_str[i] == ']'
+            if pattern_str[i] == ',' or pattern_str[i] == ']':
+                value_str = key_str
+            else:
+                i = i + 1
+                value_str, i = load_str(pattern_str, i)
+            option_map[key_str] = value_str
+            while pattern_str[i].isspace():
+                i = i + 1
+            assert pattern_str[i] == ',' or pattern_str[i] == ']'
+        return OptionType(option_map), i + 1
+    else:
+        while pattern_str[i].isspace():
+            i = i + 1
+        type_name = ''
+        in_paren = False
+        while i < len(pattern_str) and not in_paren and not (pattern_str[i] == '>' or pattern_str[i] == ','):
+            if pattern_str[i] == '(':
+                in_paren = True
+            type_name = type_name + pattern_str[i]
+            i = i + 1
+        attr_container = None
+        if i < len(pattern_str) and pattern_str[i] == ',':
+            i = i + 1
+            attr_container, i = parse_attributes(pattern_str, i)
+
+        return gen_type_through_str(type_name.strip(), attr_container), i
+
+
+attributes_set = set()
+
+
+def parse_attributes(pattern_str: str, index_begin: int) -> tuple[AttributeContainer, int]:
+    i = index_begin
+    while pattern_str[i].isspace():
+        i = i + 1
+    in_paren = False
+    attributes = []
+    attribute = ''
+    attr_container = AttributeContainer()
+    while i < len(pattern_str) and not (not in_paren and pattern_str[i] == '>'):
+        if in_paren is False and pattern_str[i] in ['(', '[']:
+            in_paren = True
+        if in_paren is False and pattern_str[i] == ',':
+            if attribute == '':
+                raise ValueError('Empty attribute is not allowed: ' + pattern_str[i:])
+            attributes.append(attribute.strip())
+            attribute = ''
+        else:
+            if in_paren is not None and pattern_str[i] in [')', ']']:
+                in_paren = False
+            attribute = attribute + pattern_str[i]
+        i = i + 1
+    if i == index_begin:
+        raise ValueError(f"Parsing Attributes Error: {pattern_str[index_begin:]}")
+    if attribute != '':
+        attributes.append(attribute.strip())
+    for attribute in attributes:
+        attr_container.add_attribute(attribute)
+        attributes_set.add(attribute)
+    return attr_container, i

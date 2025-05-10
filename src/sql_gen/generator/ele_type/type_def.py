@@ -7,26 +7,34 @@ import json
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from udfs.date_udf import date_format_udf
+from sql_gen.generator.ele_type.Attribute import AttributeContainer
+from utils.tools import date_format_trans
 
 
-def type_json_build(type_name, attributes):
-    if attributes is None:
-        return {"type_name": type_name}
-    else:
-        ori_dict = {"type_name": type_name}
-        for key, value in attributes.items():
-            ori_dict[key] = value
-        return ori_dict
+def type_json_build(type_name, type_attributes, attr_container):
+    res = {}
+    assert type_name is not None
+    if type_attributes is not None:
+        for key, value in type_attributes.items():
+            res[key] = value
+    if attr_container is not None:
+        res['attr_container'] = attr_container
+    return res
 
 
 class BaseType(dict, ABC):
-    def __init__(self, type_name, attributes=None):
-        dict.__init__(self, type=type_json_build(type_name, attributes))
+    def __init__(self, type_name, type_attributes=None, attr_container: AttributeContainer | None = None):
+        dict.__init__(self, type=type_json_build(type_name, type_attributes, attr_container))
+        self.attr_container = attr_container
+
+    def get_str_attributes(self):
+        if self.attr_container is None:
+            return ''
+        return ', ' + ', '.join([str(attr) for attr in self.attr_container])
 
     @abstractmethod
     def __str__(self):
-        return 'BaseType'
+        return 'BaseType' + self.get_str_attributes()
 
     @abstractmethod
     def get_type_name(self, dialect: str) -> str | None:
@@ -37,12 +45,30 @@ class BaseType(dict, ABC):
         return str(value)
 
 
-class IntType(BaseType):
-    def __init__(self):
-        super().__init__("INT")
+class NumberType(BaseType):
+    def __init__(self, type_name=None, attributes: dict = None, attr_container: AttributeContainer | None = None):
+        super().__init__(type_name if type_name is not None else 'NUMBER', attributes, attr_container)
+
+    def get_type_name(self, dialect: str):
+        return "NUMBER"
 
     def __str__(self):
-        return 'INT'
+        return "NUMBER" + self.get_str_attributes()
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        if value is None:
+            assert False
+        else:
+            assert isinstance(value, str)
+            return str(value)
+
+
+class IntType(NumberType):
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("INT", None, attr_container)
+
+    def __str__(self):
+        return 'INT' + self.get_str_attributes()
 
     def get_type_name(self, dialect: str):
         if dialect == 'oracle':
@@ -59,11 +85,11 @@ class IntType(BaseType):
 
 
 class BoolType(BaseType):
-    def __init__(self):
-        super().__init__("BOOL")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("BOOL", None, attr_container)
 
     def __str__(self):
-        return 'BOOL'
+        return 'BOOL' + self.get_str_attributes()
 
     def get_type_name(self, dialect: str):
         if dialect == 'oracle':
@@ -88,15 +114,15 @@ class BoolType(BaseType):
                     return 'False'
 
 
-class FloatGeneralType(BaseType):
-    def __init__(self, type_name=None, attributes: dict = None):
-        super().__init__(type_name if type_name is not None else 'FLOAT', attributes)
+class FloatGeneralType(NumberType):
+    def __init__(self, type_name=None, type_attributes: dict = None, attr_container: AttributeContainer | None = None):
+        super().__init__(type_name if type_name is not None else 'FLOAT', type_attributes, attr_container)
 
     def get_type_name(self, dialect: str):
         return f'FLOAT'
 
     def __str__(self):
-        return f"FLOAT"
+        return f"FLOAT" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -107,8 +133,8 @@ class FloatGeneralType(BaseType):
 
 
 class DecimalType(FloatGeneralType):
-    def __init__(self, precision, scale):
-        super().__init__("DECIMAL", {"precision": precision, "scale": scale})
+    def __init__(self, precision, scale, attr_container: AttributeContainer | None = None):
+        super().__init__("DECIMAL", {"precision": precision, "scale": scale}, attr_container)
         self.precision = precision
         self.scale = scale
 
@@ -119,12 +145,12 @@ class DecimalType(FloatGeneralType):
             return f'DECIMAL({self.precision}, {self.scale})'
 
     def __str__(self):
-        return f"DECIMAL({self.precision},{self.scale})"
+        return f"DECIMAL({self.precision},{self.scale})" + self.get_str_attributes()
 
 
 class DoubleType(FloatGeneralType):
-    def __init__(self):
-        super().__init__("DOUBLE")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("DOUBLE", None, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'oracle':
@@ -141,14 +167,14 @@ class DoubleType(FloatGeneralType):
 
 
 class DateType(BaseType):
-    def __init__(self):
-        super().__init__("DATE")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("DATE", None, attr_container)
 
     def get_type_name(self, dialect: str):
         return 'DATE'
 
     def __str__(self):
-        return "DATE"
+        return "DATE" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -156,7 +182,7 @@ class DateType(BaseType):
         else:
             assert isinstance(value, dict)
             if dialect == 'mysql':
-                date_format = date_format_udf(value['format'])
+                date_format = date_format_trans(value['format'])
                 return f"STR_TO_DATE('{value['value']}', '{date_format}')"
             elif dialect == 'pg':
                 return f"TO_DATE('{value['value']}', '{value['format']}')"
@@ -165,8 +191,8 @@ class DateType(BaseType):
 
 
 class TimeType(BaseType):
-    def __init__(self, fraction=None):
-        super().__init__("TIME", {"fraction": fraction})
+    def __init__(self, fraction=None, attr_container: AttributeContainer | None = None):
+        super().__init__("TIME", {"fraction": fraction}, attr_container)
         self.fraction = fraction
 
     def get_type_name(self, dialect: str):
@@ -183,9 +209,9 @@ class TimeType(BaseType):
 
     def __str__(self):
         if self.fraction is None:
-            return 'TIME'
+            return 'TIME' + self.get_str_attributes()
         else:
-            return f'TIME({self.fraction})'
+            return f'TIME({self.fraction})' + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -220,8 +246,8 @@ class TimeType(BaseType):
 
 
 class YearType(BaseType):
-    def __init__(self):
-        super().__init__("YEAR")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("YEAR", None, self.attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'mysql':
@@ -232,7 +258,7 @@ class YearType(BaseType):
             return 'NUMBER(4)'
 
     def __str__(self):
-        return "YEAR"
+        return "YEAR" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -243,8 +269,8 @@ class YearType(BaseType):
 
 
 class TimestampType(BaseType):
-    def __init__(self, fraction=None):
-        super().__init__("TIMESTAMP", {"fraction": fraction})
+    def __init__(self, fraction=None, attr_container: AttributeContainer | None = None):
+        super().__init__("TIMESTAMP", {"fraction": fraction}, attr_container)
         self.fraction = fraction
 
     def get_type_name(self, dialect: str):
@@ -255,16 +281,16 @@ class TimestampType(BaseType):
 
     def __str__(self):
         if self.fraction is None:
-            return 'TIMESTAMP'
+            return 'TIMESTAMP' + self.get_str_attributes()
         else:
-            return f'TIMESTAMP{self.fraction}'
+            return f'TIMESTAMP{self.fraction}' + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
             assert False
         else:
             assert isinstance(value, dict)
-            timestamp_obj = datetime.strptime(value['value'], date_format_udf(value['format']))
+            timestamp_obj = datetime.strptime(value['value'], date_format_trans(value['format']))
             formatted_timestamp_str = timestamp_obj.strftime('%Y-%m-%d %H:%M:%S')
             if dialect == 'oracle':
                 return f"TO_TIMESTAMP('{value['value']}', '{value['format']}')"
@@ -275,8 +301,8 @@ class TimestampType(BaseType):
 
 
 class DatetimeType(BaseType):
-    def __init__(self, fraction=None):
-        super().__init__("DATETIME", {"fraction": fraction})
+    def __init__(self, fraction=None, attr_container: AttributeContainer | None = None):
+        super().__init__("DATETIME", {"fraction": fraction}, attr_container)
         self.fraction = fraction
 
     def get_type_name(self, dialect: str):
@@ -293,17 +319,16 @@ class DatetimeType(BaseType):
 
     def __str__(self):
         if self.fraction is None:
-            return 'DATETIME'
+            return 'DATETIME' + self.get_str_attributes()
         else:
-            return f'DATETIME({self.fraction})'
+            return f'DATETIME({self.fraction})' + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
             assert False
         else:
             assert isinstance(value, dict)
-            date_format_udf(value['format'])
-            timestamp_obj = datetime.strptime(value['value'], date_format_udf(value['format']))
+            timestamp_obj = datetime.strptime(value['value'], date_format_trans(value['format']))
             formatted_timestamp_str = timestamp_obj.strftime('%Y-%m-%d %H:%M:%S')
             if dialect == 'mysql':
                 return formatted_timestamp_str
@@ -314,9 +339,27 @@ class DatetimeType(BaseType):
                     return f"TIMESTAMP('{formatted_timestamp_str}')"
 
 
-class IntervalYearMonthType(BaseType):
-    def __init__(self):
-        super().__init__("INTERVAL YEAR TO MONTH")
+class IntervalType(BaseType):
+    # TODO
+    def __init__(self, typename=None, units: list = None, attr_container: AttributeContainer | None = None):
+        """
+        units can be one of:
+        microsecond, second, minute, hour, day, week, month, quarter, year, decade
+        century, millennium
+        """
+        super().__init__("INTERVAL", {"units": units}, attr_container)
+        self.units = units
+
+    def __str__(self):
+        if self.units is None:
+            return 'INTERVAL' + self.get_str_attributes()
+        else:
+            return f'INTERVAL({self.units})' + self.get_str_attributes()
+
+
+class IntervalYearMonthType(IntervalType):
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("INTERVAL YEAR TO MONTH", ['year', 'month'], attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'oracle' or dialect == 'pg':
@@ -345,8 +388,8 @@ class IntervalYearMonthType(BaseType):
 
 
 class TimestampTZType(BaseType):
-    def __init__(self, fraction=None):
-        super().__init__("TIMESTAMPTZ", {"fraction": fraction})
+    def __init__(self, fraction=None, attr_container: AttributeContainer | None = None):
+        super().__init__("TIMESTAMPTZ", {"fraction": fraction}, attr_container)
         self.fraction = fraction
 
     def __str__(self):
@@ -375,14 +418,14 @@ class TimestampTZType(BaseType):
 
 
 class StringGeneralType(BaseType):
-    def __init__(self, type_name=None, attributes: dict = None):
-        super().__init__(type_name if type_name is not None else 'STRING', attributes)
+    def __init__(self, type_name=None, attributes: dict = None, attr_container: AttributeContainer | None = None):
+        super().__init__(type_name if type_name is not None else 'STRING', attributes, attr_container)
 
     def get_type_name(self, dialect: str):
         return "string"
 
     def __str__(self):
-        return "string"
+        return "string" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -393,8 +436,8 @@ class StringGeneralType(BaseType):
 
 
 class VarcharType(BaseType):
-    def __init__(self, length=None):
-        super().__init__("VARCHAR", {"length": length})
+    def __init__(self, length=None, attr_container: AttributeContainer | None = None):
+        super().__init__("VARCHAR", {"length": length}, attr_container)
         self.length = length
 
     def get_type_name(self, dialect: str):
@@ -404,7 +447,7 @@ class VarcharType(BaseType):
             return f'VARCHAR({self.length})'
 
     def __str__(self):
-        return f"VARCHAR({self.length})"
+        return f"VARCHAR({self.length})" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -415,8 +458,8 @@ class VarcharType(BaseType):
 
 
 class EnumType(BaseType):
-    def __init__(self, values: list):
-        super().__init__("Enum", {"values": values})
+    def __init__(self, values: list, attr_container: AttributeContainer | None = None):
+        super().__init__("Enum", {"values": values}, attr_container)
         self.values = values
         self.len = 0
         for value in self.values:
@@ -437,7 +480,7 @@ class EnumType(BaseType):
             return f'VARCHAR({self.len})'
 
     def __str__(self):
-        return f"VARCHAR({self.len})"
+        return f"VARCHAR({self.len})" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -449,8 +492,8 @@ class EnumType(BaseType):
 
 
 class NvarcharType(BaseType):
-    def __init__(self, length):
-        super().__init__("NVARCHAR", {"length": length})
+    def __init__(self, length, attr_container: AttributeContainer | None = None):
+        super().__init__("NVARCHAR", {"length": length}, attr_container)
         self.length = length
 
     def get_type_name(self, dialect: str):
@@ -462,7 +505,7 @@ class NvarcharType(BaseType):
             return f"VARCHAR2({self.length} CHAR)"
 
     def __str__(self):
-        return f"NVARCHAR({self.length})"
+        return f"NVARCHAR({self.length})" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -473,15 +516,15 @@ class NvarcharType(BaseType):
 
 
 class CharType(BaseType):
-    def __init__(self, length):
-        super().__init__("CHAR", {"length": length})
+    def __init__(self, length, attr_container: AttributeContainer | None = None):
+        super().__init__("CHAR", {"length": length}, attr_container)
         self.length = length
 
     def get_type_name(self, dialect: str):
         return f'CHAR({self.length})'
 
     def __str__(self):
-        return f"CHAR({self.length})"
+        return f"CHAR({self.length})" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -492,8 +535,8 @@ class CharType(BaseType):
 
 
 class TextType(BaseType):
-    def __init__(self):
-        super().__init__("TEXT")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("TEXT", None, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'oracle':
@@ -502,7 +545,7 @@ class TextType(BaseType):
             return 'TEXT'
 
     def __str__(self):
-        return f"TEXT"
+        return f"TEXT" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -513,8 +556,8 @@ class TextType(BaseType):
 
 
 class UuidType(BaseType):
-    def __init__(self):
-        super().__init__("UUID")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("UUID", None, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'mysql' or dialect == 'oracle':
@@ -523,7 +566,7 @@ class UuidType(BaseType):
             return 'UUID'
 
     def __str__(self):
-        return f"UUID"
+        return f"UUID" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -536,8 +579,8 @@ class UuidType(BaseType):
 
 
 class JsonType(BaseType):
-    def __init__(self, json_structure):
-        super().__init__("JSON", {"structure": json_structure})
+    def __init__(self, json_structure, attr_container: AttributeContainer | None = None):
+        super().__init__("JSON", {"structure": json_structure}, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'mysql':
@@ -548,7 +591,7 @@ class JsonType(BaseType):
             return None
 
     def __str__(self):
-        return f"JSON"
+        return f"JSON" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -563,8 +606,9 @@ class JsonType(BaseType):
 
 
 class JsonbType(BaseType):
-    def __init__(self, json_structure):
-        super().__init__("JSONB", {"structure": json_structure})
+    def __init__(self, json_structure=None, attr_container: AttributeContainer | None = None):
+        super().__init__("JSONB", {"structure": json_structure}, attr_container)
+        self.json_structure = json_structure
 
     def get_type_name(self, dialect: str):
         if dialect == 'mysql':
@@ -575,7 +619,7 @@ class JsonbType(BaseType):
             return None
 
     def __str__(self):
-        return f"JSONB"
+        return f"JSONB" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -590,8 +634,8 @@ class JsonbType(BaseType):
 
 
 class PointType(BaseType):
-    def __init__(self):
-        super().__init__("POINT")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("POINT", None, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'oracle':
@@ -602,7 +646,7 @@ class PointType(BaseType):
             return 'POINT'
 
     def __str__(self):
-        return f"POINT"
+        return f"POINT" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -621,8 +665,8 @@ class PointType(BaseType):
 
 
 class XmlType(BaseType):
-    def __init__(self):
-        super().__init__("XML")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("XML", None, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'mysql':
@@ -633,7 +677,7 @@ class XmlType(BaseType):
             return 'XMLType'
 
     def __str__(self):
-        return f"XML"
+        return f"XML" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -648,8 +692,8 @@ class XmlType(BaseType):
 
 
 class BlobType(BaseType):
-    def __init__(self):
-        super().__init__("BLOB")
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("BLOB", None, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'mysql':
@@ -660,7 +704,7 @@ class BlobType(BaseType):
             return 'BLOB'
 
     def __str__(self):
-        return f"BLOB"
+        return f"BLOB" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -670,8 +714,8 @@ class BlobType(BaseType):
 
 
 class ArrayType(BaseType):
-    def __init__(self, element_type: BaseType, col_name, length):
-        super().__init__("ARRAY", {"element_type": element_type})
+    def __init__(self, element_type: BaseType, col_name, length, attr_container: AttributeContainer | None = None):
+        super().__init__("ARRAY", {"element_type": element_type}, attr_container)
         self.element_type = element_type
         self.col_name = col_name
         self.length = length
@@ -687,7 +731,7 @@ class ArrayType(BaseType):
             return f'{ele_name}[]'
 
     def __str__(self):
-        return f"ARRAY({self.element_type})[{self.length}]"
+        return f"ARRAY({self.element_type})[{self.length}]" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -727,3 +771,96 @@ class NullType(BaseType):
     def gen_value(self, dialect: str, value=None) -> str | None:
         assert value is None
         return 'NULL'
+
+
+class ListType(BaseType):
+    def __init__(self, element_type: BaseType):
+        super().__init__("LIST", {"element_type": element_type})
+        self.element_type = element_type
+
+    def get_type_name(self, dialect: str):
+        return f'LIST[{self.element_type.get_type_name(dialect)}]'
+
+    def __str__(self):
+        return f"LIST[{self.element_type}]"
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        assert False
+
+
+class OptionType(BaseType):
+    def __init__(self, map_dict):
+        super().__init__("OPTION")
+        self.map_dict = map_dict
+
+    def get_type_name(self, dialect: str):
+        map_str = ''
+        for key, value in self.map_dict.items():
+            if map_str != '':
+                map_str = map_str + ', '
+            map_str = map_str + f"{key}: {value}"
+        return f'OPTION[{map_str}]'
+
+    def __str__(self):
+        return self.get_type_name('')
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        if value is not None:
+            assert value in self.map_dict
+            return self.map_dict[value]
+
+
+class AnyValueType(BaseType):
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("ANY_VALUE", None, attr_container)
+
+    def get_type_name(self, dialect: str):
+        return f'ANY_VALUE'
+
+    def __str__(self):
+        return f"ANY_VALUE" + self.get_str_attributes()
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        assert False
+
+
+class AliasType(BaseType):
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("ALIAS", None, attr_container)
+
+    def get_type_name(self, dialect: str):
+        return f'ALIAS'
+
+    def __str__(self):
+        return f"ALIAS"
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        assert False
+
+
+class TableType(BaseType):
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("TABLE", None, attr_container)
+
+    def get_type_name(self, dialect: str):
+        return f'TABLE'
+
+    def __str__(self):
+        return f"TABLE" + self.get_str_attributes()
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        assert False
+
+
+class QueryType(BaseType):
+    def __init__(self, attr_container: AttributeContainer | None = None):
+        super().__init__("QUERY", None, attr_container)
+
+    def get_type_name(self, dialect: str):
+        return f'QUERY'
+
+    def __str__(self):
+        return f"QUERY" + self.get_str_attributes()
+
+    def gen_value(self, dialect: str, value=None) -> str | None:
+        assert False

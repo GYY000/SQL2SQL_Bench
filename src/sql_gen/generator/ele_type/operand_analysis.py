@@ -3,8 +3,6 @@
 # @Module: operand_analysis$
 # @Author: 10379
 # @Time: 2025/4/1 17:01
-import json
-import os.path
 
 from antlr_parser.Tree import TreeNode
 from antlr_parser.mysql_tree import rename_column_mysql, fetch_main_select_from_select_stmt_mysql, \
@@ -17,10 +15,8 @@ from antlr_parser.pg_tree import get_pg_main_select_node_from_select_stmt, fetch
     only_column_ref_pg, \
     rename_column_pg, fetch_all_simple_select_from_select_stmt_pg, analyze_pg_table_refs, parse_pg_group_by
 from sql_gen.generator.ele_type.type_conversion import type_mapping
-from sql_gen.generator.ele_type.type_operation import load_col_type
 from sql_gen.generator.element.Operand import ColumnOp, Operand
 from utils.db_connector import get_mysql_type, get_pg_type, get_oracle_type
-from utils.tools import get_proj_root_path
 
 
 def build_ctes(ctes: dict, dialect: str):
@@ -215,7 +211,7 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                 }, dialect
             )
             get_type_query = f"{with_clauses}\n SELECT * FROM \"{cte_name}\" LIMIT 1"
-            flag, cte_types = get_pg_type(get_type_query, db_name, False)
+            flag, cte_types = get_pg_type(db_name, get_type_query, False)
             if not flag:
                 raise ValueError(cte_types[0])
             select_main_node = fetch_main_select_from_select_stmt_pg(query_body_node)
@@ -248,7 +244,7 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                         while j < len(cte_types):
                             if cte_types[i]['col'] == cte_types[j]['col']:
                                 cte_types[j]['col'] = rename_column_pg(select_elements[j], name_dict,
-                                                                          cte_types[i]['col'])
+                                                                       cte_types[i]['col'])
                             j += 1
             res.append({
                 'cte_name': cte_name,
@@ -313,7 +309,7 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                 }, dialect
             )
             get_type_query = f"{with_clauses}\n SELECT * FROM \"{cte_name}\" LIMIT 1"
-            flag, cte_types = get_oracle_type(get_type_query, db_name, False)
+            flag, cte_types = get_oracle_type(db_name, get_type_query, False)
             if not flag:
                 raise ValueError(cte_types[0])
             select_main_node = fetch_main_select_from_subquery_oracle(query_body_node)
@@ -342,7 +338,7 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                     while j < len(cte_types):
                         if cte_types[i]['col'] == cte_types[j]['col']:
                             cte_types[j]['col'] = rename_column_oracle(select_elements[j], name_dict,
-                                                                          cte_types[i]['col'])
+                                                                       cte_types[i]['col'])
                         j = j + 1
             res.append({
                 'cte_name': cte_name,
@@ -498,7 +494,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
                 from_elems += ',\n'
             from_elems += build_from_elem(table_elements[i], dialect)
             sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
-            flag, types = get_pg_type(sql, db_name, False)
+            flag, types = get_pg_type(db_name, sql, False)
             if not flag:
                 print(sql)
                 print(types)
@@ -535,7 +531,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
                 from_elems += ',\n'
             from_elems += build_from_elem(table_elements[i], dialect)
             sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
-            flag, types = get_oracle_type(sql, db_name, False)
+            flag, types = get_oracle_type(db_name, sql, False)
             if not flag:
                 print(sql)
                 print(types)
@@ -553,8 +549,6 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
             final_cols = final_cols + newly_added_cols
             ele_cnt = j
         return True, final_cols, str(simple_select_node)
-
-
     else:
         assert False
 
@@ -612,7 +606,7 @@ def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, diale
         select_elements_node.is_terminal = True
         clone_node.rm_child_by_value('group_clause')
         clone_node.rm_child_by_value('having_clause')
-        flag, res = get_pg_type(f"{build_ctes(ctes, dialect)}\n {str(clone_node)}", db_name, False)
+        flag, res = get_pg_type(db_name, f"{build_ctes(ctes, dialect)}\n {str(clone_node)}", False)
         if not flag:
             print(str(clone_node))
             assert False
@@ -638,7 +632,7 @@ def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, diale
         select_elements_node.value = ' ' + new_str + ' '
         select_elements_node.is_terminal = True
         clone_node.rm_child_by_value('group_by_clause')
-        flag, res = get_oracle_type(f"{build_ctes(ctes, dialect)}\n {str(clone_node)}", db_name, False)
+        flag, res = get_oracle_type(db_name, f"{build_ctes(ctes, dialect)}\n {str(clone_node)}", False)
         if not flag:
             print(f"{build_ctes(ctes, dialect)}\n {str(clone_node)}")
             assert False
@@ -698,7 +692,7 @@ def analysis_sql(db_name, sql, dialect: str):
             flag_group_by, group_by_cols = analysis_group_by_simple_select(db_name, simple_select_node, dialect, ctes)
             select_stmts.append({
                 "select_root_node": simple_select_node,
-                "type": 'UNION', # Haven't been used yet
+                "type": 'UNION',  # Haven't been used yet
                 "cols": cols,
                 "group_by_cols": group_by_cols
             })
@@ -709,7 +703,7 @@ def analysis_sql(db_name, sql, dialect: str):
         }
     elif dialect == 'oracle':
         subquery_node = root_node.get_children_by_path(['unit_statement', 'data_manipulation_language_statements',
-                                                           'select_statement', 'select_only_statement', 'subquery'])
+                                                        'select_statement', 'select_only_statement', 'subquery'])
         if len(subquery_node) != 1:
             print('FOR UPDATE haven\'t been supported yet')
             assert False
@@ -720,7 +714,7 @@ def analysis_sql(db_name, sql, dialect: str):
             flag_group_by, group_by_cols = analysis_group_by_simple_select(db_name, simple_select_node, dialect, ctes)
             select_stmts.append({
                 "select_root_node": simple_select_node,
-                "type": 'UNION', # Haven't been used yet
+                "type": 'UNION',  # Haven't been used yet
                 "cols": cols,
                 "group_by_cols": group_by_cols
             })

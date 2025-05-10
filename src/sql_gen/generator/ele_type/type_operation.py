@@ -9,8 +9,43 @@ import os
 from datetime import datetime
 
 from sql_gen.generator.ele_type.type_def import *
-from udfs.date_udf import date_format_udf
 from utils.tools import get_proj_root_path
+
+
+def gen_type_through_str(type_str, attr_container) -> BaseType:
+    if type_str == 'ANY_VALUE':
+        return AnyValueType(attr_container)
+    elif type_str == 'INT':
+        return IntType(attr_container)
+    elif type_str == 'STRING':
+        return StringGeneralType(attr_container)
+    elif type_str == 'BOOL':
+        return BoolType(attr_container)
+    elif type_str == 'ALIAS':
+        assert attr_container is None
+        return AliasType()
+    elif type_str == 'DATE':
+        return DateType(attr_container)
+    elif type_str == 'TABLE':
+        return TableType(attr_container)
+    elif type_str == 'TIMESTAMP':
+        return TimestampType(None, attr_container)
+    elif type_str == 'INTERVAL':
+        return IntervalType(None, attr_container)
+    elif type_str == 'POINT':
+        return PointType(attr_container)
+    elif type_str == 'XML':
+        return XmlType(attr_container)
+    elif type_str == 'NUMBER':
+        return NumberType(None, None, attr_container)
+    elif type_str == 'NVARCHAR':
+        return NvarcharType(4000, attr_container)
+    elif type_str == 'FLOAT':
+        return FloatGeneralType(None, None, attr_container)
+    elif type_str == 'QUERY':
+        return QueryType(attr_container)
+    else:
+        raise ValueError(f"Type {type_str} does not exist in this system")
 
 
 def load_col_type(type_def: dict, col_name: str, dialect: str):

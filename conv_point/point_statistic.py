@@ -41,7 +41,7 @@ def statistic_folder(folder_path, dialect_pair, folder_name, hierarchy_level=1):
             flag = False
             break
     if not flag:
-        file_path = f"{folder_path}/{dialect_pair}.json"
+        file_path = f"{folder_path}/{dialect_pair}_point.json"
         with open(file_path, "r", encoding="utf-8") as file:
             json_content = json.load(file)
             all_num = len(json_content)
