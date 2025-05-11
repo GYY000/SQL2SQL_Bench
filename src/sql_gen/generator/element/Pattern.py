@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from sql_gen.generator.ele_type.type_def import ListType, BaseType, QueryType, TableType, OptionType, AliasType, \
     AnyValueType
 from sql_gen.generator.element.Operand import Operand
+from utils.tools import get_no_space_len
 
 
 class Slot(ABC):
@@ -19,7 +20,11 @@ class Slot(ABC):
         return 'slot'
 
     @abstractmethod
-    def extend(self, used_id) -> str:
+    def __repr__(self):
+        return self.__str__()
+
+    @abstractmethod
+    def extend(self):
         pass
 
 
@@ -52,6 +57,9 @@ class ValueSlot(Slot):
         else:
             return f"<{self.name}: {self.slot_type}>"
 
+    def __repr__(self):
+        return self.__str__()
+
     def fill_value(self, op: Operand):
         if self.value is not None:
             assert isinstance(self.value, Operand)
@@ -62,24 +70,24 @@ class ValueSlot(Slot):
     def is_fulfilled(self):
         return self.value is not None
 
-    def extend(self, used_id) -> str:
+    def extend(self):
         assert not isinstance(self.slot_type, QueryType)
         assert not isinstance(self.slot_type, TableType)
         # ALIAS TABLE QUERY LIST OPTION ANY_VALUE
         if isinstance(self.slot_type, ListType):
-            return f"[{self.name}_{used_id}]"
+            assert False
         elif isinstance(self.slot_type, QueryType):
             assert False
         elif isinstance(self.slot_type, TableType):
             assert False
         elif isinstance(self.slot_type, AnyValueType):
-            return f"[{self.name}_{used_id}]"
+            return f"element"
         elif isinstance(self.slot_type, OptionType):
-            return f"{self.name}_{used_id}"
+            return f"{self.name}"
         elif isinstance(self.slot_type, AliasType):
-            return f"{self.name}_{used_id}"
+            return f"{self.name}"
         else:
-            return f"element{used_id}"
+            return f"element"
 
 
 class StringLiteralSlot(Slot):
@@ -135,21 +143,39 @@ class Pattern:
 
     def extend_pattern(self):
         res = ''
-        slot_map = {}
-        used_id = 0
+        slot_list = []
         for ele in self.elements:
             if isinstance(ele, str):
                 res = res + ele
+            elif isinstance(ele, ForSlot):
+                ori_len = get_no_space_len(res)
+                extended_ele, loop_slot_list0, loop_slot_list1 = ele.extend()
+                slot_list.append({
+                    "slot": ele,
+                    "info": {
+                        "pos": [ori_len, ori_len + get_no_space_len(extended_ele['first_str']),
+                                ori_len + get_no_space_len(extended_ele['first_str']) + get_no_space_len(
+                                    extended_ele['second_str']),
+                                ori_len + get_no_space_len(extended_ele['first_str']) + get_no_space_len(
+                                    extended_ele['second_str']) +
+                                get_no_space_len(extended_ele['second_str']) - 1]
+                    },
+                    "slot_list": [loop_slot_list0, loop_slot_list1]
+                })
+                res = (res + " " + extended_ele['first_str'] + extended_ele['second_str'] +
+                       extended_ele['second_str'])
             else:
-                assert isinstance(ele, Slot)
-                if ele in slot_map:
-                    res = res + " " + slot_map[ele]
-                else:
-                    used_id = used_id + 1
-                    extended_ele = ele.extend(used_id)
-                    slot_map[ele] = extended_ele
-                res = res + " " + str(slot_map[ele])
-        return res, slot_map
+                ori_len = get_no_space_len(res)
+                assert isinstance(ele, ValueSlot)
+                extended_ele = ele.extend()
+                slot_list.append({
+                    "slot": ele,
+                    "info": {
+                        "pos": [ori_len, ori_len + get_no_space_len(extended_ele) - 1]
+                    }
+                })
+                res = res + " " + str(extended_ele)
+        return res, slot_list
 
 
 class ForSlot(Slot):
@@ -160,7 +186,6 @@ class ForSlot(Slot):
                              "for list is not equal to the number of elements in the for list")
         if len(sub_ele_slots) != len(ele_slots):
             raise ValueError("The number of elements in for list is zero")
-        self.slots = []
         self.pattern = pattern
         self.sub_ele_slots = sub_ele_slots
         self.ele_slots = ele_slots
@@ -183,6 +208,9 @@ class ForSlot(Slot):
             patterns = patterns + "\t\t" + line + '\n'
         return f"{{\n\tFor {sub_elements} in {elements} ADD '{self.strip_str}':\n{patterns}}}"
 
+    def __repr__(self):
+        return self.__str__()
+
     def fulfill(self):
         for slot in self.ele_slots:
             assert isinstance(slot, ValueSlot)
@@ -191,16 +219,32 @@ class ForSlot(Slot):
                                  f"before construction please check the define order of the slots")
         i = 0
         res = ''
-        for i in range(len(self.ele_slots[0].value)):
+        for i in range(len(self.ele_slots[0].value.value)):
             for j in range(len(self.ele_slots)):
                 assert isinstance(self.ele_slots[j].slot_type, ListType)
-                self.sub_ele_slots[j].value = self.ele_slots[j].value[i]
+                self.sub_ele_slots[j].value = self.ele_slots[j].value.value[i]
             if res != '':
-                res = res + "\n" + self.pattern.fulfill_pattern()
+                res = res + "\n" + self.pattern.fulfill_pattern({})
             else:
-                res = res + self.pattern.fulfill_pattern()
+                res = res + self.pattern.fulfill_pattern({})
         return res
 
+    def extend(self) -> tuple:
+        res0, slot_list1 = self.pattern.extend_pattern()
+        res1, slot_list2 = self.pattern.extend_pattern()
+        res1 = self.strip_str + res1
+        add_dis = get_no_space_len(self.strip_str)
+        add_pos_for_slot_list(slot_list2, add_dis)
+        return {
+            "first_str": res0,
+            "second_str": res1,
+        }, slot_list1, slot_list2
 
-def extend(self):
-    pass
+
+def add_pos_for_slot_list(slot_list, dis):
+    for slot_info in slot_list:
+        for i in range(len(slot_info['info']['pos'])):
+            slot_info['info']['pos'][i] = slot_info['info']['pos'][i] + dis
+        if 'slot_list' in slot_info:
+            add_pos_for_slot_list(slot_info['slot_list'][0], dis)
+            add_pos_for_slot_list(slot_info['slot_list'][1], dis)

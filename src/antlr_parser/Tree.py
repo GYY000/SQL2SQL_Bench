@@ -30,6 +30,11 @@ class TreeNode:
         self.is_terminal = is_terminal
         self.model_get = model_get
         self.slot = None
+        self.slot_times = None
+        self.for_slot_ancestor_id = None
+        self.for_slot_ancestor = None
+        self.for_loop_slot = []
+        self.for_loop_sub_trees = []
 
     def to_tree_rep(self):
         if len(self.children) != 0:
@@ -43,7 +48,7 @@ class TreeNode:
 
     def get_value_rep(self):
         if self.slot is not None:
-            return str(self.slot)
+            return f"{self.value}({str(self.slot)})"
         return self.value
 
     def __str__(self):
@@ -158,6 +163,9 @@ class TreeNode:
                     res = res + sub_str
                     flag = True
         return res
+
+    def __repr__(self):
+        return self.__str__()
 
     def add_child(self, node):
         self.children.append(node)
@@ -329,7 +337,7 @@ class TreeNode:
             return res
 
     def clone(self):
-        new_node = TreeNode(self.get_value_rep(), self.dialect, self.is_terminal)
+        new_node = TreeNode(self.value, self.dialect, self.is_terminal)
         new_node.model_get = self.model_get
         for child in self.children:
             new_node.add_child(child.clone())

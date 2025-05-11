@@ -246,7 +246,7 @@ def date_format_trans(format_str: str):
             replace('AM', '%p').replace('PM', '%p').replace('HH', '%I').replace('RR', '%y'))
 
 
-def gen_interval(dialect, units:list, values: list, sign=False):
+def gen_interval(dialect, units: list, values: list, sign=False):
     year = 0
     month = 0
     day = 0
@@ -295,5 +295,9 @@ def gen_interval(dialect, units:list, values: list, sign=False):
             return f"INTERVAL '{year}' YEAR TO MONTH"
 
 
-
-
+def get_no_space_len(string: str):
+    splits = string.split()
+    length = 0
+    for split in splits:
+        length = length + len(split)
+    return length
