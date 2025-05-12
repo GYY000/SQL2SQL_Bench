@@ -133,6 +133,8 @@ def parse_pattern(pattern_str: str, index_begin: int, dialect: str, slot_defs) -
         else:
             cur_str = cur_str + token
             i = i + 1
+    if cur_str != '':
+        pattern.add_keyword(cur_str)
     return pattern, i
 
 
