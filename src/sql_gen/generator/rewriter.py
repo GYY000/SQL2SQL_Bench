@@ -94,15 +94,15 @@ def match_tree_node(sql_tree_node: TreeNode, pattern_tree_node: TreeNode, try_fi
                                 flag = False
                             else:
                                 assert isinstance(for_slot, ForSlot)
-                                for i in range(len(for_slot.sub_ele_slots)):
-                                    sub_ele = for_slot.sub_ele_slots[i]
+                                for k in range(len(for_slot.sub_ele_slots)):
+                                    sub_ele = for_slot.sub_ele_slots[k]
                                     assert sub_ele in new_temp_map
                                     final_sub_ele_value = get_final_value(new_temp_map, sub_ele)
-                                    if for_slot.ele_slots[i] not in add_map:
-                                        add_map[for_slot.ele_slots[i]] = {}
-                                    if 'full' not in add_map[for_slot.ele_slots[i]]:
-                                        add_map[for_slot.ele_slots[i]]['full'] = []
-                                    add_map[for_slot.ele_slots[i]]['full'].append(
+                                    if for_slot.ele_slots[k] not in add_map:
+                                        add_map[for_slot.ele_slots[k]] = {}
+                                    if 'full' not in add_map[for_slot.ele_slots[k]]:
+                                        add_map[for_slot.ele_slots[k]]['full'] = []
+                                    add_map[for_slot.ele_slots[k]]['full'].append(
                                         Operand(final_sub_ele_value, BaseType('')))
                                 # consider slot not in sub_ele_list as global Variable
                                 for key, value in new_temp_map.items():
@@ -111,22 +111,25 @@ def match_tree_node(sql_tree_node: TreeNode, pattern_tree_node: TreeNode, try_fi
                                             assert value_compare(add_map[key]['full'], value)
                                         else:
                                             add_map[key]['full'] = value
-                                i = i + len(first_tree.children)
+                                i = i + len(first_tree.children) - 1
                                 while True:
+                                    i = i + 1
                                     new_temp_map = {}
                                     flag_second, _, _ = match_tree_node(sql_tree_node, second_tree, new_temp_map, i, 0)
                                     if not flag_second:
+                                        # compensate for the i = i + 1 afterwards
+                                        i = i - 1
                                         break
                                     else:
-                                        for i in range(len(for_slot.sub_ele_slots)):
-                                            sub_ele = for_slot.sub_ele_slots[i]
+                                        for k in range(len(for_slot.sub_ele_slots)):
+                                            sub_ele = for_slot.sub_ele_slots[k]
                                             assert sub_ele in new_temp_map
                                             final_sub_ele_value = get_final_value(new_temp_map, sub_ele)
-                                            if for_slot.ele_slots[i] not in add_map:
-                                                add_map[for_slot.ele_slots[i]] = {}
-                                            if 'full' not in add_map[for_slot.ele_slots[i]]:
-                                                add_map[for_slot.ele_slots[i]]['full'] = []
-                                            add_map[for_slot.ele_slots[i]]['full'].append(
+                                            if for_slot.ele_slots[k] not in add_map:
+                                                add_map[for_slot.ele_slots[k]] = {}
+                                            if 'full' not in add_map[for_slot.ele_slots[k]]:
+                                                add_map[for_slot.ele_slots[k]]['full'] = []
+                                            add_map[for_slot.ele_slots[k]]['full'].append(
                                                 Operand(final_sub_ele_value, BaseType('')))
                                         for key, value in new_temp_map.items():
                                             if key not in for_slot.sub_ele_slots:
@@ -134,7 +137,7 @@ def match_tree_node(sql_tree_node: TreeNode, pattern_tree_node: TreeNode, try_fi
                                                     assert value_compare(add_map[key]['full'], value)
                                                 else:
                                                     add_map[key]['full'] = value
-                                        i = i + len(second_tree.children)
+                                        i = i + len(second_tree.children) - 1
                         else:
                             return True, for_slot_ancestor_node, for_slot_id
                     if flag:
@@ -188,7 +191,8 @@ def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point]):
     sql_tree_node, _, _, _ = parse_tree(sql, src_dialect)
     src_pattern_trees = []
     for point in points:
-        src_pattern_trees.append(parse_pattern_tree(point.point_type, point.src_pattern, src_dialect))
+        pattern_tree = parse_pattern_tree(point.point_type, point.src_pattern, src_dialect)
+        src_pattern_trees.append(pattern_tree)
     if sql_tree_node is None:
         return None
     sql_root_node = TreeNode.make_g4_tree_by_node(sql_tree_node, src_dialect)
@@ -200,6 +204,7 @@ def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point]):
 with open(get_proj_root_path() + "/src/sql_gen/generator/sql.json", "r", encoding="utf-8") as file:
     json_content = json.load(file)
     parsed_points = []
-    for point in json_content[1]['points']:
+    test_case = json_content[2]
+    for point in test_case['points']:
         parsed_points.append(parse_point(point))
-    rewrite_sql('mysql', 'pg', json_content[1]['mysql'], parsed_points)
+    rewrite_sql('mysql', 'pg', test_case['mysql'], parsed_points)

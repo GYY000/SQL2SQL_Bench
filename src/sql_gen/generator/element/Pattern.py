@@ -71,15 +71,13 @@ class ValueSlot(Slot):
         return self.value is not None
 
     def extend(self):
-        assert not isinstance(self.slot_type, QueryType)
-        assert not isinstance(self.slot_type, TableType)
         # ALIAS TABLE QUERY LIST OPTION ANY_VALUE
         if isinstance(self.slot_type, ListType):
             assert False
         elif isinstance(self.slot_type, QueryType):
-            assert False
+            assert f"SELECT 1 FROM tbl"
         elif isinstance(self.slot_type, TableType):
-            assert False
+            return f"table_element"
         elif isinstance(self.slot_type, AnyValueType):
             return f"element"
         elif isinstance(self.slot_type, OptionType):
