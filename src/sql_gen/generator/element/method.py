@@ -30,12 +30,18 @@ def parse_pattern_tree(point_type, pattern: Pattern, dialect) -> TreeNode:
         if tree_node is None:
             raise ValueError(f"Failed to parse the pattern {pattern}")
         tree_node = TreeNode.make_g4_tree_by_node(tree_node, dialect)
+        assert isinstance(tree_node, TreeNode)
+        while len(tree_node.children) == 1:
+            tree_node = tree_node.children[0]
         rep_value_with_slot(tree_node, slot_list, None)
     else:
         tree_node, _, _, _ = parse_function_tree(extended_pattern, dialect)
         if tree_node is None:
             raise ValueError(f"Failed to parse the pattern {extended_pattern}")
         tree_node = TreeNode.make_g4_tree_by_node(tree_node, dialect)
+        assert isinstance(tree_node, TreeNode)
+        while len(tree_node.children) == 1:
+            tree_node = tree_node.children[0]
         rep_value_with_slot(tree_node, slot_list, None)
     return tree_node
 
@@ -118,7 +124,6 @@ def lift_slot_nodes(root_node: TreeNode):
         lifted_node.for_slot_ancestor = node.for_slot_ancestor
         lifted_node.for_loop_slot = node.for_loop_slot
         lifted_node.for_loop_sub_trees = node.for_loop_sub_trees
-
 
 
 def dfs_get_slot_node_set(root_node: TreeNode, node_set: list[TreeNode]):

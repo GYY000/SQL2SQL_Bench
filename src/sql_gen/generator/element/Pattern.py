@@ -75,7 +75,7 @@ class ValueSlot(Slot):
         if isinstance(self.slot_type, ListType):
             assert False
         elif isinstance(self.slot_type, QueryType):
-            assert f"SELECT 1 FROM tbl"
+            return f"SELECT 1 FROM tbl"
         elif isinstance(self.slot_type, TableType):
             return f"table_element"
         elif isinstance(self.slot_type, AnyValueType):
@@ -165,7 +165,9 @@ class Pattern:
             else:
                 ori_len = get_no_space_len(res)
                 assert isinstance(ele, ValueSlot)
+                print(ele)
                 extended_ele = ele.extend()
+                print(extended_ele)
                 slot_list.append({
                     "slot": ele,
                     "info": {
