@@ -203,9 +203,9 @@ def parse_for_loop(pattern_str, index_begin: int, dialect: str, slot_defs: List)
     new_def_layer = []
     assert len(sub_value_slots) == len(slots)
     for k in range(len(sub_value_slots)):
-        assert isinstance(slots[k].slot_type, ListType) or slots[k].udf_func is not None
+        assert isinstance(slots[k].get_type(), ListType)
         if slots[k].udf_func is None:
-            sub_value_slots[k].slot_type = slots[k].slot_type.element_type
+            sub_value_slots[k].slot_type = slots[k].get_type().element_type
         new_def_layer.append(sub_value_slots[k])
     slot_defs.append(new_def_layer)
     pattern, i = parse_pattern(pattern_str[i:j], 0, dialect, slot_defs)
@@ -299,8 +299,6 @@ def parse_function(pattern_str: str, index_begin: int, dialect: str, slot_defs: 
         else:
             assert pattern_str[i] == ')'
     function_name.add(name)
-    print(function_name)
-    print(len(function_name))
     return UdfFunction(name, slots), i + 1
 
 

@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from sql_gen.generator.ele_type.type_def import ListType, BaseType, QueryType, TableType, OptionType, AliasType, \
     AnyValueType
 from sql_gen.generator.element.Operand import Operand
+from udfs.UdfFunction import getReturnType, execute
 from utils.tools import get_no_space_len
 
 
@@ -29,10 +30,19 @@ class Slot(ABC):
 
 
 class UdfFunction:
-    def __init__(self, func_name: str, arg_slots: List[Slot], func_def: str = None):
+    def __init__(self, func_name: str, arg_slots: List[Slot]):
         self.arg_slots = arg_slots
-        self.func_def = func_def
         self.func_name = func_name
+
+    def get_return_type(self):
+        return getReturnType(self.func_name)
+
+    def execute(self):
+        args = []
+        for slot in self.arg_slots:
+            assert isinstance(slot, ValueSlot)
+            args.append(slot.get_value())
+        return execute(self.func_name, *args)
 
     def __str__(self):
         params = ""
@@ -41,6 +51,13 @@ class UdfFunction:
                 params = params + ", "
             params = params + str(slot)
         return f"{self.func_name}({params.strip()})"
+
+    def is_fulfilled(self):
+        for slot in self.arg_slots:
+            assert isinstance(slot, ValueSlot)
+            if not slot.is_fulfilled():
+                return False
+        return True
 
 
 class ValueSlot(Slot):
@@ -55,7 +72,7 @@ class ValueSlot(Slot):
         if self.udf_func is not None:
             return f"<{self.name}: @{str(self.udf_func)}>"
         else:
-            return f"<{self.name}: {self.slot_type}>"
+            return f"<{self.name}: {self.get_type()}>"
 
     def __repr__(self):
         return self.__str__()
@@ -67,25 +84,46 @@ class ValueSlot(Slot):
         else:
             self.value = op
 
+    def get_type(self):
+        if self.udf_func is not None:
+            return self.udf_func.get_return_type()
+        else:
+            return self.slot_type
+
     def is_fulfilled(self):
-        return self.value is not None
+        if self.value is not None:
+            return True
+        else:
+            if self.udf_func is not None:
+                return self.udf_func.is_fulfilled()
+        return False
 
     def extend(self):
         # ALIAS TABLE QUERY LIST OPTION ANY_VALUE
-        if isinstance(self.slot_type, ListType):
+        if isinstance(self.get_type(), ListType):
             assert False
-        elif isinstance(self.slot_type, QueryType):
+        elif isinstance(self.get_type(), QueryType):
             return f"SELECT 1 FROM tbl"
-        elif isinstance(self.slot_type, TableType):
+        elif isinstance(self.get_type(), TableType):
             return f"table_element"
-        elif isinstance(self.slot_type, AnyValueType):
+        elif isinstance(self.get_type(), AnyValueType):
             return f"element"
-        elif isinstance(self.slot_type, OptionType):
+        elif isinstance(self.get_type(), OptionType):
             return f"{self.name}"
-        elif isinstance(self.slot_type, AliasType):
+        elif isinstance(self.get_type(), AliasType):
             return f"{self.name}"
         else:
             return f"element"
+
+    def get_value(self):
+        if not self.is_fulfilled():
+            raise ValueError(
+                f"Slot {self.name} haven't been fulfilled before construction "
+                f"please check the define order of the slots")
+        if self.value is not None:
+            return self.value
+        else:
+            return self.udf_func.execute()
 
 
 class StringLiteralSlot(Slot):
@@ -123,14 +161,14 @@ class Pattern:
             if isinstance(ele, Slot):
                 if isinstance(ele, ValueSlot):
                     if not ele.is_fulfilled():
-                        if isinstance(ele.slot_type, AliasType):
+                        if isinstance(ele.get_type(), AliasType):
                             ele.value = Operand(f'ALIAS_{alias_id_map["ALIAS"] + 1}', AliasType())
                             alias_id_map['ALIAS'] = alias_id_map['ALIAS'] + 1
                         else:
                             raise ValueError(f"Slot {ele.name} haven't been fulfilled "
                                              f"before construction please check the define order of the slots")
                     else:
-                        res = res + " " + ele.value.str_value()
+                        res = res + " " + ele.get_value().str_value()
                 elif isinstance(ele, ForSlot):
                     res = res + "\n" + ele.fulfill()
             else:
@@ -165,9 +203,7 @@ class Pattern:
             else:
                 ori_len = get_no_space_len(res)
                 assert isinstance(ele, ValueSlot)
-                print(ele)
                 extended_ele = ele.extend()
-                print(extended_ele)
                 slot_list.append({
                     "slot": ele,
                     "info": {
@@ -221,7 +257,7 @@ class ForSlot(Slot):
         res = ''
         for i in range(len(self.ele_slots[0].value.value)):
             for j in range(len(self.ele_slots)):
-                assert isinstance(self.ele_slots[j].slot_type, ListType)
+                assert isinstance(self.ele_slots[j].get_type(), ListType)
                 self.sub_ele_slots[j].value = self.ele_slots[j].value.value[i]
             if res != '':
                 res = res + "\n" + self.pattern.fulfill_pattern({})

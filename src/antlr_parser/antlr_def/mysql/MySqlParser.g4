@@ -2505,8 +2505,8 @@ passwordFunctionClause
     ;
 
 functionArgs
-    : (constant | fullColumnName | functionCall | expression) (
-        ',' (constant | fullColumnName | functionCall | expression)
+    : (functionArg) (
+        ',' (functionArg)
     )*
     ;
 
