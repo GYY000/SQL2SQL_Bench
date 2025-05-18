@@ -8,13 +8,32 @@ from typing import List
 
 from antlr_parser.Tree import TreeNode
 from antlr_parser.parse_tree import parse_tree
-from sql_gen.generator.ele_type.type_def import BaseType
+from sql_gen.generator.ele_type.type_def import BaseType, OptionType, QueryType, TableType, ListType, AnyValueType, \
+    is_str_type
 from sql_gen.generator.element.Operand import Operand
 from sql_gen.generator.element.Pattern import Slot, ValueSlot, ForSlot
 from sql_gen.generator.element.Point import Point
 from sql_gen.generator.element.method import parse_pattern_tree
+from sql_gen.generator.fetch_operand_type import fetch_operand_type
 from sql_gen.generator.point_parser import parse_point
 from utils.tools import get_proj_root_path
+
+
+def type_equal(type1: BaseType, type2: BaseType) -> bool:
+    if type1 == type2:
+        return True
+
+
+def type1_contains_type2(type1: BaseType, type2: BaseType) -> bool:
+    print(type1)
+    print(type2)
+    if isinstance(type1, AnyValueType):
+        return True
+    if type(type1).__name__ == type(type2).__name__:
+        return True
+    elif is_str_type(type1) and is_str_type(type2):
+        return True
+    return False
 
 
 def check_slot_value_map(slot_value_map: dict):
@@ -59,14 +78,14 @@ def match_tree_node(sql_tree_node: TreeNode, pattern_tree_node: TreeNode, try_fi
         add_map = {}
         if pattern_tree_node.slot is not None:
             if isinstance(pattern_tree_node.slot, ValueSlot):
-                value = str(sql_tree_node)
                 slot = pattern_tree_node.slot
                 times = pattern_tree_node.slot_times
                 if pattern_tree_node.slot not in try_fill_map:
                     try_fill_map[slot] = {}
                 if times not in try_fill_map[pattern_tree_node.slot]:
-                    try_fill_map[slot][times] = ''
-                try_fill_map[slot][times] = try_fill_map[slot][times] + ' ' + value
+                    try_fill_map[slot][times] = sql_tree_node
+                else:
+                    try_fill_map[slot][times] = get_merge_tree_node(try_fill_map[slot][times], sql_tree_node)
                 return True, None, 0
             else:
                 assert isinstance(pattern_tree_node.slot, ForSlot)
@@ -112,6 +131,13 @@ def match_tree_node(sql_tree_node: TreeNode, pattern_tree_node: TreeNode, try_fi
                                         else:
                                             add_map[key]['full'] = value
                                 i = i + len(first_tree.children) - 1
+                                # prior to match the next pattern_tree_node tree node not the list
+                                flag_next_node, _, _ = match_tree_node(sql_tree_node.children[i + 1],
+                                                                       pattern_tree_node.children[j + 1], {})
+                                if flag_next_node:
+                                    i = i + 1
+                                    j = j + 1
+                                    continue
                                 while True:
                                     i = i + 1
                                     new_temp_map = {}
@@ -164,16 +190,46 @@ def match_tree_node(sql_tree_node: TreeNode, pattern_tree_node: TreeNode, try_fi
                         if time not in try_fill_map[slot]:
                             try_fill_map[slot][time] = temp_value
                         else:
-                            try_fill_map[slot][time] = try_fill_map[slot][time] + temp_value
+                            try_fill_map[slot][time] = get_merge_tree_node(try_fill_map[slot][time], temp_value)
         return True, None, 0
     else:
         return False, None, 0
 
 
+def compare_slot_value(slot_type: BaseType, value: TreeNode | List[TreeNode], dialect: str, db_name: str):
+    if isinstance(slot_type, ListType):
+        flag = True
+        for i in range(len(value)):
+            flag = flag and compare_slot_value(slot_type.element_type, value[i], dialect, db_name)
+        return flag
+    else:
+        father_node = value
+        if dialect == 'mysql':
+            while father_node.value != 'selectStatement':
+                father_node = father_node.father
+        elif dialect == 'pg':
+            while father_node.value!='simple_select_pramary':
+                father_node = father_node.father
+        else:
+            assert dialect == 'oracle'
+            while father_node.value!='subquery':
+                father_node = father_node.father
+        value_type = fetch_operand_type(db_name, father_node, value, dialect)
+        return type1_contains_type2(slot_type, value_type)
+
+
+def no_space_and_case_insensitive_str(string_value: str):
+    splits = string_value.split()
+    result = ''
+    for item in splits:
+        result = result + item
+    return result.lower()
+
+
 def rewrite_tree_node(tree_node: TreeNode, src_pattern_trees: List[TreeNode], points: List[Point],
-                      alias_id_map: dict[str, int]):
+                      alias_id_map: dict[str, int], src_dialect, db_name):
     for child_node in tree_node.children:
-        rewrite_tree_node(child_node, src_pattern_trees, points, alias_id_map)
+        rewrite_tree_node(child_node, src_pattern_trees, points, alias_id_map, src_dialect, db_name)
 
     for i in range(len(src_pattern_trees)):
         try_fill_map = {}
@@ -181,13 +237,75 @@ def rewrite_tree_node(tree_node: TreeNode, src_pattern_trees: List[TreeNode], po
         if flag:
             for slot, value in try_fill_map.items():
                 used_value = get_final_value(try_fill_map, slot)
-                slot.fill_value(Operand(used_value, BaseType('')))
+                assert isinstance(slot, ValueSlot)
+                if isinstance(slot.slot_type, OptionType):
+                    str_value = str(used_value)
+                    temp_flag = False
+                    for key, value in slot.slot_type.map_dict.items():
+                        if no_space_and_case_insensitive_str(str_value) == no_space_and_case_insensitive_str(key):
+                            temp_flag = True
+                            break
+                    if not temp_flag:
+                        flag = False
+                        break
+                elif (isinstance(slot.slot_type, OptionType) or isinstance(slot.slot_type, QueryType)
+                        or isinstance(slot.slot_type, TableType)):
+                    continue
+                else:
+                    if compare_slot_value(slot.slot_type, used_value, src_dialect, db_name):
+                        continue
+                    else:
+                        flag = False
+                        break
+            if not flag:
+                continue
+            for slot, value in try_fill_map.items():
+                used_value = get_final_value(try_fill_map, slot)
+                slot.fill_value(Operand(used_value, slot.slot_type))
             tree_node.value = points[i].tgt_pattern.fulfill_pattern(alias_id_map)
             tree_node.is_terminal = True
             break
 
 
-def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point]):
+def get_merge_tree_node(node1: TreeNode, node2: TreeNode):
+    # assert that node1 is on the left side of node2
+    node1_path = [node1]
+    while node1.father is not None:
+        node1_path.insert(0, node1.father)
+        node1 = node1.father
+    node2_path = [node2]
+    while node2.father is not None:
+        node2_path.insert(0, node2.father)
+        node2 = node2.father
+    i = 0
+    while i < len(node1_path) and i < len(node2_path):
+        if node1_path[i] == node2_path[i]:
+            i = i + 1
+        else:
+            break
+    first_same_node = node1_path[i - 1]
+    clone_first_same_node = TreeNode(first_same_node.value, first_same_node.dialect, first_same_node.is_terminal,
+                                     first_same_node.father)
+    node1_i = i
+    last_node = clone_first_same_node
+    while node1_i < len(node1_path):
+        clone_node_path_node = TreeNode(node1_path[node1_i].value, node1_path[node1_i].dialect,
+                                        node1_path[node1_i].is_terminal)
+        last_node.add_child(clone_node_path_node)
+        last_node = clone_node_path_node
+        node1_i = node1_i + 1
+    node2_i = i
+    last_node = clone_first_same_node
+    while node2_i < len(node2_path):
+        clone_node_path_node = TreeNode(node2_path[node2_i].value, node2_path[node2_i].dialect,
+                                        node2_path[node2_i].is_terminal)
+        last_node.add_child(clone_node_path_node)
+        last_node = clone_node_path_node
+        node2_i = node2_i + 1
+    return clone_first_same_node
+
+
+def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point], db_name: str):
     sql_tree_node, _, _, _ = parse_tree(sql, src_dialect)
     src_pattern_trees = []
     for point in points:
@@ -197,14 +315,14 @@ def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point]):
         return None
     sql_root_node = TreeNode.make_g4_tree_by_node(sql_tree_node, src_dialect)
     alias_id_map = {}
-    rewrite_tree_node(sql_root_node, src_pattern_trees, points, alias_id_map)
+    rewrite_tree_node(sql_root_node, src_pattern_trees, points, alias_id_map, src_dialect, db_name)
     print(sql_root_node)
 
 
 with open(get_proj_root_path() + "/src/sql_gen/generator/sql.json", "r", encoding="utf-8") as file:
     json_content = json.load(file)
     parsed_points = []
-    test_case = json_content[2]
+    test_case = json_content[0]
     for point in test_case['points']:
         parsed_points.append(parse_point(point))
-    rewrite_sql('mysql', 'pg', test_case['mysql'], parsed_points)
+    rewrite_sql('mysql', 'oracle', test_case['mysql'], parsed_points, db_name='bird')

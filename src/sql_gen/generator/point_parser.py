@@ -105,7 +105,7 @@ def parse_point(point: Dict) -> Point:
     src_pattern, _ = parse_pattern(src_pattern, 0, src_dialect, slot_defs)
     tgt_pattern, _ = parse_pattern(tgt_pattern, 0, tgt_dialect, slot_defs)
 
-    return Point(src_pattern, tgt_pattern, slot_defs[0], point_type, return_type, predicate)
+    return Point(src_dialect, tgt_dialect, src_pattern, tgt_pattern, slot_defs[0], point_type, return_type, predicate)
 
 
 def parse_pattern(pattern_str: str, index_begin: int, dialect: str, slot_defs) -> tuple[Pattern, int]:

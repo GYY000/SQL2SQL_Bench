@@ -9,6 +9,15 @@ from antlr_parser.parse_tree import parse_tree
 
 # used for analyze mysql tree structure
 
+def get_select_statement_node_from_root(root_node: TreeNode):
+    node = root_node.get_child_by_value('sqlStatements')
+    assert isinstance(node, TreeNode)
+    select_statement_node = root_node.get_children_by_path(['sqlStatements', 'sqlStatement',
+                                                            'dmlStatement', 'selectStatement'])
+    assert len(select_statement_node) == 1
+    return select_statement_node[0]
+
+
 def fetch_main_select_from_select_stmt_mysql(select_statement_node: TreeNode):
     node = select_statement_node
     if node.get_child_by_value('querySpecificationNointo') is not None:

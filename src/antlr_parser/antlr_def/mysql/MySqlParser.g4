@@ -970,7 +970,7 @@ tableSource
 
 tableSourceItem
     : LATERAL? tableName (PARTITION '(' uidList ')')? (AS? alias = uid)? (indexHint (',' indexHint)*)? # atomTableItem
-    | LATERAL? (selectStatement | '(' parenthesisSubquery = selectStatement ')') AS? alias = uid ('(' uidList ')')?    # subqueryTableItem
+    | LATERAL? (dmlStatement | '(' parenthesisSubquery = dmlStatement ')') AS? alias = uid ('(' uidList ')')?    # subqueryTableItem
     | LATERAL? '(' tableSources ')'                                                                    # tableSourcesItem
     ;
 
