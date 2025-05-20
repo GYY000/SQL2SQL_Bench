@@ -11,7 +11,7 @@ ora_config = load_oracle_config()
 
 def init_kb_func():
     try:
-        cracksql_config_path = os.path.join(get_proj_root_path(), 'src', 'transpile', 'cracksql_driver',
+        cracksql_config_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'cracksql_driver',
                                             'init_config.yaml')
         initkb(cracksql_config_path)  # fill the basic configurations in the `.yaml` first
         print("Knowledge base initialized successfully")
@@ -21,7 +21,7 @@ def init_kb_func():
         traceback.print_exc()
 
 
-def trans_func(sql, src_dialect, tgt_dialect, db_name, model_name):
+def trans_func(sql, src_dialect, tgt_dialect, db_name, model_name, db_para=None):
     model_names = ['gpt-4o', 'moonshot-v1-128k']
     if tgt_dialect == 'oracle':
         target_db_config = {
@@ -73,7 +73,8 @@ def trans_func(sql, src_dialect, tgt_dialect, db_name, model_name):
             vector_config=vector_config,
             out_dir="./",
             retrieval_on=True,
-            top_k=3
+            top_k=3,
+            db_para=db_para
         )
         return translated_sql, model_ans_list, used_pieces, lift_histories
     except Exception as e:

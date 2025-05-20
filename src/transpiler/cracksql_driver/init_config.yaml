@@ -28,7 +28,7 @@ EMBEDDING_MODELS:
     category: "embedding"                   # Model category
     api_base: "https://api.openai.com/v1"   # API base URL
     api_key: "your-openai-api-key"          # Replace with your actual API key
-    path: "/home/gyy/SQL2SQL_Bench/src/transpile/cracksql_driver/cracksql-0.0.2b0/all-MiniLM-L6-v2"  # Local model path. Please replace with the actual path of the local model.
+    path: "/home/gyy/SQL2SQL_Bench/src/transpiler/cracksql_driver/cracksql-0.0.2b0/all-MiniLM-L6-v2"  # Local model path. Please replace with the actual path of the local model.
     dimension: 1536                         # Vector dimension
     description: "CrackSQL all-MiniLM-L6-v2"  # Model description
 
@@ -39,7 +39,7 @@ KNOWLEDGE_BASES:
     kb_info: "MySQL数据库知识库，包含MySQL的关键字、函数、操作符等信息"  # Knowledge base description
     embedding_model: "all-MiniLM-L6-v2"  # Embedding model to use
     knowledge_files: # Knowledge files to import
-      - "/home/gyy/SQL2SQL_Bench/src/transpile/cracksql_driver/mysql_8_kb.json"  # Knowledge file path
+      - "/home/gyy/SQL2SQL_Bench/src/transpiler/cracksql_driver/mysql_8_kb.json"  # Knowledge file path
 
   # PostgreSQL knowledge base  
   - kb_name: "postgresql_knowledge"         # Knowledge base name
@@ -47,7 +47,7 @@ KNOWLEDGE_BASES:
     kb_info: "PostgreSQL数据库知识库，包含PostgreSQL的关键字、函数、操作符等信息"  # Knowledge base description
     embedding_model: "all-MiniLM-L6-v2"  # Embedding model to use
     knowledge_files: # Knowledge files to import
-      - "/home/gyy/SQL2SQL_Bench/src/transpile/cracksql_driver/pg_14_kb.json"
+      - "/home/gyy/SQL2SQL_Bench/src/transpiler/cracksql_driver/pg_14_kb.json"
 
   # Oracle knowledge base
   - kb_name: "oracle_knowledge"             # Knowledge base name
@@ -55,4 +55,4 @@ KNOWLEDGE_BASES:
     kb_info: "Oracle 数据库知识库，包含Oracle的关键字、函数、操作符等信息"  # Knowledge base description
     embedding_model: "all-MiniLM-L6-v2"  # Embedding model to use
     knowledge_files: # Knowledge files to import
-      - "/home/gyy/SQL2SQL_Bench/src/transpile/cracksql_driver/oracle_11_kb.json"
+      - "/home/gyy/SQL2SQL_Bench/src/transpiler/cracksql_driver/oracle_11_kb.json"

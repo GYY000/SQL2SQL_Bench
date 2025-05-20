@@ -127,7 +127,8 @@ def translate(
         out_dir: str = "./",
         retrieval_on: bool = False,
         top_k: int = 3,
-        max_retry_time: int = 3
+        max_retry_time: int = 3,
+        db_para: Dict = None
 ) -> Union[str, Tuple[str, List, List, List]]:
     """
     Translate source SQL from one database dialect to target database dialect
@@ -143,6 +144,7 @@ def translate(
         retrieval_on (bool): Whether to enable knowledge retrieval, default is False
         top_k (int): Number of top k relevant documents to return during retrieval, default is 3
         max_retry_time (int): Maximum retry times, default is 3
+        db_parameters (Dict): Database parameters, default is None
     
     Returns:
         Union[str, Tuple[str, List, List, List]]: Translated SQL, model answer list, used knowledge pieces, lift history
@@ -171,7 +173,8 @@ def translate(
             out_type="file",
             out_dir=out_dir,
             retrieval_on=retrieval_on,
-            top_k=top_k
+            top_k=top_k,
+            db_para=db_para
         )
 
         if not target_db_config or (not vector_config or not vector_config.get("src_kb_name", None) or

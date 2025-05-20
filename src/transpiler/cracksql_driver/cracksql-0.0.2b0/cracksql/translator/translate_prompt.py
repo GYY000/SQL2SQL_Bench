@@ -170,12 +170,100 @@ Please start by carefully reviewing the input SQL, along with the provided incor
 USER_PROMPT_RET = r"""
 ## INPUT ##
 Please translate the input SQL snippet from **{src_dialect}** to **{tgt_dialect}**.
-Ensure that you have translated all the required components and retain the double quotes (") and backticks (`) used for identifiers (e.g., tables and columns).
+
+Ensure that:
+- You have translated all the required components.
+- You only add double quotes (") and backticks (`) around identifiers (e.g., tables and columns) if:
+    - They are reserved keywords in {tgt_dialect}; or
+    - They were already quoted in the source SQL.
+
+Use the provided **incorrect examples**, **dialect specifications** as references when needed. 
+The input SQL snippet is:
+```
+{sql}
+```
+Below are specifications (might be redundant or irrelevant) from **{src_dialect}** and **{tgt_dialect}** organized in JSON format. 
+1. `{src_dialect} SQL Snippet`: snippets along with their descriptions that may need to be translated in the input SQL snippet;
+2. `{tgt_dialect} SQL Snippet`: candidates and their descriptions for replacing specific SQL snippets in the input SQL snippet.
+Please consider translate `{src_dialect} SQL Snippet` with `{tgt_dialect} SQL Snippet` if their usage is equivalent based on the specfications.
+<< SPECIFICATION START >>
+```json
+{document}
+```
+<< SPECIFICATION END >>
+
+Note that these specifications may contain redundant or irrelevant information, so please carefully identify what is necessary for the translation.
+{hint}
+{example}
+## OUTPUT FORMAT ##
+Please return your response without any redundant information, strictly adhering to the following format:
+```json
+{{ 
+    "Answer": "The translated SQL snippet",
+    "Reasoning": "Your detailed reasoning for the translation steps (clear and succinct, no more than 200 words)",
+    "Confidence": "The confidence score about your translation (0 - 1)"
+}}
+```
+
+## OUTPUT ##
+"""
+
+# 2.3 Parameter Retrieval
+
+SYSTEM_PROMPT_PARA = """
+## CONTEXT ##
+You are a database expert specializing in various SQL dialects, such as **{src_dialect}** and **{tgt_dialect}**, with a focus on accurately translating SQL queries between these dialects.
+You will be provided with the following material to assist the translation process:
+1. **Incorrect Translation Examples**: The translation mistakes to avoid;
+2. **Dialect Documents**: The information about functions and their usage descriptions to guide your translation.
+3. **Database Parameters**: Specific configuration or version details of {src_dialect} and {tgt_dialect}, which may influence syntax, function availability, or behavior.
+
+## OBJECTIVE ##
+Your task is to translate the input SQL snippet from **{src_dialect}** to **{tgt_dialect}**, using the provided incorrect examples and dialect specifications as needed.
+Ensure you meet the following criteria:
+1. **Grammar Compliance**: The translated SQL must strictly adheres to the grammar and conventions of {tgt_dialect} (e.g., correct usage of keywords and functions);
+2. **Functional Consistency**: The translated SQL should produce the same results and maintain the same functionality as the input SQL (e.g., same columns and data types).
+3. **Clarity and Efficiency**: The translation should be clear and efficient, avoiding unnecessary complexity while achieving the same outcome.
+
+During your translation, please consider the following candidate translation points:
+1. **Keywords and Syntax**: Ensure {tgt_dialect} supports all the keywords from the input SQL, and that the syntax is correct;
+2. **Built-In Functions**: Verify that any built-in functions from {src_dialect} are available in {tgt_dialect}, paying attention to the argument types and the return types;
+3. **Data Types**: Ensure that {tgt_dialect} supports the data types used in the input SQL. Address any expressions that require explicit type conversions (e.g., Both ends of an operator must have the same type);
+4. **Incompatibilities**: Resolve any other potential incompatibility issues during translation.
+
+**Important**: Pay attention to the **Database Parameters** of {src_dialect} and {tgt_dialect} database. These parameters may influence syntax, function availability, or behavior.
+
+This task is crucial, and your successful translation will be recognized and rewarded. 
+Please start by carefully reviewing the input SQL, along with the provided incorrect examples and specifications, and then proceed with the translation.
+"""
+
+USER_PROMPT_PARA = r"""
+## INPUT ##
+Please translate the input SQL snippet from **{src_dialect}** to **{tgt_dialect}**.
+
+Ensure that:
+- You have translated all the required components.
+- You only add double quotes (") and backticks (`) around identifiers (e.g., tables and columns) if:
+    - They are reserved keywords in {tgt_dialect}; or
+    - They were already quoted in the source SQL.
+    
 Use the provided **incorrect examples** and **dialect specifications** as references when needed. 
 The input SQL snippet is:
 ```
 {sql}
 ```
+
+Below are database parameters organized in JSON format that may influence the translation process.
+1. `{src_dialect} Database Parameter`: parameters along with their values specific to the {src_dialect} database;
+2. `{tgt_dialect} Database Parameter`: parameters along with their values specific to the {tgt_dialect} database.
+Please consider these parameters when translating the SQL snippet:
+<< PARAMETER START >>
+```json
+{parameter}
+```
+<< PARAMETER END >>
+
+
 Below are specifications (might be redundant or irrelevant) from **{src_dialect}** and **{tgt_dialect}** organized in JSON format. 
 1. `{src_dialect} SQL Snippet`: snippets along with their descriptions that may need to be translated in the input SQL snippet;
 2. `{tgt_dialect} SQL Snippet`: candidates and their descriptions for replacing specific SQL snippets in the input SQL snippet.

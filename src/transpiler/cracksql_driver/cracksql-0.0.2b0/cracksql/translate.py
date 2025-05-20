@@ -21,9 +21,10 @@ from cracksql.preprocessor.query_simplifier.Tree import TreeNode, lift_node
 from cracksql.preprocessor.query_simplifier.locate import locate_node_piece, replace_piece, get_func_name, find_piece
 from cracksql.preprocessor.query_simplifier.normalize import normalize
 from cracksql.preprocessor.query_simplifier.rewrite import get_all_piece
-from cracksql.translator.judge_prompt import SYSTEM_PROMPT_JUDGE, USER_PROMPT_JUDGE, USER_PROMPT_REFLECT
+from cracksql.translator.judge_prompt import SYSTEM_PROMPT_JUDGE, USER_PROMPT_JUDGE, USER_PROMPT_REFLECT, \
+    USER_PROMPT_REFLECT_PARA, SYSTEM_PROMPT_JUDGE_PARA, USER_PROMPT_JUDGE_PARA
 from cracksql.translator.llm_translator import LLMTranslator
-from cracksql.translator.translate_prompt import SYSTEM_PROMPT_NA, USER_PROMPT_NA, \
+from cracksql.translator.translate_prompt import SYSTEM_PROMPT_NA, USER_PROMPT_NA, USER_PROMPT_PARA, SYSTEM_PROMPT_PARA, \
     SYSTEM_PROMPT_SEG, USER_PROMPT_SEG, SYSTEM_PROMPT_RET, USER_PROMPT_RET, EXAMPLE_PROMPT, JUDGE_INFO_PROMPT
 from cracksql.utils.constants import DIALECT_MAP, FAILED_TEMPLATE, CHUNK_SIZE, TRANSLATION_ANSWER_PATTERN, \
     JUDGE_ANSWER_PATTERN, DIALECT_LIST, DIALECT_LIST_RULE
@@ -46,7 +47,8 @@ class Translator:
                  top_k: int,
                  history_id: str = None,
                  out_type: str = "file",
-                 out_dir: str = None):
+                 out_dir: str = None,
+                 db_para: dict = None):
         """SQL dialect translator
         
         This class is used to convert one SQL dialect to another, supporting retrieval enhancement and history tracking.
@@ -80,6 +82,7 @@ class Translator:
         self.tgt_dialect = tgt_dialect
         self.vector_config = vector_config
         self.tgt_db_config = tgt_db_config
+        self.db_para = db_para
 
         if self.src_dialect == "postgresql":
             self.src_dialect = "pg"
@@ -154,7 +157,7 @@ class Translator:
             # Parse SQL to get syntax tree and fragments
             root_node, all_pieces = self.do_query_segmentation()
             # Normalization processing
-            normalize(root_node, self.src_dialect, self.tgt_dialect)
+            # normalize(root_node, self.src_dialect, self.tgt_dialect)
             self.src_sql = str(root_node)
         except ValueError as ve:
             # Handle parsing failure
@@ -366,6 +369,22 @@ class Translator:
                     sql=input_sql,
                     hint=hint,
                     example=example
+                ).strip("\n")
+            if self.db_para is not None:
+                document = self.get_document_description(piece)
+                # Use retrieval enhanced prompt template
+                sys_prompt = SYSTEM_PROMPT_PARA.format(
+                    src_dialect=DIALECT_MAP[self.src_dialect],
+                    tgt_dialect=DIALECT_MAP[self.tgt_dialect]
+                ).strip("\n")
+                user_prompt = USER_PROMPT_PARA.format(
+                    src_dialect=DIALECT_MAP[self.src_dialect],
+                    tgt_dialect=DIALECT_MAP[self.tgt_dialect],
+                    sql=input_sql,
+                    hint=hint,
+                    example=example,
+                    document=document,
+                    parameter=json.dumps(self.db_para, indent=4)
                 ).strip("\n")
             else:  # Not first attempt, use retrieval enhancement
                 # Get similar case description
@@ -691,13 +710,24 @@ class Translator:
             history.append(model_message)
 
             # Build new user prompt for reflection and evaluation of current conversion result
-            user_prompt = USER_PROMPT_REFLECT.format(
-                src_dialect=DIALECT_MAP[self.src_dialect],
-                tgt_dialect=DIALECT_MAP[self.tgt_dialect],
-                src_sql=src_sql,
-                tgt_sql=current_sql,
-                snippet=f"`{str(last_time_piece['Node'])}`"
-            ).strip("\n")
+            if self.db_para is None:
+                user_prompt = USER_PROMPT_REFLECT.format(
+                    src_dialect=DIALECT_MAP[self.src_dialect],
+                    tgt_dialect=DIALECT_MAP[self.tgt_dialect],
+                    src_sql=src_sql,
+                    tgt_sql=current_sql,
+                    snippet=f"`{str(last_time_piece['Node'])}`"
+                ).strip("\n")
+            else:
+                user_prompt = USER_PROMPT_REFLECT_PARA.format(
+                    src_dialect=DIALECT_MAP[self.src_dialect],
+                    tgt_dialect=DIALECT_MAP[self.tgt_dialect],
+                    src_sql=src_sql,
+                    tgt_sql=current_sql,
+                    snippet=f"`{str(last_time_piece['Node'])}`",
+                    parameter=json.dumps(self.db_para, indent=4)
+                ).strip("\n")
+
 
         # Call model for judgment
         piece, assist_info, judge_raw = self.model_judge(
@@ -738,21 +768,38 @@ class Translator:
 
         # If system prompt is not provided, use default judgment prompt template
         if sys_prompt is None:
-            sys_prompt = SYSTEM_PROMPT_JUDGE.format(
-                src_dialect=self.src_dialect,
-                tgt_dialect=self.tgt_dialect
-            ).strip("\n")
+            if self.db_para is None:
+                sys_prompt = SYSTEM_PROMPT_JUDGE.format(
+                    src_dialect=self.src_dialect,
+                    tgt_dialect=self.tgt_dialect
+                ).strip("\n")
+            else:
+                sys_prompt = SYSTEM_PROMPT_JUDGE_PARA.format(
+                    src_dialect=self.src_dialect,
+                    tgt_dialect=self.tgt_dialect,
+                    parameter=json.dumps(self.db_para, indent=4)
+                ).strip("\n")
 
         # If no user prompt provided, generate one
         if user_prompt is None:
             # Format user prompt
-            user_prompt = USER_PROMPT_JUDGE.format(
-                src_dialect=self.src_dialect,
-                tgt_dialect=self.tgt_dialect,
-                src_sql=src_sql,
-                tgt_sql=current_sql,
-                snippet=snippet
-            ).strip("\n")
+            if self.db_para is None:
+                user_prompt = USER_PROMPT_JUDGE.format(
+                    src_dialect=self.src_dialect,
+                    tgt_dialect=self.tgt_dialect,
+                    src_sql=src_sql,
+                    tgt_sql=current_sql,
+                    snippet=snippet
+                ).strip("\n")
+            else:
+                user_prompt = USER_PROMPT_JUDGE_PARA.format(
+                    src_dialect=self.src_dialect,
+                    tgt_dialect=self.tgt_dialect,
+                    src_sql=src_sql,
+                    tgt_sql=current_sql,
+                    snippet=snippet,
+                    parameter=json.dumps(self.db_para, indent=4)
+                )
 
         # Call translator to get model judgment result
         self.add_process(content=process_history_text(user_prompt, role="user", action="judge"),
