@@ -12,19 +12,21 @@ import sqlglot
 
 from db_builder.normalize import remove_sql_quote, remove_for_oracle
 from model.model_init import parse_llm_answer, init_model
-from model_prompt import LLM_REWRITE_SYS_PROMPT, LLM_REWRITE_USER_PROMPT
+from transpiler.cracksql_driver.cracksql_driver import trans_func
+from transpiler.model_prompt import LLM_REWRITE_SYS_PROMPT, LLM_REWRITE_USER_PROMPT
 from utils.tools import get_proj_root_path, load_config
 
 config = load_config()
 if not config['cloud_mode']:
-    sqlines_path = os.path.join(get_proj_root_path(), 'src', 'transpile', 'sqlines-3.3.133', 'sqlines-3.3.133',
+    sqlines_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'sqlines-3.3.133', 'sqlines-3.3.133',
                                 'sqlines.exe')
-    input_file = os.path.join(get_proj_root_path(), 'src', 'transpile', 'sqlines-3.3.133', 'script.sql')
-    output_file = os.path.join(get_proj_root_path(), 'src', 'transpile', 'sqlines-3.3.133', 'sqlines_res.sql')
+    input_file = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'sqlines-3.3.133', 'script.sql')
+    output_file = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'sqlines-3.3.133', 'sqlines_res.sql')
 else:
-    sqlines_path = os.path.join(get_proj_root_path(), 'src', 'transpile', 'sqlines', 'sqlines')
-    input_file = os.path.join(get_proj_root_path(), 'src', 'transpile', 'sqlines', 'script.sql')
-    output_file = os.path.join(get_proj_root_path(), 'src', 'transpile', 'sqlines_res.sql')
+    sqlines_path = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'sqlines', 'sqlines')
+    input_file = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'sqlines', 'script.sql')
+    output_file = os.path.join(get_proj_root_path(), 'src', 'transpiler', 'sqlines_res.sql')
+
 
 def normalize_whitespace(text):
     return re.sub(r'\s+', ' ', text).strip()
@@ -48,14 +50,14 @@ def transfer_sql_sqline(sql: str, src_dialect: str, tgt_dialect: str):
     command = (f"{sqlines_path} -in={input_file} -s={sqlines_dialect_map[src_dialect]} "
                f"-out={output_file} -t={sqlines_dialect_map[tgt_dialect]}")
 
-    os.system(command + f" > {os.path.join(get_proj_root_path(), 'src', 'transpile', 'sqlines_cmd_out.txt')}")
+    os.system(command + f" > {os.path.join(get_proj_root_path(), 'src', 'transpiler', 'sqlines_cmd_out.txt')}")
     with open(output_file, 'r') as file:
         out_sqls = file.readlines()
 
     flag = True
     out_sql = out_sqls[1]
     out_sql = normalize_whitespace(out_sql)
-    folder_path = os.path.join(get_proj_root_path(), 'src', 'transpile')
+    folder_path = os.path.join(get_proj_root_path(), 'src', 'transpiler')
     for file_name in os.listdir(folder_path):
         if not file_name.startswith('sqlines'):
             continue
@@ -78,7 +80,7 @@ def translate_sqlglot(sql: str, src_dialect: str, tgt_dialect: str):
 
 
 def model_translate(sql: str, src_dialect: str, tgt_dialect: str):
-    translator = init_model('gpt-4')
+    translator = init_model('moonshot-v1-128k')
     model_dialect_map = {
         "pg": "PostgreSQL",
         "mysql": "MySQL",
@@ -89,10 +91,11 @@ def model_translate(sql: str, src_dialect: str, tgt_dialect: str):
     sys_prompt = LLM_REWRITE_SYS_PROMPT.format(src_dialect=src_dialect, tgt_dialect=tgt_dialect)
     user_prompt = LLM_REWRITE_USER_PROMPT.format(src_dialect=src_dialect, tgt_dialect=tgt_dialect, sql=sql)
     answer_raw = translator.trans_func([], sys_prompt, user_prompt)
+    print(answer_raw)
     pattern = r'"Answer":\s*(.*?)\s*,\s*"Reasoning":\s*(.*?)'
     # pattern = r'"SQL Snippet":\s*(.*?)\s*,\s*"Reasoning":\s*(.*?),\s*"Confidence":\s*(.*?)\s'
     res = parse_llm_answer(translator.model_id, answer_raw, pattern)
-    folder_path = os.path.join(get_proj_root_path(), 'src', 'sql_gen', 'transpile')
+    folder_path = os.path.join(get_proj_root_path(), 'src', 'transpiler')
     with open(os.path.join(folder_path, 'llm_ans.json'), 'r') as file:
         data = json.load(file)
     data.append(answer_raw)
@@ -101,7 +104,24 @@ def model_translate(sql: str, src_dialect: str, tgt_dialect: str):
     return True, res
 
 
+def cracksql_translate(sql: str, src_dialect: str, tgt_dialect: str, db_name, db_para):
+    translated_sql, model_ans_list, used_pieces, lift_histories = trans_func(sql, src_dialect, tgt_dialect, db_name, 'moonshot-v1-128k', db_para)
+    print(translated_sql)
+
+
 def transpile_pipeline(sql: str, db_name, src_dialect: str, tgt_dialect: str):
     flag, out_sql = model_translate(sql, src_dialect, tgt_dialect)
     if not flag:
         flag, out_sql = transfer_sql_sqline(sql, src_dialect, tgt_dialect)
+
+
+sql = """
+SELECT t1.customerid FROM customers AS t1 INNER JOIN yearmonth AS t2 ON t1.customerid = t2.customerid WHERE t1.segment = 'LAM' AND SUBSTR(t2.date , 1 , 4 ) = '2012' GROUP BY t1.customerid ORDER BY SUM( t2.consumption) ASC NULLS FIRST 
+"""
+
+db_parameter = {
+    "postgres Database Parameter": {
+        "datestyle": "MDY"
+    }
+}
+print(cracksql_translate(sql, 'pg', 'mysql', 'bird', db_parameter))
