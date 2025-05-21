@@ -301,3 +301,62 @@ def get_no_space_len(string: str):
     for split in splits:
         length = length + len(split)
     return length
+
+
+reserved_keywords = {
+    "oracle": [
+        "DATE",
+        "ORDER",
+        "NUMBER",
+        "COMMENT",
+        "USER",
+        "START",
+        "MODE"
+    ],
+    "mysql": [
+        "MATCH",
+        "CROSS",
+        "VIRTUAL",
+        "ORDER",
+        "RANK"
+    ],
+    "pg": [
+        "CROSS",
+        "ORDER",
+        "RANK",
+        "USER"
+    ]
+}
+
+
+def get_table_col_name(name: str, dialect: str, db_name: str):
+    if db_name == 'chinook':
+        if dialect == 'pg':
+            return f'"{name}"'
+        elif dialect == 'mysql':
+            return f'`{name}`'
+        elif dialect == 'oracle':
+            return f'"{name}"'
+        else:
+            assert False
+    if dialect == 'pg':
+        if name.upper() in reserved_keywords['pg']:
+            name = f"\"{name}\""
+        elif ' ' in name or '-' in name:
+            name = f"\"{name}\""
+    elif dialect == 'mysql':
+        if name == 'cross':
+            print(name.upper() in reserved_keywords['mysql'])
+            print(reserved_keywords['mysql'])
+        if name.upper() in reserved_keywords['mysql']:
+            name = f"`{name}`"
+        elif ' ' in name or '-' in name:
+            name = f"`{name}`"
+    elif dialect == 'oracle':
+        if name.upper() in reserved_keywords['oracle']:
+            name = f"\"{name}\""
+        elif ' ' in name or '-' in name:
+            name = f"\"{name}\""
+    else:
+        assert False
+    return name

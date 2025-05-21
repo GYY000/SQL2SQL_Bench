@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from sql_gen.generator.ele_type.type_def import ListType, BaseType, QueryType, TableType, OptionType, AliasType, \
     AnyValueType
 from sql_gen.generator.element.Operand import Operand
-from udfs.UdfFunction import getReturnType, execute
+from sql_gen.generator.udfs.UdfFunction import getReturnType, execute
 from utils.tools import get_no_space_len
 
 
@@ -37,11 +37,11 @@ class UdfFunction:
     def get_return_type(self):
         return getReturnType(self.func_name)
 
-    def execute(self):
+    def execute(self, slot_value_map: dict):
         args = []
         for slot in self.arg_slots:
             assert isinstance(slot, ValueSlot)
-            args.append(slot.get_value())
+            args.append(slot.get_value(slot_value_map))
         return execute(self.func_name, *args)
 
     def __str__(self):
@@ -52,10 +52,10 @@ class UdfFunction:
             params = params + str(slot)
         return f"{self.func_name}({params.strip()})"
 
-    def is_fulfilled(self):
+    def is_fulfilled(self, slot_value_map: dict):
         for slot in self.arg_slots:
             assert isinstance(slot, ValueSlot)
-            if not slot.is_fulfilled():
+            if slot not in slot_value_map:
                 return False
         return True
 
@@ -65,7 +65,6 @@ class ValueSlot(Slot):
         super().__init__()
         self.slot_type = slot_type
         self.name = name
-        self.value = None
         self.udf_func = udf_func
 
     def __str__(self):
@@ -77,25 +76,18 @@ class ValueSlot(Slot):
     def __repr__(self):
         return self.__str__()
 
-    def fill_value(self, op: Operand):
-        if self.value is not None:
-            assert isinstance(self.value, Operand)
-            assert self.value.value == op.value
-        else:
-            self.value = op
-
     def get_type(self):
         if self.udf_func is not None:
             return self.udf_func.get_return_type()
         else:
             return self.slot_type
 
-    def is_fulfilled(self):
-        if self.value is not None:
+    def is_fulfilled(self, slot_value_map: dict):
+        if self in slot_value_map:
             return True
         else:
             if self.udf_func is not None:
-                return self.udf_func.is_fulfilled()
+                return self.udf_func.is_fulfilled(slot_value_map)
         return False
 
     def extend(self):
@@ -115,15 +107,15 @@ class ValueSlot(Slot):
         else:
             return f"element"
 
-    def get_value(self):
-        if not self.is_fulfilled():
+    def get_value(self, slot_value_map: dict):
+        if not self.is_fulfilled(slot_value_map):
             raise ValueError(
                 f"Slot {self.name} haven't been fulfilled before construction "
                 f"please check the define order of the slots")
-        if self.value is not None:
-            return self.value
+        if self in slot_value_map:
+            return slot_value_map[self]
         else:
-            return self.udf_func.execute()
+            return self.udf_func.execute(slot_value_map)
 
 
 class StringLiteralSlot(Slot):
@@ -134,6 +126,13 @@ class StringLiteralSlot(Slot):
     def __str__(self):
         return f"'{self.literal}'"
 
+    def __repr__(self):
+        return self.__str__()
+
+    def extend(self):
+        # won't be used
+        assert False
+
 
 class NumberLiteralSlot(Slot):
     def __init__(self, num):
@@ -142,6 +141,13 @@ class NumberLiteralSlot(Slot):
 
     def __str__(self):
         return str(self.num)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def extend(self):
+        # won't be used
+        assert False
 
 
 class Pattern:
@@ -155,12 +161,12 @@ class Pattern:
     def add_slot(self, slot: Slot):
         self.elements.append(slot)
 
-    def fulfill_pattern(self, alias_id_map):
+    def fulfill_pattern(self, alias_id_map, slot_value_map):
         res = ''
         for ele in self.elements:
             if isinstance(ele, Slot):
                 if isinstance(ele, ValueSlot):
-                    if not ele.is_fulfilled():
+                    if not ele.is_fulfilled(slot_value_map):
                         if isinstance(ele.get_type(), AliasType):
                             ele.value = Operand(f'ALIAS_{alias_id_map["ALIAS"] + 1}', AliasType())
                             alias_id_map['ALIAS'] = alias_id_map['ALIAS'] + 1
@@ -168,9 +174,9 @@ class Pattern:
                             raise ValueError(f"Slot {ele.name} haven't been fulfilled "
                                              f"before construction please check the define order of the slots")
                     else:
-                        res = res + " " + ele.get_value().str_value()
+                        res = res + " " + ele.get_value(slot_value_map).str_value()
                 elif isinstance(ele, ForSlot):
-                    res = res + "\n" + ele.fulfill()
+                    res = res + "\n" + ele.fulfill(slot_value_map)
             else:
                 if res != '':
                     res = res + ' '
@@ -247,22 +253,27 @@ class ForSlot(Slot):
     def __repr__(self):
         return self.__str__()
 
-    def fulfill(self):
+    def fulfill(self, slot_value_map):
         for slot in self.ele_slots:
             assert isinstance(slot, ValueSlot)
-            if not slot.is_fulfilled():
+            if not slot.is_fulfilled(slot_value_map):
                 raise ValueError(f"Slot {slot.name} haven't been fulfilled "
                                  f"before construction please check the define order of the slots")
         i = 0
         res = ''
-        for i in range(len(self.ele_slots[0].value.value)):
+        sub_slot_value_map = {}
+        for slot, value in slot_value_map.items():
+            if slot not in self.sub_ele_slots:
+                sub_slot_value_map[slot] = value
+        for i in range(len(slot_value_map[self.ele_slots[0]].value)):
             for j in range(len(self.ele_slots)):
                 assert isinstance(self.ele_slots[j].get_type(), ListType)
-                self.sub_ele_slots[j].value = self.ele_slots[j].value.value[i]
+                sub_slot_value_map[self.sub_ele_slots[j]] = (
+                    slot_value_map[self.ele_slots[j]].value)[i]
             if res != '':
-                res = res + "\n" + self.pattern.fulfill_pattern({})
+                res = res + self.strip_str + " " + self.pattern.fulfill_pattern({}, sub_slot_value_map)
             else:
-                res = res + self.pattern.fulfill_pattern({})
+                res = res + self.pattern.fulfill_pattern({}, sub_slot_value_map)
         return res
 
     def extend(self) -> tuple:

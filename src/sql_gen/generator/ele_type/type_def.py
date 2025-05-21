@@ -30,7 +30,7 @@ class BaseType(dict, ABC):
     def get_str_attributes(self):
         if self.attr_container is None:
             return ''
-        return ', ' + ', '.join([str(attr) for attr in self.attr_container])
+        return ', ' + ', '.join([str(attr) for attr in self.attr_container.attributes])
 
     @abstractmethod
     def __str__(self):
@@ -247,7 +247,7 @@ class TimeType(BaseType):
 
 class YearType(BaseType):
     def __init__(self, attr_container: AttributeContainer | None = None):
-        super().__init__("YEAR", None, self.attr_container)
+        super().__init__("YEAR", None, attr_container)
 
     def get_type_name(self, dialect: str):
         if dialect == 'mysql':
@@ -331,12 +331,12 @@ class DatetimeType(BaseType):
             timestamp_obj = datetime.strptime(value['value'], date_format_trans(value['format']))
             formatted_timestamp_str = timestamp_obj.strftime('%Y-%m-%d %H:%M:%S')
             if dialect == 'mysql':
-                return formatted_timestamp_str
+                return f"STR_TO_DATE('{formatted_timestamp_str}', '%Y-%m-%d %H:%i:%s')"
             else:
                 if dialect == 'oracle':
                     return f"TO_TIMESTAMP('{formatted_timestamp_str}', 'yyyy-MM-dd HH24:mi:ss')"
                 elif dialect == 'pg':
-                    return f"TIMESTAMP('{formatted_timestamp_str}')"
+                    return f"'{formatted_timestamp_str}'::timestamp"
 
 
 class IntervalType(BaseType):
@@ -422,10 +422,10 @@ class StringGeneralType(BaseType):
         super().__init__(type_name if type_name is not None else 'STRING', attributes, attr_container)
 
     def get_type_name(self, dialect: str):
-        return "string"
+        return "STRING"
 
     def __str__(self):
-        return "string" + self.get_str_attributes()
+        return "STRING" + self.get_str_attributes()
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         if value is None:
@@ -714,7 +714,7 @@ class BlobType(BaseType):
 
 
 class ArrayType(BaseType):
-    def __init__(self, element_type: BaseType, col_name, length, attr_container: AttributeContainer | None = None):
+    def __init__(self, element_type: BaseType, col_name=None, length=None, attr_container: AttributeContainer | None = None):
         super().__init__("ARRAY", {"element_type": element_type}, attr_container)
         self.element_type = element_type
         self.col_name = col_name
@@ -864,3 +864,46 @@ class QueryType(BaseType):
 
     def gen_value(self, dialect: str, value=None) -> str | None:
         assert False
+
+def is_num_type(type: BaseType):
+    if isinstance(type, NumberType):
+        return True
+    elif isinstance(type, BoolType):
+        return True
+    elif isinstance(type, IntType):
+        return True
+    elif isinstance(type, FloatGeneralType):
+        return True
+    elif isinstance(type, DoubleType):
+        return True
+    elif isinstance(type, DecimalType):
+        return True
+
+def is_str_type(type: BaseType):
+    if isinstance(type, StringGeneralType):
+        return True
+    elif isinstance(type, VarcharType):
+        return True
+    elif isinstance(type, NvarcharType):
+        return True
+    elif isinstance(type, CharType):
+        return True
+    elif isinstance(type, TextType):
+        return True
+    elif isinstance(type, EnumType):
+        return True
+    return False
+
+def is_time_type(type: BaseType):
+    if isinstance(type, TimestampType):
+        return True
+    elif isinstance(type, DateType):
+        return True
+    elif isinstance(type, TimeType):
+        return True
+    elif isinstance(type, DatetimeType):
+        return True
+    elif isinstance(type, TimestampTZType):
+        return True
+    else:
+        return False

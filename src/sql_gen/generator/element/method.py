@@ -4,7 +4,7 @@
 # @Author: 10379
 # @Time: 2025/5/10 12:24
 from antlr_parser.Tree import TreeNode
-from antlr_parser.parse_tree import parse_function_tree, parse_tree
+from antlr_parser.parse_tree import parse_elemetn_tree, parse_tree
 from sql_gen.generator.element.Pattern import Pattern, Slot, ForSlot, ValueSlot
 from utils.tools import get_no_space_len
 
@@ -27,22 +27,17 @@ def parse_pattern_tree(point_type, pattern: Pattern, dialect) -> TreeNode:
     extended_pattern, slot_list = pattern.extend_pattern()
     if point_type == 'PATTERN':
         tree_node, _, _, _ = parse_tree(extended_pattern, dialect)
-        if tree_node is None:
-            raise ValueError(f"Failed to parse the pattern {pattern}")
-        tree_node = TreeNode.make_g4_tree_by_node(tree_node, dialect)
-        assert isinstance(tree_node, TreeNode)
-        while len(tree_node.children) == 1:
-            tree_node = tree_node.children[0]
-        rep_value_with_slot(tree_node, slot_list, None)
+    elif point_type == 'ORDER_BY_CLAUSE':
+        tree_node, _, _, _ = parse_elemetn_tree(extended_pattern, dialect, 'ORDER_BY_CLAUSE')
     else:
-        tree_node, _, _, _ = parse_function_tree(extended_pattern, dialect)
-        if tree_node is None:
-            raise ValueError(f"Failed to parse the pattern {extended_pattern}")
-        tree_node = TreeNode.make_g4_tree_by_node(tree_node, dialect)
-        assert isinstance(tree_node, TreeNode)
-        while len(tree_node.children) == 1:
-            tree_node = tree_node.children[0]
-        rep_value_with_slot(tree_node, slot_list, None)
+        tree_node, _, _, _ = parse_elemetn_tree(extended_pattern, dialect, 'FUNCTION')
+    if tree_node is None:
+        raise ValueError(f"Failed to parse the pattern {pattern}")
+    tree_node = TreeNode.make_g4_tree_by_node(tree_node, dialect)
+    assert isinstance(tree_node, TreeNode)
+    while len(tree_node.children) == 1:
+        tree_node = tree_node.children[0]
+    rep_value_with_slot(tree_node, slot_list, None)
     return tree_node
 
 

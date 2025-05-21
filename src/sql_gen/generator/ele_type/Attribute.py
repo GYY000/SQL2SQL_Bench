@@ -10,6 +10,12 @@ class AttributeContainer:
     def __init__(self):
         self.attributes = []
 
+    def has_number(self):
+        for attr in self.attributes:
+            if attr == 'NUMBER':
+                return True
+        return False
+
     def has_literal(self):
         for attr in self.attributes:
             if attr == 'LITERAL':
@@ -41,7 +47,7 @@ class AttributeContainer:
         return None
 
     def add_attribute(self, attr_name: str | dict):
-        if attr_name in ['LITERAL', 'COLUMN', 'GROUP_BY']:
+        if attr_name in ['LITERAL', 'COLUMN', 'GROUP_BY', 'NUMBER']:
             self.attributes.append(attr_name)
         else:
             # range attribute

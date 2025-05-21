@@ -31,7 +31,7 @@ def parse_tree(src_sql: str, dialect: str) -> (str, int, int, str):
         raise ValueError("use one of" + str(map_parser) + " as argument")
 
 
-def parse_function_tree(function_expr: str, dialect: str) -> (str, int, int, str):
+def parse_elemetn_tree(function_expr: str, dialect: str, element) -> (str, int, int, str):
     if dialect == 'pg':
         try:
             input_stream = InputStream(function_expr)
@@ -40,7 +40,12 @@ def parse_function_tree(function_expr: str, dialect: str) -> (str, int, int, str
             stream = CommonTokenStream(lexer)
             parser = PostgreSQLParser(stream)
             parser.addErrorListener(CustomErrorListener())
-            tree = parser.a_expr()
+            if element == 'FUNCTION':
+                tree = parser.a_expr()
+            elif element == 'ORDER_BY_CLAUSE':
+                tree = parser.sort_clause()
+            else:
+                assert False
             return tree, None, None, None
         except SelfParseError as e:
             return None, e.line, e.column, e.msg
@@ -55,7 +60,12 @@ def parse_function_tree(function_expr: str, dialect: str) -> (str, int, int, str
             stream = CommonTokenStream(lexer)
             parser = MySqlParser(stream)
             parser.addErrorListener(CustomErrorListener())
-            tree = parser.expression()
+            if element == 'FUNCTION':
+                tree = parser.expression()
+            elif element == 'ORDER_BY_CLAUSE':
+                tree = parser.orderByClause()
+            else:
+                assert False
             return tree, None, None, None
         except SelfParseError as e:
             return None, e.line, e.column, e.msg
@@ -70,7 +80,12 @@ def parse_function_tree(function_expr: str, dialect: str) -> (str, int, int, str
             stream = CommonTokenStream(lexer)
             parser = PlSqlParser(stream)
             parser.addErrorListener(CustomErrorListener())
-            tree = parser.expression()
+            if element == 'FUNCTION':
+                tree = parser.expression()
+            elif element == 'ORDER_BY_CLAUSE':
+                tree = parser.order_by_clause()
+            else:
+                assert False
             return tree, None, None, None
         except SelfParseError as e:
             return None, e.line, e.column, e.msg

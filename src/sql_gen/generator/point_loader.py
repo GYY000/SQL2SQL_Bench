@@ -70,8 +70,7 @@ def load_translation_point_folder(folder_path, src_dialect, tgt_dialect):
             points = json.load(file)
             for point in points:
                 assert isinstance(point, dict)
-                # translation_points.append(point)
-                translation_points.append(parse_point(point, src_dialect, tgt_dialect))
+                translation_points.append(point)
     return translation_points
 
 
@@ -85,21 +84,30 @@ def load_translation_point(src_dialect, tgt_dialect):
     return points
 
 
-point_types = set()
-fields = set()
-return_fields = set()
-type_fields = set()
+def load_point_by_name(src_dialect, tgt_dialect, point_name):
+    point_path = os.path.join(get_proj_root_path(), 'conv_point')
+    for category in categories:
+        category_path = os.path.join(point_path, category)
+        category_points = load_translation_point_folder(category_path, src_dialect, tgt_dialect)
+        for point in category_points:
+            if point['Desc'] == point_name:
+                return point
+    raise ValueError(f"Point {point_name} not found")
 
-for src_dialect in dialects:
-    for tgt_dialect in dialects:
-        if src_dialect == tgt_dialect:
-            continue
-        points = load_translation_point(src_dialect, tgt_dialect)
-        # for category, values in points.items():
-        #     for point in values:
-        #         if 'return' in point:
-        #             return_fields.add(point['return'])
-        #         if 'type' not in point:
-        #             print(point)
-        #         else:
-        #             type_fields.add(point['type'])
+# point_types = set()
+# fields = set()
+# return_fields = set()
+# type_fields = set()
+#
+# for src_dialect in dialects:
+#     for tgt_dialect in dialects:
+#         if src_dialect == tgt_dialect:
+#             continue
+#         points = load_translation_point(src_dialect, tgt_dialect)
+#         for category, values in points.items():
+#             for point in values:
+#                 return_fields.add(point['Return'])
+#                 type_fields.add(point['Type'])
+#
+# print(return_fields)
+# print(type_fields)

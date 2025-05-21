@@ -44,81 +44,9 @@ def type_mapping(dialect: str, op_type: str) -> BaseType:
         else:
             raise ValueError(f"MySQL Type {op_type} is not supported yet")
     elif dialect == 'pg':
-        """
-  "19": "name",
-  "22": "int2vector",
-  "24": "regproc",
-  "26": "oid",
-  "27": "tid",
-  "28": "xid",
-  "29": "cid",
-  "30": "oidvector",
-  "71": "pg_type",
-  "75": "pg_attribute",
-  "81": "pg_proc",
-  "83": "pg_class",
-  "194": "pg_node_tree",
-  "3361": "pg_ndistinct",
-  "3402": "pg_dependencies",
-  "5017": "pg_mcv_list",
-  "601": "lseg",
-  "602": "path",
-  "603": "box",
-  "604": "polygon",
-  "628": "line",
-  "705": "unknown",
-  "718": "circle",
-  "790": "money",
-  "829": "macaddr",
-  "869": "inet",
-  "650": "cidr",
-  "774": "macaddr8",
-  "1033": "aclitem",
-  "1083": "time",
-  "1184": "timestamptz",
-  "1186": "interval",
-  "1266": "timetz",
-  "1560": "bit",
-  "1562": "varbit",
-  "1790": "refcursor",
-  "2202": "regprocedure",
-  "2203": "regoper",
-  "2204": "regoperator",
-  "2205": "regclass",
-  "2206": "regtype",
-  "4096": "regrole",
-  "4089": "regnamespace",
-  "3220": "pg_lsn",
-  "3614": "tsvector",
-  "3642": "gtsvector",
-  "3615": "tsquery",
-  "3734": "regconfig",
-  "3769": "regdictionary",
-  "4072": "jsonpath",
-  "2970": "txid_snapshot",
-  "3904": "int4range",
-  "3906": "numrange",
-  "3908": "tsrange",
-  "3910": "tstzrange",
-  "3912": "daterange",
-  "3926": "int8range",
-  "2249": "record",
-  "2287": "_record",
-  "2275": "cstring",
-  "2276": "any",
-  "2277": "anyarray",
-  "2278": "void",
-  "2281": "internal",
-  "2282": "opaque",
-  "2283": "anyelement",
-  "2776": "anynonarray",
-  "3500": "anyenum",
-  "3831": "anyrange",
-  "1000": "_bool",
-  "1001": "_bytea",
-  "1002": "_char",
-  "1003": "_name"
-        """
+        if op_type.startswith('_'):
+            ele_type = type_mapping(dialect, op_type[1:])
+            return ArrayType(ele_type)
         if op_type == 'uuid':
             return UuidType()
         elif op_type == 'bytea':
@@ -154,6 +82,10 @@ def type_mapping(dialect: str, op_type: str) -> BaseType:
         else:
             raise ValueError(f"PG Type {op_type} is not supported yet")
     elif dialect == 'oracle':
-        pass
+        if op_type == 'NUMBER':
+            return NumberType()
+        if op_type == 'CHAR':
+            return StringGeneralType()
+        raise ValueError(f"Oracle Type {op_type} is not supported yet")
     else:
         raise ValueError(f"dialect {dialect} is not supported")

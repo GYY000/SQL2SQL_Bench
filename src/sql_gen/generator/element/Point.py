@@ -10,8 +10,13 @@ from sql_gen.generator.element.Pattern import Pattern, ValueSlot
 
 
 class Point:
-    def __init__(self, src_pattern: Pattern, tgt_pattern: Pattern, slots: List, point_type: str, return_type: BaseType | None, predicate: str | None):
+    def __init__(self, src_dialect, tgt_dialect, src_pattern: Pattern, tgt_pattern: Pattern, slots: List, point_type: str,
+                 return_type: BaseType | None, predicate: str | None):
+        self.src_dialect = src_dialect
+        self.tgt_dialect = tgt_dialect
         self.src_pattern = src_pattern
         self.tgt_pattern = tgt_pattern
         self.slots = slots
         self.point_type = point_type
+        self.return_type = return_type
+        self.predicate = predicate

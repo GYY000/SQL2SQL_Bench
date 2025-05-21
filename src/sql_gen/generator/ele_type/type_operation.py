@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 from sql_gen.generator.ele_type.type_def import *
-from utils.tools import get_proj_root_path
+from utils.tools import get_proj_root_path, get_table_col_name
 
 
 def gen_type_through_str(type_str, attr_container) -> BaseType:
@@ -48,7 +48,7 @@ def gen_type_through_str(type_str, attr_container) -> BaseType:
         raise ValueError(f"Type {type_str} does not exist in this system")
 
 
-def load_col_type(type_def: dict, col_name: str, dialect: str):
+def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
     # col_name are used for build VARRAY Type for Oracle
     type_name = type_def['type_name']
     add_constraint = None
@@ -94,9 +94,9 @@ def load_col_type(type_def: dict, col_name: str, dialect: str):
             values = values + f"'{value}'"
         final_type = EnumType(type_def['values'])
         if dialect == 'pg':
-            add_constraint = f"CONSTRAINT \"{col_name}_check\" CHECK(\"{col_name}\" IN ({values}))"
+            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'pg', db_name)} IN ({values}))"
         elif dialect == 'oracle':
-            add_constraint = f"CONSTRAINT \"{col_name}_check\" CHECK(\"{col_name}\" IN ({values}))"
+            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'oracle', db_name)} IN ({values}))"
     elif type_name == 'NVARCHAR':
         final_type = NvarcharType(type_def['length'])
     elif type_name == 'CHAR':
@@ -116,7 +116,8 @@ def load_col_type(type_def: dict, col_name: str, dialect: str):
     elif type_name == 'BLOB':
         final_type = BlobType()
     elif type_name == 'ARRAY':
-        ele_type, ele_constraint, ele_type_defs = load_col_type(type_def['ele_type'], 'sub' + col_name, dialect)
+        ele_type, ele_constraint, ele_type_defs = load_col_type(type_def['ele_type'], 'sub' + col_name, dialect,
+                                                                db_name)
         final_type = ArrayType(ele_type, col_name, type_def['length'])
         type_defs = type_defs + ele_type_defs
         if dialect == 'oracle':

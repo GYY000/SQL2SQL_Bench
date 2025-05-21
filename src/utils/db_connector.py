@@ -2,6 +2,8 @@ import json
 import os.path
 import re
 import subprocess
+import traceback
+from datetime import datetime
 
 from typing import List
 
@@ -212,7 +214,7 @@ def get_mysql_type_by_oid(type_code):
         return "UNKNOWN"
 
 
-def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
+def get_mysql_type(db_name: str, obj: str, is_table: bool) -> tuple[bool, List]:
     if is_table:
         table_name = obj
         with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
@@ -223,7 +225,7 @@ def get_mysql_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, List]:
             res = []
             for col in schema[table_name]['cols']:
                 col_name = col['col']
-                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'mysql')
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'mysql', db_name)
                 res.append({
                     "col": col_name,
                     "type": col_type
@@ -377,6 +379,7 @@ def pg_sql_execute(db_name: str, sql):
         return True, rows
     except (Exception, psycopg2.Error) as error:
         connection.rollback()
+        traceback.print_exc()
         return False, f"Error while executing PostgreSQL query: {error}"
 
 
@@ -406,7 +409,7 @@ def get_type_name_by_oid(oid):
         return "UNKNOWN"
 
 
-def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
+def get_pg_type(db_name: str, obj: str, is_table: bool) -> tuple[bool, list]:
     if is_table:
         table_name = obj
         with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
@@ -417,7 +420,7 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
             res = []
             for col in schema[table_name]['cols']:
                 col_name = col['col']
-                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'pg')
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'pg', db_name)
                 res.append({
                     "col": col_name,
                     "type": col_type
@@ -435,7 +438,6 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
         res = []
         if cursor.description:
             for column in cursor.description:
-                print(column)
                 res.append({
                     "col": column.name,
                     "type": get_type_name_by_oid(column.type_code)
@@ -443,15 +445,22 @@ def get_pg_type(obj: str, db_name: str, is_table: bool) -> tuple[bool, list]:
         connection.commit()
         return True, res
     except (Exception, psycopg2.Error) as error:
+        raise error
         connection.rollback()
         return False, [f"Error while executing PostgreSQL query: {error}"]
 
 
 def pg_test(ddls: list[str], sql: str):
     test_db_name = 'test'
+    pg_drop_db(test_db_name)
     pg_db_connect(test_db_name)
     for ddl in ddls:
-        pg_sql_execute(test_db_name, ddl)
+        if ddl.strip() == '':
+            continue
+        flag, res = pg_sql_execute(test_db_name, ddl)
+        if not flag:
+            print(res)
+            exit()
     flag, res = pg_sql_execute(test_db_name, sql)
     pg_drop_db(test_db_name)
     return flag, res
@@ -496,6 +505,7 @@ def oracle_db_connect(db_name):
             cursor.execute(f"CREATE USER {db_name} IDENTIFIED BY {ora_config['usr_default_pwd']}")
             cursor.execute(f"GRANT CONNECT, RESOURCE TO {db_name}")
             cursor.execute(f"GRANT CREATE SESSION TO {db_name}")
+            cursor.execute(f"GRANT ALTER SESSION TO {db_name}")
             cursor.execute(f"GRANT CREATE TABLE TO {db_name}")
             connection.commit()
         except Exception as e:
@@ -594,7 +604,7 @@ oracle_conn_local_map = {}
 oracle_cursor_local_map = {}
 
 
-def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
+def get_oracle_type(db_name, obj: str, is_table: bool) -> tuple[bool, list]:
     if is_table:
         table_name = obj
         with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
@@ -605,7 +615,7 @@ def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
             res = []
             for col in schema[table_name]['cols']:
                 col_name = col['col']
-                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'oracle')
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'oracle', db_name)
                 res.append({
                     "col": col_name,
                     "type": col_type
@@ -618,7 +628,7 @@ def get_oracle_type(obj: str, db_name, is_table: bool) -> tuple[bool, list]:
         connection = oracle_conn_map[db_name]
         cursor = oracle_cursor_map[db_name]
         sql = obj
-        cursor.execute(sql)
+        cursor.execute(sql.strip().strip(';'))
         res = []
         for column in cursor.description:
             match = re.search(r'DB_TYPE_(\w+)', column[1].name)
@@ -638,6 +648,8 @@ def oracle_test(ddls: list[str], sql: str):
     test_db_name = 'test'
     oracle_db_connect(test_db_name)
     for ddl in ddls:
+        if ddl.strip() == '':
+            continue
         oracle_sql_execute(test_db_name, ddl)
     flag, res = oracle_sql_execute(test_db_name, sql)
     oracle_drop_db(test_db_name)

@@ -3,7 +3,6 @@ import sys
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from antlr_parser.parse_tree import get_parser, parse_tree
-from sql_gen.generator.element.Pattern import Slot
 from utils.tools import self_split, remove_all_space
 
 parser_map = {}

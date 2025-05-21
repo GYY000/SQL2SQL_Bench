@@ -7,7 +7,7 @@
 from antlr_parser.Tree import TreeNode
 from antlr_parser.mysql_tree import rename_column_mysql, fetch_main_select_from_select_stmt_mysql, \
     fetch_all_simple_select_from_select_stmt_mysql, \
-    analyze_mysql_table_sources
+    analyze_mysql_table_sources, get_select_statement_node_from_root
 from antlr_parser.oracle_tree import fetch_main_select_from_subquery_oracle, general_element_only_oracle, \
     rename_column_oracle, fetch_all_simple_select_from_subquery_oracle, analyze_table_refs_oracle, parse_oracle_group_by
 from antlr_parser.parse_tree import parse_tree
@@ -125,7 +125,7 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
                 }, dialect
             )
             get_type_query = f"{with_clauses}\n SELECT * FROM `{cte_name}` LIMIT 1"
-            flag, cte_types = get_mysql_type(get_type_query, db_name, False)
+            flag, cte_types = get_mysql_type(db_name, get_type_query, False)
             if not flag:
                 raise ValueError(cte_types[0])
             select_statement_node = cte_root_nodes.get_children_by_path(
@@ -392,8 +392,7 @@ def analysis_res_cols_sql(db_name, root_node: TreeNode, dialect: str) -> tuple[b
     name_dict = {}
     rename_flag = False
     if dialect == 'mysql':
-        select_statement_node = root_node.get_children_by_path(['sqlStatements', 'sqlStatement',
-                                                                'dmlStatement', 'selectStatement'])
+        select_statement_node = get_select_statement_node_from_root(root_node)
         select_main_node = fetch_main_select_from_select_stmt_mysql(select_statement_node[0])
         # if len(select_main_node.get_children_by_path(['selectElements', '*'])) > 0:
         #     flag, all_cols = analysis_usable_cols_sql(db_name, sql, dialect)
@@ -456,7 +455,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
                 from_elems += ',\n'
             from_elems += build_from_elem(table_elements[i], dialect)
             sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
-            flag, types = get_mysql_type(sql, db_name, False)
+            flag, types = get_mysql_type(db_name, sql, False)
             if not flag:
                 print(sql)
                 print(types)
@@ -577,7 +576,7 @@ def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, diale
         select_elements_node.value = ' ' + new_str + ' '
         select_elements_node.is_terminal = True
         get_type_sql = f"{build_ctes(ctes, dialect)}\n {str(clone_node)}"
-        flag, res = get_mysql_type(get_type_sql, db_name, False)
+        flag, res = get_mysql_type(db_name, get_type_sql, False)
         if not flag:
             print(get_type_sql)
             assert False
