@@ -2483,15 +2483,6 @@ class MySqlParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by MySqlParser#selectFunctionElement.
-    def enterSelectFunctionElement(self, ctx:MySqlParser.SelectFunctionElementContext):
-        pass
-
-    # Exit a parse tree produced by MySqlParser#selectFunctionElement.
-    def exitSelectFunctionElement(self, ctx:MySqlParser.SelectFunctionElementContext):
-        pass
-
-
     # Enter a parse tree produced by MySqlParser#selectExpressionElement.
     def enterSelectExpressionElement(self, ctx:MySqlParser.SelectExpressionElementContext):
         pass

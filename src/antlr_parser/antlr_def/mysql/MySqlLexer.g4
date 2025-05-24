@@ -226,6 +226,7 @@ TRIGGER                       : 'TRIGGER';
 TRUE                          : 'TRUE';
 UNDO                          : 'UNDO';
 UNION                         : 'UNION';
+INTERSECT                     : 'INTERSECT';
 UNIQUE                        : 'UNIQUE';
 UNLOCK                        : 'UNLOCK';
 UNSIGNED                      : 'UNSIGNED';

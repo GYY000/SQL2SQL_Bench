@@ -862,9 +862,9 @@ selectStatement
     : querySpecification lockClause? # simpleSelect
     | queryExpression lockClause?    # parenthesisSelect
     | (querySpecificationNointo | queryExpressionNointo) unionStatement+ (
-        UNION unionType = (ALL | DISTINCT)? (querySpecification | queryExpression)
+        (UNION | INTERSECT | EXCEPT) unionType = (ALL | DISTINCT)? (querySpecification | queryExpression)
     )? orderByClause? limitClause? lockClause?                                                                                               # unionSelect
-    | queryExpressionNointo unionParenthesis+ (UNION unionType = (ALL | DISTINCT)? queryExpression)? orderByClause? limitClause? lockClause? #
+    | queryExpressionNointo unionParenthesis+ ((UNION | INTERSECT | EXCEPT) unionType = (ALL | DISTINCT)? queryExpression)? orderByClause? limitClause? lockClause? #
         unionParenthesisSelect
     | querySpecificationNointo (',' lateralStatement)+ # withLateralStatement
     ;
@@ -1018,11 +1018,11 @@ querySpecificationNointo
     ;
 
 unionParenthesis
-    : UNION unionType = (ALL | DISTINCT)? queryExpressionNointo
+    : (UNION | INTERSECT | EXCEPT) unionType = (ALL | DISTINCT)? queryExpressionNointo
     ;
 
 unionStatement
-    : UNION unionType = (ALL | DISTINCT)? (querySpecificationNointo | queryExpressionNointo)
+    : (UNION | INTERSECT | EXCEPT) unionType = (ALL | DISTINCT)? (querySpecificationNointo | queryExpressionNointo)
     ;
 
 lateralStatement
@@ -1080,7 +1080,6 @@ selectElements
 selectElement
     : fullId '.' '*'                               # selectStarElement
     | fullColumnName (AS? uid)?                    # selectColumnElement
-    | functionCall (AS? uid)?                      # selectFunctionElement
     | (LOCAL_ID VAR_ASSIGN)? expression (AS? uid)? # selectExpressionElement
     ;
 
@@ -2245,7 +2244,7 @@ convertedDataType
     : (
         typeName = (BINARY | NCHAR | FLOAT) lengthOneDimension?
         | typeName = CHAR lengthOneDimension? (charSet charsetName)?
-        | typeName = (DATE | DATETIME | TIME | YEAR | JSON | INT | INTEGER | DOUBLE)
+        | typeName = (DATE | DATETIME | TIME | YEAR | JSON | INT | INTEGER | DOUBLE | REAL)
         | typeName = (DECIMAL | DEC) lengthTwoOptionalDimension?
         | (SIGNED | UNSIGNED) (INTEGER | INT)?
     ) ARRAY?
@@ -2814,7 +2813,6 @@ keywordsCanBeId
     | EVENT
     | EVENTS
     | EVERY
-    | EXCEPT
     | EXCHANGE
     | EXCLUSIVE
     | EXPIRE
