@@ -4,6 +4,7 @@
 # @Author: 10379
 # @Time: 2025/4/2 20:35
 from antlr_parser.Tree import TreeNode
+from utils.tools import get_table_col_name
 
 
 # used for analyze pg tree structure
@@ -106,17 +107,17 @@ def rename_column_pg(target_el_node: TreeNode, name_dict: dict, extend_name=None
     name_dict[extend_name] = idx + 1
     if target_el_node.get_child_by_value('collable') is not None:
         uid_node = target_el_node.get_child_by_value('collable')
-        new_name_node = TreeNode(f"\"{extend_name}_{idx}\"", 'mysql', True)
+        new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True)
         assert isinstance(uid_node, TreeNode)
         uid_node.children = [new_name_node]
     elif target_el_node.get_child_by_value('identifier') is not None:
         uid_node = target_el_node.get_child_by_value('identifier')
-        new_name_node = TreeNode(f"\"{extend_name}_{idx}\"", 'mysql', True)
+        new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True)
         assert isinstance(uid_node, TreeNode)
         uid_node.children = [new_name_node]
     else:
         target_el_node.add_child(TreeNode('AS', 'mysql', True))
-        target_el_node.add_child(TreeNode(f"\"{extend_name}_{idx}\"", 'mysql', True))
+        target_el_node.add_child(TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True))
     return f"{extend_name}_{idx}"
 
 
@@ -302,7 +303,7 @@ def rename_table(father_node: TreeNode, son_node: TreeNode | None, name_dict, va
         assert son_node is not None
         table_alias_node = TreeNode('table_alias_clause', 'pg', False)
         table_alias_node.add_child(TreeNode('AS', 'pg', True))
-        table_alias_node.add_child(TreeNode(f"\"{value}\"", 'pg', True))
+        table_alias_node.add_child(TreeNode(f"{get_table_col_name(value, 'pg').lower()}", 'pg', True))
         opt_alias_node = TreeNode('opt_alias_clause', 'pg', False)
         opt_alias_node.add_child(table_alias_node)
         father_node.insert_after_node(opt_alias_node, son_node.value)
@@ -310,7 +311,7 @@ def rename_table(father_node: TreeNode, son_node: TreeNode | None, name_dict, va
     else:
         table_name_node = (father_node.get_child_by_value('opt_alias_clause').
                            get_child_by_value('table_alias_clause').get_child_by_value('table_alias'))
-        table_name_node.children = [TreeNode(f"\"{value}\"", 'pg', True)]
+        table_name_node.children = [TreeNode(f"{get_table_col_name(value, 'pg').lower()}", 'pg', True)]
         return value
 
 
@@ -374,7 +375,7 @@ def rename_sql_pg(select_stmt_node: TreeNode):
     return res
 
 def parse_pg_group_by(group_list_node: TreeNode) -> list:
-    group_by_item_nodes = group_list_node.get_children_by_value('group_by_list')
+    group_by_item_nodes = group_list_node.get_children_by_value('group_by_item')
     if len(group_by_item_nodes) > 1:
         # No Node has cube or grouping sets or roll up
         res = []

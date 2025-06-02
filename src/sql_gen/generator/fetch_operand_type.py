@@ -9,6 +9,7 @@ from antlr_parser.oracle_tree import fetch_main_select_from_subquery_oracle
 from antlr_parser.parse_tree import parse_tree
 from antlr_parser.pg_tree import fetch_main_select_from_select_stmt_pg
 from sql_gen.generator.ele_type.type_conversion import type_mapping
+from sql_gen.generator.ele_type.type_def import BoolType
 from utils.db_connector import get_mysql_type, get_pg_type, get_oracle_type
 
 
@@ -45,6 +46,11 @@ def fetch_operand_type(db_name, operand: TreeNode, dialect: str):
     new_operand_node = TreeNode(str(operand), operand.dialect, True)
     order_by_mode = False
     if dialect == 'mysql':
+        while len(operand.children) == 1:
+            operand = operand.children[0]
+            if operand.value == 'predicate':
+                if not(len(operand.children) == 1 and operand.children[0].value == 'expressionAtom'):
+                    return BoolType()
         father_node = operand
         sql_root_node = None
         while father_node is not None:
@@ -75,6 +81,7 @@ def fetch_operand_type(db_name, operand: TreeNode, dialect: str):
             sql = f"{ctes}SELECT {str(operand)} FROM ({sql_root_node}) AS temp"
             flag, res = get_mysql_type(db_name, sql, False)
             if not flag:
+                print(sql)
                 print("Error in fetching operand type")
             return type_mapping('mysql', res[0]['type'])
         else:
@@ -96,6 +103,7 @@ def fetch_operand_type(db_name, operand: TreeNode, dialect: str):
                 sql = str(sql_root_node)
             flag, res = get_mysql_type(db_name, sql, False)
             if not flag:
+                print(sql)
                 print("Error in fetching operand type")
             sql_root_node.replace_child(new_operand_node, ori_select_elements_node)
             if order_by_node is not None:
@@ -145,6 +153,7 @@ def fetch_operand_type(db_name, operand: TreeNode, dialect: str):
                 sql = str(main_select_node)
             flag, res = get_pg_type(db_name, sql, False)
             if not flag:
+                print(sql)
                 print("Error in fetching operand type")
             main_select_node.replace_child(new_operand_node, target_list_node)
             return type_mapping('pg', res[0]['type'])
@@ -173,6 +182,7 @@ def fetch_operand_type(db_name, operand: TreeNode, dialect: str):
             sql = f"{ctes}SELECT {str(operand)} FROM ({sql_root_node}) AS temp"
             flag, res = get_oracle_type(db_name, sql, False)
             if not flag:
+                print(sql)
                 print("Error in fetching operand type")
             return type_mapping('oracle', res[0]['type'])
         else:
@@ -195,6 +205,7 @@ def fetch_operand_type(db_name, operand: TreeNode, dialect: str):
                 sql = str(sql_root_node)
             flag, res = get_oracle_type(db_name, sql, False)
             if not flag:
+                print(sql)
                 print("Error in fetching operand type")
             sql_root_node.replace_child(new_operand_node, target_list_node)
             if order_by_node is not None:

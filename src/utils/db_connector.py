@@ -14,7 +14,8 @@ import psycopg2
 import oracledb
 
 from sql_gen.generator.ele_type.type_operation import load_col_type
-from utils.tools import get_proj_root_path, load_mysql_config, load_pg_config, load_oracle_config
+from utils.tools import get_proj_root_path, load_mysql_config, load_pg_config, load_oracle_config, get_db_ids, \
+    get_empty_db_name
 
 mysql_conn_map = {}
 mysql_cursor_map = {}
@@ -31,42 +32,7 @@ database_mapping = {
     "customer_order": {
         "mysql": "cus_order",
         "pg": "cus_order",
-        "oracle": "orc_sample_db",
-    },
-    "hr_order_entry": {
-        "mysql": "order_entry",
-        "pg": "order_entry",
-        "oracle": "order_entry"
-    },
-    "sale_history": {
-        "mysql": "sale_his",
-        "pg": "sale_his",
-        "oracle": "sale_his"
-    },
-    "snap": {
-        "mysql": "snap",
-        "pg": "snap",
-        "oracle": "snap"
-    },
-    "chinook": {
-        "mysql": "chinook",
-        "pg": "chinook",
-        "oracle": "chinook"
-    },
-    "bird": {
-        "mysql": "bird",
-        "pg": "bird",
-        "oracle": "bird"
-    },
-    "tpch": {
-        "mysql": "tpch",
-        "pg": "tpch",
-        "oracle": "tpch"
-    },
-    "tpcds": {
-        "mysql": "tpcds",
-        "pg": "tpcds",
-        "oracle": "tpcds"
+        "oracle": "cus_order",
     },
     "test": {
         "mysql": "test",
@@ -77,19 +43,25 @@ database_mapping = {
 
 
 def get_db_name(dialect, db_name):
+    db_ids = get_db_ids()
     if db_name not in database_mapping:
+        for db_id in db_ids:
+            if db_id == db_name:
+                return db_id
+            elif db_name == get_empty_db_name(db_id):
+                return db_id
         assert False
     else:
         return database_mapping[db_name][dialect]
 
 
-def sql_execute(dialect: str, db_name: str, sql: str):
+def sql_execute(dialect: str, db_name: str, sql: str, db_parameter: dict | None = None):
     if dialect == 'pg':
-        return pg_sql_execute(db_name, sql)
+        return pg_sql_execute(db_name, sql, db_parameter)
     elif dialect == 'mysql':
-        return mysql_sql_execute(db_name, sql)
+        return mysql_sql_execute(db_name, sql, db_parameter)
     elif dialect == 'oracle':
-        return oracle_sql_execute(db_name, sql)
+        return oracle_sql_execute(db_name, sql, False, db_parameter)
     else:
         raise ValueError(f"{dialect} is not supported")
 
@@ -121,7 +93,7 @@ def mysql_drop_db(db_name: str):
         )
         db_name = get_db_name('mysql', db_name)
         if db_name in mysql_conn_map:
-            close_mysql_connnect(db_name)
+            close_mysql_connect(db_name)
         cursor = connection.cursor()
         cursor.execute(f"DROP DATABASE `{db_name}`")
         connection.commit()
@@ -172,13 +144,19 @@ def mysql_db_connect(dbname):
         print(f"Error while connecting to MySQL: {e}")
 
 
-def mysql_sql_execute(db_name: str, sql):
+def mysql_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=False):
+    if emp_flag:
+        db_name = get_empty_db_name(db_name)
     db_name = get_db_name('mysql', db_name)
     if db_name not in mysql_conn_map:
         mysql_db_connect(db_name)
     connection = mysql_conn_map[db_name]
     cursor = mysql_cursor_map[db_name]
     try:
+        if db_param is not None:
+            for key, value in db_param:
+                cursor.execute(f"SET SESSION {key} = '{value}'")
+            connection.commit()
         cursor.execute(sql.strip().strip(';'))
         rows = cursor.fetchall()
         connection.commit()
@@ -188,7 +166,7 @@ def mysql_sql_execute(db_name: str, sql):
         return False, e.args[1]
 
 
-def close_mysql_connnect(dbname: str):
+def close_mysql_connect(dbname: str):
     connection = mysql_conn_map[dbname]
     cursor = mysql_cursor_map[dbname]
     if connection.is_connected():
@@ -214,7 +192,7 @@ def get_mysql_type_by_oid(type_code):
         return "UNKNOWN"
 
 
-def get_mysql_type(db_name: str, obj: str, is_table: bool) -> tuple[bool, List]:
+def get_mysql_type(db_name: str, obj: str, is_table: bool, db_param: dict | None = None) -> tuple[bool, List]:
     if is_table:
         table_name = obj
         with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
@@ -227,28 +205,37 @@ def get_mysql_type(db_name: str, obj: str, is_table: bool) -> tuple[bool, List]:
                 col_name = col['col']
                 col_type, _, _ = load_col_type(col['type'], col['col_name'], 'mysql', db_name)
                 res.append({
-                    "col": col_name,
+                    "col": col_name.lower(),
                     "type": col_type
                 })
             return True, res
     try:
+        db_name = get_empty_db_name(db_name)
         db_name = get_db_name('mysql', db_name)
         if db_name not in mysql_conn_map:
             mysql_db_connect(db_name)
         connection = mysql_conn_map[db_name]
         cursor = mysql_cursor_map[db_name]
+        if db_param is not None:
+            for key, value in db_param:
+                cursor.execute(f"SET SESSION {key} = '{value}'")
+            connection.commit()
         sql = obj
         cursor.execute(sql)
         columns = cursor.description
         res = []
+        i = 0
         for column in columns:
             col_name = column[0]
             col_type_code = column[1]
             col_type = get_mysql_type_by_oid(col_type_code)
+            if col_type == 'LONGLONG':
+                pass
             res.append({
-                "col": col_name,
+                "col": col_name.lower(),
                 "type": col_type
             })
+            i = i + 1
         rows = cursor.fetchall()
         connection.commit()
         return True, res
@@ -363,13 +350,19 @@ def pg_db_connect(dbname):
         print(f"Error while connecting to PostgreSQL: {error}")
 
 
-def pg_sql_execute(db_name: str, sql):
+def pg_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=False):
+    if emp_flag:
+        db_name = get_empty_db_name(db_name)
     db_name = get_db_name('pg', db_name)
     if db_name not in pg_conn_map:
         pg_db_connect(db_name)
     connection = pg_conn_map[db_name]
     cursor = pg_cursor_map[db_name]
     try:
+        if db_param is not None:
+            for key, value in db_param.items():
+                cursor.execute(f"SET {key} = '{value}';")
+            connection.commit()
         cursor.execute(sql.strip().strip(';'))
         if cursor.description:
             rows = cursor.fetchall()
@@ -378,6 +371,7 @@ def pg_sql_execute(db_name: str, sql):
         connection.commit()
         return True, rows
     except (Exception, psycopg2.Error) as error:
+        print(sql)
         connection.rollback()
         traceback.print_exc()
         return False, f"Error while executing PostgreSQL query: {error}"
@@ -409,7 +403,7 @@ def get_type_name_by_oid(oid):
         return "UNKNOWN"
 
 
-def get_pg_type(db_name: str, obj: str, is_table: bool) -> tuple[bool, list]:
+def get_pg_type(db_name: str, obj: str, is_table: bool, db_param: dict | None = None) -> tuple[bool, list]:
     if is_table:
         table_name = obj
         with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
@@ -422,7 +416,7 @@ def get_pg_type(db_name: str, obj: str, is_table: bool) -> tuple[bool, list]:
                 col_name = col['col']
                 col_type, _, _ = load_col_type(col['type'], col['col_name'], 'pg', db_name)
                 res.append({
-                    "col": col_name,
+                    "col": col_name.lower(),
                     "type": col_type
                 })
             return True, res
@@ -433,13 +427,17 @@ def get_pg_type(db_name: str, obj: str, is_table: bool) -> tuple[bool, list]:
             pg_db_connect(db_name)
         connection = pg_conn_map[db_name]
         cursor = pg_cursor_map[db_name]
+        if db_param is not None:
+            for key, value in db_param.items():
+                cursor.execute(f"SET {key} = '{value}';")
+            connection.commit()
         sql = obj
         cursor.execute(sql)
         res = []
         if cursor.description:
             for column in cursor.description:
                 res.append({
-                    "col": column.name,
+                    "col": column.name.lower(),
                     "type": get_type_name_by_oid(column.type_code)
                 })
         connection.commit()
@@ -551,8 +549,10 @@ def oracle_drop_db(db_name):
     return True
 
 
-def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
+def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False, db_param: dict | None = None, emp_flag=False):
     sql = sql.strip().strip(';')
+    if emp_flag:
+        db_name = get_empty_db_name(db_name)
     db_name = get_db_name('oracle', db_name)
     if not sql_plus_flag:
         if db_name not in oracle_conn_map:
@@ -560,8 +560,12 @@ def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False):
         connection = oracle_conn_map[db_name]
         cursor = oracle_cursor_map[db_name]
         try:
+            if db_param is not None:
+                for key, value in db_param.items():
+                    cursor.execute(f"ALTER SESSION SET {key} = '{value}'")
+                connection.commit()
             cursor.execute(sql)
-            if sql.startswith('INSERT'):
+            if sql.startswith('INSERT') or sql.startswith('CREATE'):
                 connection.commit()
                 return True, []
             elif "SELECT" in sql.upper():
@@ -604,7 +608,7 @@ oracle_conn_local_map = {}
 oracle_cursor_local_map = {}
 
 
-def get_oracle_type(db_name, obj: str, is_table: bool) -> tuple[bool, list]:
+def get_oracle_type(db_name, obj: str, is_table: bool, db_param: dict | None = None) -> tuple[bool, list | str]:
     if is_table:
         table_name = obj
         with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
@@ -617,16 +621,21 @@ def get_oracle_type(db_name, obj: str, is_table: bool) -> tuple[bool, list]:
                 col_name = col['col']
                 col_type, _, _ = load_col_type(col['type'], col['col_name'], 'oracle', db_name)
                 res.append({
-                    "col": col_name,
+                    "col": col_name.lower(),
                     "type": col_type
                 })
             return True, res
     try:
+        db_name = get_empty_db_name(db_name)
         db_name = get_db_name('oracle', db_name)
         if db_name not in oracle_conn_map:
             oracle_db_connect(db_name)
         connection = oracle_conn_map[db_name]
         cursor = oracle_cursor_map[db_name]
+        if db_param is not None:
+            for key, value in db_param.items():
+                cursor.execute(f"ALTER SESSION SET {key} = '{value}'")
+            connection.commit()
         sql = obj
         cursor.execute(sql.strip().strip(';'))
         res = []
@@ -635,13 +644,16 @@ def get_oracle_type(db_name, obj: str, is_table: bool) -> tuple[bool, list]:
             assert match
             type_name = match.group(1)
             res.append({
-                "col": column[0],
+                "col": column[0].lower(),
                 "type": type_name
             })
         cursor.fetchall()
         return True, res
     except Exception as e:
-        raise e
+        error_message = str(e)
+        print(obj)
+        print(f"Error executing SQL on database {db_name}: {error_message}")
+        return False, error_message
 
 
 def oracle_test(ddls: list[str], sql: str):

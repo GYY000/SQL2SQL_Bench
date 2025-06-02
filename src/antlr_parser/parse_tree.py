@@ -31,7 +31,7 @@ def parse_tree(src_sql: str, dialect: str) -> (str, int, int, str):
         raise ValueError("use one of" + str(map_parser) + " as argument")
 
 
-def parse_elemetn_tree(function_expr: str, dialect: str, element) -> (str, int, int, str):
+def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, int, str):
     if dialect == 'pg':
         try:
             input_stream = InputStream(function_expr)

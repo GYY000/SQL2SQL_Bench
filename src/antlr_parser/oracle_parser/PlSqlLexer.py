@@ -1,4 +1,4 @@
-# Generated from D:/Coding/LLM4DB/antlr_gram/oracle/PlSqlLexer.g4 by ANTLR 4.13.1
+# Generated from D://Coding//SQL2SQL_Bench//src//antlr_parser//antlr_def//oracle//PlSqlLexer.g4 by ANTLR 4.13.1
 from antlr4 import *
 from io import StringIO
 import sys
@@ -16859,12 +16859,12 @@ class PlSqlLexer(PlSqlLexerBase):
 
     def REMARK_COMMENT_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 0:
-                return self.IsNewlineAtPos(-4)
+                return this.IsNewlineAtPos(-4)
          
 
     def PROMPT_MESSAGE_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 1:
-                return self.IsNewlineAtPos(-4)
+                return this.IsNewlineAtPos(-4)
          
 
 

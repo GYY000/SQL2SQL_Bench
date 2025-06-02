@@ -5,6 +5,7 @@
 # @Time: 2024/12/25 0:16
 from antlr_parser.Tree import TreeNode
 from sql_gen.generator.ele_type.type_def import BaseType
+from utils.tools import get_table_col_name
 
 
 class Operand:
@@ -29,9 +30,9 @@ class ColumnOp(Operand):
         self.dialect = dialect
         self.column_name = column_name
         if dialect == 'mysql':
-            self.value = f"`{table_name}`.`{self.column_name}`"
+            self.value = f"{get_table_col_name(table_name, dialect)}.{get_table_col_name(self.column_name, dialect)}"
         elif dialect == 'oracle' or dialect == 'pg':
-            self.value = f"\"{self.table_name}\".\"{self.column_name}\""
+            self.value = f"{get_table_col_name(self.table_name, dialect)}.{get_table_col_name(self.column_name, dialect)}"
         else:
             print(f"{dialect} is not supported yet")
             assert False
@@ -40,10 +41,10 @@ class ColumnOp(Operand):
         return self.value
 
     def __str__(self):
-        return f"value: {self.table_name}.{self.value} type: {self.op_type}"
+        return f"value: {self.table_name}.{self.column_name} type: {self.op_type}"
 
     def __repr__(self):
-        return f"value: {self.table_name}.{self.value} type: {self.op_type}"
+        return f"value: {self.table_name}.{self.column_name} type: {self.op_type}"
 
 
 class TreeNodeOperand(Operand):

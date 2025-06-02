@@ -4,7 +4,7 @@
 # @Author: 10379
 # @Time: 2025/5/10 12:24
 from antlr_parser.Tree import TreeNode
-from antlr_parser.parse_tree import parse_elemetn_tree, parse_tree
+from antlr_parser.parse_tree import parse_element_tree, parse_tree
 from sql_gen.generator.element.Pattern import Pattern, Slot, ForSlot, ValueSlot
 from utils.tools import get_no_space_len
 
@@ -28,9 +28,11 @@ def parse_pattern_tree(point_type, pattern: Pattern, dialect) -> TreeNode:
     if point_type == 'PATTERN':
         tree_node, _, _, _ = parse_tree(extended_pattern, dialect)
     elif point_type == 'ORDER_BY_CLAUSE':
-        tree_node, _, _, _ = parse_elemetn_tree(extended_pattern, dialect, 'ORDER_BY_CLAUSE')
+        tree_node, _, _, _ = parse_element_tree(extended_pattern, dialect, 'ORDER_BY_CLAUSE')
+    elif point_type == 'FUNCTION':
+        tree_node, _, _, _ = parse_element_tree(extended_pattern, dialect, 'FUNCTION')
     else:
-        tree_node, _, _, _ = parse_elemetn_tree(extended_pattern, dialect, 'FUNCTION')
+        assert False
     if tree_node is None:
         raise ValueError(f"Failed to parse the pattern {pattern}")
     tree_node = TreeNode.make_g4_tree_by_node(tree_node, dialect)
@@ -38,6 +40,7 @@ def parse_pattern_tree(point_type, pattern: Pattern, dialect) -> TreeNode:
     while len(tree_node.children) == 1:
         tree_node = tree_node.children[0]
     rep_value_with_slot(tree_node, slot_list, None)
+    print(tree_node.to_tree_rep())
     return tree_node
 
 

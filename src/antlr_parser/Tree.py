@@ -47,7 +47,7 @@ class TreeNode:
 
     def get_value_rep(self):
         if self.slot is not None:
-            return f"{self.value}({str(self.slot)})"
+            return f"{self.value}[{str(self.slot)}]"
         return self.value
 
     def __str__(self):

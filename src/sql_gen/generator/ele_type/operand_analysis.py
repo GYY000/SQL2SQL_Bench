@@ -170,6 +170,11 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
         select_stmt_node = select_stmt_node[0]
         select_main_node = get_pg_main_select_node_from_select_stmt(select_stmt_node)
         with_clause_node = select_main_node.get_child_by_value('with_clause')
+        if with_clause_node is None:
+            return True, {
+                "is_recursive": False,
+                "cte_list": []
+            }
         if with_clause_node.get_child_by_value('RECURSIVE') is not None:
             is_recursive = True
         cte_nodes = with_clause_node.get_children_by_path(['cte_list', 'common_table_expr'])
@@ -262,6 +267,11 @@ def analysis_ctes(db_name, root_node: TreeNode, dialect: str) -> tuple[bool, dic
         assert len(select_stmt_node) == 1
         select_stmt_node = select_stmt_node[0]
         with_clause_node = select_stmt_node.get_child_by_value('with_clause')
+        if with_clause_node is None:
+            return True, {
+                "is_recursive": False,
+                "cte_list": []
+            }
         cte_nodes = with_clause_node.get_children_by_value('with_factoring_clause')
         for cte_node in cte_nodes:
             assert cte_node.get_child_by_value('subquery_factoring_clause') is not None
@@ -440,7 +450,8 @@ def analysis_res_cols_sql(db_name, root_node: TreeNode, dialect: str) -> tuple[b
 def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str, ctes: dict) -> tuple[bool, list, str]:
     name_dict = {}
     if dialect == 'mysql':
-        assert simple_select_node.value == 'querySpecificationNointo' or simple_select_node.value == 'querySpecification'
+        assert (simple_select_node.value == 'querySpecificationNointo'
+                or simple_select_node.value == 'querySpecification')
         from_clause_node = simple_select_node.get_child_by_value('fromClause')
         if from_clause_node is None:
             return True, [], str(simple_select_node)
@@ -452,7 +463,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
         final_cols = []
         for i in range(len(table_elements)):
             if from_elems != '':
-                from_elems += ',\n'
+                from_elems += ', '
             from_elems += build_from_elem(table_elements[i], dialect)
             sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
             flag, types = get_mysql_type(db_name, sql, False)
@@ -466,7 +477,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
                 owner_name = table_elements[i]['name']
                 if 'alias' in table_elements[i] and table_elements[i]['alias'] is not None:
                     owner_name = table_elements[i]['alias']
-                col = ColumnOp(types[j]['col'], owner_name,
+                col = ColumnOp(dialect, types[j]['col'], owner_name,
                                type_mapping(dialect, types[j]['type']))
                 j += 1
                 newly_added_cols.append(col)
@@ -490,7 +501,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
         final_cols = []
         for i in range(len(table_elements)):
             if from_elems != '':
-                from_elems += ',\n'
+                from_elems += ', '
             from_elems += build_from_elem(table_elements[i], dialect)
             sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
             flag, types = get_pg_type(db_name, sql, False)
@@ -504,7 +515,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
                 owner_name = table_elements[i]['name']
                 if 'alias' in table_elements[i] and table_elements[i]['alias'] is not None:
                     owner_name = table_elements[i]['alias']
-                col = ColumnOp(types[j]['col'], owner_name,
+                col = ColumnOp(dialect, types[j]['col'], owner_name,
                                type_mapping(dialect, types[j]['type']))
                 j += 1
                 newly_added_cols.append(col)
@@ -517,7 +528,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
         if from_clause_node is None:
             return True, [], str(simple_select_node)
         table_ref_list_node = from_clause_node.get_child_by_value('table_ref_list')
-        table_refs = table_ref_list_node.get_child_by_value('table_ref')
+        table_refs = table_ref_list_node.get_children_by_value('table_ref')
         if len(table_refs) == 1 and str(table_refs[0]).lower() == 'dual':
             return True, [], str(simple_select_node)
         table_elements = analyze_table_refs_oracle(table_refs)
@@ -527,7 +538,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
         final_cols = []
         for i in range(len(table_elements)):
             if from_elems != '':
-                from_elems += ',\n'
+                from_elems += ', '
             from_elems += build_from_elem(table_elements[i], dialect)
             sql = f"{with_clauses}\nSELECT * FROM {from_elems}"
             flag, types = get_oracle_type(db_name, sql, False)
@@ -541,7 +552,7 @@ def analysis_usable_cols_sql(db_name, simple_select_node: TreeNode, dialect: str
                 owner_name = table_elements[i]['name']
                 if 'alias' in table_elements[i] and table_elements[i]['alias'] is not None:
                     owner_name = table_elements[i]['alias']
-                col = ColumnOp(types[j]['col'], owner_name,
+                col = ColumnOp(dialect, types[j]['col'], owner_name,
                                type_mapping(dialect, types[j]['type']))
                 j += 1
                 newly_added_cols.append(col)
@@ -647,6 +658,7 @@ def analysis_group_by_simple_select(db_name, simple_select_node: TreeNode, diale
 def analysis_sql(db_name, sql, dialect: str):
     root_node, _, _, _ = parse_tree(sql, dialect)
     if root_node is None:
+        print(sql)
         print('parse error')
         return False, [], ''
     root_node = TreeNode.make_g4_tree_by_node(root_node, dialect)
@@ -654,7 +666,7 @@ def analysis_sql(db_name, sql, dialect: str):
     res = []
     select_stmts = []
     if not flag:
-        return False, [], ''
+        return None
     if dialect == 'mysql':
         select_statement_node = root_node.get_children_by_path(['sqlStatements', 'sqlStatement',
                                                                 'dmlStatement', 'selectStatement'])

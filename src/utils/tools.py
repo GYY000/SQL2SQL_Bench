@@ -4,9 +4,14 @@
 # @Author: 10379
 # @Time: 2024/12/9 20:18
 import configparser
+import json
 import os
 import platform
 from typing import List
+
+
+def get_data_path():
+    return os.path.join('/home/gyy/data/database_data')
 
 
 def dialect_judge(dialect: str):
@@ -303,42 +308,23 @@ def get_no_space_len(string: str):
     return length
 
 
-reserved_keywords = {
-    "oracle": [
-        "DATE",
-        "ORDER",
-        "NUMBER",
-        "COMMENT",
-        "USER",
-        "START",
-        "MODE"
-    ],
-    "mysql": [
-        "MATCH",
-        "CROSS",
-        "VIRTUAL",
-        "ORDER",
-        "RANK"
-    ],
-    "pg": [
-        "CROSS",
-        "ORDER",
-        "RANK",
-        "USER"
-    ]
-}
+reserved_keywords = {}
+
+with open(os.path.join(get_proj_root_path(), 'src', 'utils', 'mysql_reserved_keyword.json'), 'r') as f:
+    reserved_keywords['mysql'] = json.load(f)
+
+with open(os.path.join(get_proj_root_path(), 'src', 'utils', 'oracle_reserved_keyword.json'), 'r') as f:
+    reserved_keywords['oracle'] = json.load(f)
+
+with open(os.path.join(get_proj_root_path(), 'src', 'utils', 'pg_reserved_keyword.json'), 'r') as f:
+    reserved_keywords['pg'] = json.load(f)
 
 
-def get_table_col_name(name: str, dialect: str, db_name: str):
-    if db_name == 'chinook':
-        if dialect == 'pg':
-            return f'"{name}"'
-        elif dialect == 'mysql':
-            return f'`{name}`'
-        elif dialect == 'oracle':
-            return f'"{name}"'
-        else:
-            assert False
+def get_used_reserved_keyword_list():
+    return reserved_keywords
+
+
+def get_table_col_name(name: str, dialect: str):
     if dialect == 'pg':
         if name.upper() in reserved_keywords['pg']:
             name = f"\"{name}\""
@@ -360,3 +346,26 @@ def get_table_col_name(name: str, dialect: str, db_name: str):
     else:
         assert False
     return name
+
+
+def get_db_ids():
+    return [
+        'chinook',
+        'bird',
+        'hr_order_entry',
+        'sale_history',
+        'customer_order',
+        'snap',
+        'tpch',
+        'tpcds',
+        'csail_stata_cinder',
+        'csail_stata_glance',
+        'csail_stata_neutron',
+        'csail_stata_nova',
+        'dw',
+        'keystone'
+    ]
+
+
+def get_empty_db_name(db_name):
+    return f'emp_{db_name}'
