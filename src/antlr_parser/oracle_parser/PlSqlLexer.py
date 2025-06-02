@@ -16859,12 +16859,12 @@ class PlSqlLexer(PlSqlLexerBase):
 
     def REMARK_COMMENT_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 0:
-                return this.IsNewlineAtPos(-4)
+                return self.IsNewlineAtPos(-4)
          
 
     def PROMPT_MESSAGE_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 1:
-                return this.IsNewlineAtPos(-4)
+                return self.IsNewlineAtPos(-4)
          
 
 
