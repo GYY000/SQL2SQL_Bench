@@ -11,41 +11,41 @@ from tqdm import tqdm
 from sql_gen.generator.ele_type.type_def import BaseType
 from sql_gen.generator.ele_type.type_operation import load_col_type, build_value
 from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute, oracle_drop_db, pg_drop_db, \
-    mysql_drop_db
-from utils.tools import get_proj_root_path, str_split, get_table_col_name
+    mysql_drop_db, sql_execute
+from utils.tools import str_split, get_table_col_name, get_data_path, get_empty_db_name
 
 id_number = {}
 
 
-def create_table(table_schema, constraints, dialect, db_name):
+def create_table(table_schema, constraints, dialect):
     if dialect == 'pg':
-        return pg_create_table(table_schema, constraints, db_name)
+        return pg_create_table(table_schema, constraints)
     elif dialect == 'mysql':
-        return mysql_create_table(table_schema, constraints, db_name)
+        return mysql_create_table(table_schema, constraints)
     elif dialect == 'oracle':
-        return oracle_create_table(table_schema, constraints, db_name)
+        return oracle_create_table(table_schema, constraints)
     else:
         assert False
 
 
-def add_foreign_key(schema, dialect, db_name):
+def add_foreign_key(schema, dialect):
     if dialect == 'pg':
-        return pg_add_foreign_key(schema, db_name)
+        return pg_add_foreign_key(schema)
     elif dialect == 'mysql':
-        return mysql_add_foreign_key(schema, db_name)
+        return mysql_add_foreign_key(schema)
     elif dialect == 'oracle':
-        return oracle_add_foreign_key(schema, db_name)
+        return oracle_add_foreign_key(schema)
     else:
         assert False
 
 
-def add_index(schema, dialect, db_name):
+def add_index(schema, dialect):
     if dialect == 'pg':
-        return pg_add_index(schema, db_name)
+        return pg_add_index(schema)
     elif dialect == 'mysql':
-        return mysql_add_index(schema, db_name)
+        return mysql_add_index(schema)
     elif dialect == 'oracle':
-        return oracle_add_index(schema, db_name)
+        return oracle_add_index(schema)
     else:
         assert False
 
@@ -86,7 +86,7 @@ def build_attributes(col_type, attributes, dialect):
     return res
 
 
-def mysql_create_table(table_schema, constraints, db_name):
+def mysql_create_table(table_schema, constraints):
     table_name = table_schema['table']
     cols = table_schema['cols']
     primary_keys = ''
@@ -95,7 +95,7 @@ def mysql_create_table(table_schema, constraints, db_name):
         for key in primary_key:
             if primary_keys != '':
                 primary_keys = primary_keys + ', '
-            primary_keys = primary_keys + get_table_col_name(key, 'mysql', db_name)
+            primary_keys = primary_keys + get_table_col_name(key, 'mysql')
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -107,15 +107,15 @@ def mysql_create_table(table_schema, constraints, db_name):
         for attribute in attributes:
             str_attribute = str_attribute + ' '
             str_attribute = str_attribute + attribute
-        type_def = (f"\t{get_table_col_name(col_name, 'mysql', db_name)} "
+        type_def = (f"\t{get_table_col_name(col_name, 'mysql')} "
                     f"{col['type'].get_type_name('mysql')}{str_attribute}")
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    create_stmt = f"CREATE TABLE {get_table_col_name(table_name, 'mysql', db_name)} (\n{col_defs}"
+    create_stmt = f"CREATE TABLE {get_table_col_name(table_name, 'mysql')} (\n{col_defs}"
     if primary_keys != '':
         constraints.append(
-            f"CONSTRAINT {get_table_col_name(rename_constraints(f'PK_{table_name}'), 'mysql', db_name)} "
+            f"CONSTRAINT {get_table_col_name(rename_constraints(f'PK_{table_name}'), 'mysql')} "
             f"PRIMARY KEY ({primary_keys})")
     for constraint in constraints:
         create_stmt += ',\n\t' + constraint
@@ -123,7 +123,7 @@ def mysql_create_table(table_schema, constraints, db_name):
     return create_stmt
 
 
-def mysql_add_foreign_key(schema, db_name):
+def mysql_add_foreign_key(schema):
     table = schema['table']
     res = []
     if 'foreign_key' not in schema:
@@ -137,25 +137,25 @@ def mysql_add_foreign_key(schema, db_name):
             for column in ori_column:
                 if column != '':
                     column = column + ', '
-                column = column + get_table_col_name(column, 'mysql', db_name)
+                column = column + get_table_col_name(column, 'mysql')
             assert isinstance(ori_ref_column, list)
             ref_column = ''
             for column in ori_ref_column:
                 if ref_column != '':
                     ref_column = ref_column + ', '
-                ref_column = ref_column + get_table_col_name(column, 'mysql', db_name)
+                ref_column = ref_column + get_table_col_name(column, 'mysql')
         else:
-            column = get_table_col_name(ori_column, 'mysql', db_name)
-            ref_column = get_table_col_name(ori_ref_column, 'mysql', db_name)
+            column = get_table_col_name(ori_column, 'mysql')
+            ref_column = get_table_col_name(ori_ref_column, 'mysql')
         res.append((
-            f"ALTER TABLE {get_table_col_name(table, 'mysql', db_name)} ADD CONSTRAINT "
-            f"{get_table_col_name(rename_constraints(f'FK_{table}'), 'mysql', db_name)} "
-            f"FOREIGN KEY ({column}) REFERENCES {get_table_col_name(ref_table, 'mysql', db_name)} ({ref_column}) "
+            f"ALTER TABLE {get_table_col_name(table, 'mysql')} ADD CONSTRAINT "
+            f"{get_table_col_name(rename_constraints(f'FK_{table}'), 'mysql')} "
+            f"FOREIGN KEY ({column}) REFERENCES {get_table_col_name(ref_table, 'mysql')} ({ref_column}) "
             f"ON DELETE CASCADE ON UPDATE NO ACTION;"))
     return res
 
 
-def mysql_add_index(schema, db_name):
+def mysql_add_index(schema):
     table = schema['table']
     res = []
     if 'index' not in schema:
@@ -165,14 +165,14 @@ def mysql_add_index(schema, db_name):
         for col in index_cols:
             if str_columns != '':
                 str_columns = str_columns + ', '
-            str_columns = str_columns + get_table_col_name(col, 'mysql', db_name)
+            str_columns = str_columns + get_table_col_name(col, 'mysql')
         res.append(
-            f"CREATE INDEX {rename_constraints(f'IDX_{table}')} ON {get_table_col_name(table, 'mysql', db_name)} "
+            f"CREATE INDEX {rename_constraints(f'IDX_{table}')} ON {get_table_col_name(table, 'mysql')} "
             f"({str_columns});")
     return res
 
 
-def pg_create_table(table_schema: dict, constraints, db_name):
+def pg_create_table(table_schema: dict, constraints):
     table_name = table_schema['table']
     cols = table_schema['cols']
     primary_keys = ''
@@ -181,7 +181,7 @@ def pg_create_table(table_schema: dict, constraints, db_name):
         for key in primary_key:
             if primary_keys != '':
                 primary_keys = primary_keys + ', '
-            primary_keys = primary_keys + get_table_col_name(key, 'pg', db_name)
+            primary_keys = primary_keys + get_table_col_name(key, 'pg')
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -192,14 +192,14 @@ def pg_create_table(table_schema: dict, constraints, db_name):
         for attribute in attributes:
             str_attribute = str_attribute + ' '
             str_attribute = str_attribute + attribute
-        type_def = f"\t{get_table_col_name(col_name, 'pg', db_name)} {col['type'].get_type_name('pg')}{str_attribute}"
+        type_def = f"\t{get_table_col_name(col_name, 'pg')} {col['type'].get_type_name('pg')}{str_attribute}"
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    create_stmt = f"CREATE TABLE {get_table_col_name(table_name, 'pg', db_name)} (\n{col_defs}"
+    create_stmt = f"CREATE TABLE {get_table_col_name(table_name, 'pg')} (\n{col_defs}"
     if primary_keys != '':
         constraints.append(
-            f"CONSTRAINT {get_table_col_name(rename_constraints(f'PK_{table_name}'), 'pg', db_name)} "
+            f"CONSTRAINT {get_table_col_name(rename_constraints(f'PK_{table_name}'), 'pg')} "
             f"PRIMARY KEY ({primary_keys})")
     for constraint in constraints:
         create_stmt += ',\n\t' + constraint
@@ -207,7 +207,7 @@ def pg_create_table(table_schema: dict, constraints, db_name):
     return create_stmt
 
 
-def pg_add_foreign_key(schema, db_name):
+def pg_add_foreign_key(schema):
     table = schema['table']
     res = []
     if 'foreign_key' not in schema:
@@ -221,26 +221,26 @@ def pg_add_foreign_key(schema, db_name):
             for column in ori_column:
                 if column != '':
                     column = column + ', '
-                column = column + get_table_col_name(column, 'pg', db_name)
+                column = column + get_table_col_name(column, 'pg')
             assert isinstance(ori_ref_column, list)
             ref_column = ''
             for column in ori_ref_column:
                 if ref_column != '':
                     ref_column = ref_column + ', '
-                ref_column = ref_column + get_table_col_name(column, 'pg', db_name)
+                ref_column = ref_column + get_table_col_name(column, 'pg')
         else:
-            column = get_table_col_name(ori_column, 'pg', db_name)
-            ref_column = get_table_col_name(ori_ref_column, 'pg', db_name)
+            column = get_table_col_name(ori_column, 'pg')
+            ref_column = get_table_col_name(ori_ref_column, 'pg')
         res.append((
-            f"ALTER TABLE {get_table_col_name(table, 'pg', db_name)}\n"
+            f"ALTER TABLE {get_table_col_name(table, 'pg')}\n"
             f"ADD CONSTRAINT {rename_constraints(f'FK_{table}')} "
             f"FOREIGN KEY ({column})\n\t"
-            f"REFERENCES {get_table_col_name(ref_table, 'pg', db_name)} ({ref_column}) "
+            f"REFERENCES {get_table_col_name(ref_table, 'pg')} ({ref_column}) "
             f"ON DELETE CASCADE ON UPDATE NO ACTION;"))
     return res
 
 
-def pg_add_index(schema, db_name):
+def pg_add_index(schema):
     table = schema['table']
     res = []
     if 'index' not in schema:
@@ -250,14 +250,14 @@ def pg_add_index(schema, db_name):
         for col in index_cols:
             if str_columns != '':
                 str_columns = str_columns + ', '
-            str_columns = str_columns + get_table_col_name(col, 'pg', db_name)
+            str_columns = str_columns + get_table_col_name(col, 'pg')
         res.append(
             f"CREATE INDEX {rename_constraints(f'IDX_{table}')} "
-            f"ON {get_table_col_name(table, 'pg', db_name)} ({str_columns});")
+            f"ON {get_table_col_name(table, 'pg')} ({str_columns});")
     return res
 
 
-def oracle_create_table(table_schema: dict, constraints, db_name: str):
+def oracle_create_table(table_schema: dict, constraints):
     table_name = table_schema['table']
     cols = table_schema['cols']
     primary_keys = ''
@@ -266,7 +266,7 @@ def oracle_create_table(table_schema: dict, constraints, db_name: str):
         for key in primary_key:
             if primary_keys != '':
                 primary_keys = primary_keys + ', '
-            primary_keys = primary_keys + get_table_col_name(key, 'oracle', db_name)
+            primary_keys = primary_keys + get_table_col_name(key, 'oracle')
     col_defs = ''
     for col in cols:
         col_name = col['col_name']
@@ -274,18 +274,18 @@ def oracle_create_table(table_schema: dict, constraints, db_name: str):
         if col['type'].get_type_name('oracle') is None:
             continue
         if 'attribute' in col and 'NOT NULL' in col['attribute']:
-            type_def = (f"\t{get_table_col_name(col_name, 'oracle', db_name)} "
+            type_def = (f"\t{get_table_col_name(col_name, 'oracle')} "
                         f"{col['type'].get_type_name('oracle')} NOT NULL")
         else:
-            type_def = (f"\t{get_table_col_name(col_name, 'oracle', db_name)} "
+            type_def = (f"\t{get_table_col_name(col_name, 'oracle')} "
                         f"{col['type'].get_type_name('oracle')}")
         if col_defs != '':
             col_defs = col_defs + ',\n'
         col_defs = col_defs + type_def
-    create_stmt = f"CREATE TABLE {get_table_col_name(table_name, 'oracle', db_name)} (\n{col_defs}"
+    create_stmt = f"CREATE TABLE {get_table_col_name(table_name, 'oracle')} (\n{col_defs}"
     if primary_keys != '':
         constraints.append(
-            f"CONSTRAINT {get_table_col_name(rename_constraints(f'PK_{table_name}'), 'oracle', db_name)} "
+            f"CONSTRAINT {get_table_col_name(rename_constraints(f'PK_{table_name}'), 'oracle')} "
             f"PRIMARY KEY ({primary_keys})")
     for constraint in constraints:
         create_stmt += ',\n\t' + constraint
@@ -293,7 +293,7 @@ def oracle_create_table(table_schema: dict, constraints, db_name: str):
     return create_stmt
 
 
-def oracle_add_foreign_key(schema, db_name):
+def oracle_add_foreign_key(schema):
     table = schema['table']
     res = []
     if 'foreign_key' not in schema:
@@ -307,25 +307,25 @@ def oracle_add_foreign_key(schema, db_name):
             for column in ori_column:
                 if column != '':
                     column = column + ', '
-                column = column + get_table_col_name(column, 'oracle', db_name)
+                column = column + get_table_col_name(column, 'oracle')
             assert isinstance(ori_ref_column, list)
             ref_column = ''
             for ref_column in ori_ref_column:
                 if ref_column != '':
                     ref_column = ref_column + ', '
-                ref_column = ref_column + get_table_col_name(ref_column, 'oracle', db_name)
+                ref_column = ref_column + get_table_col_name(ref_column, 'oracle')
         else:
-            column = get_table_col_name(ori_column, 'oracle', db_name)
-            ref_column = get_table_col_name(ori_ref_column, 'oracle', db_name)
+            column = get_table_col_name(ori_column, 'oracle')
+            ref_column = get_table_col_name(ori_ref_column, 'oracle')
         res.append((
-            f"ALTER TABLE {get_table_col_name(table, 'oracle', db_name)}\n"
+            f"ALTER TABLE {get_table_col_name(table, 'oracle')}\n"
             f"ADD CONSTRAINT {rename_constraints(f'FK_{table}')} "
             f"FOREIGN KEY ({column})\n\t"
-            f"REFERENCES {get_table_col_name(ref_table, 'oracle', db_name)} ({ref_column});"))
+            f"REFERENCES {get_table_col_name(ref_table, 'oracle')} ({ref_column});"))
     return res
 
 
-def oracle_add_index(schema, db_name):
+def oracle_add_index(schema):
     table = schema['table']
     res = []
     if 'index' not in schema:
@@ -335,9 +335,9 @@ def oracle_add_index(schema, db_name):
         for col in index_cols:
             if str_columns != '':
                 str_columns = str_columns + ', '
-            str_columns = str_columns + get_table_col_name(col, 'oracle', db_name)
+            str_columns = str_columns + get_table_col_name(col, 'oracle')
         res.append(
-            f"CREATE INDEX {rename_constraints(f'IDX_{table}')} ON {get_table_col_name(table, 'oracle', db_name)} "
+            f"CREATE INDEX {rename_constraints(f'IDX_{table}')} ON {get_table_col_name(table, 'oracle')} "
             f"({str_columns});")
     return res
 
@@ -355,7 +355,7 @@ def sql_writer(file, ddl_sqls: list, foreign_key_sqls: list = None, index_sqls: 
 
 
 def dump_schema(schema: dict, constraints: dict, schema_type_defs: dict, dialect: str, db_name: str):
-    db_path = os.path.join(get_proj_root_path(), 'data', db_name)
+    db_path = os.path.join(get_data_path(), db_name)
     ddl_dir = os.path.join(db_path, 'ddl')
     if not os.path.exists(ddl_dir):
         os.makedirs(ddl_dir)
@@ -364,11 +364,11 @@ def dump_schema(schema: dict, constraints: dict, schema_type_defs: dict, dialect
     indexes = []
     type_defs = []
     for table_name, table_content in schema.items():
-        create_stmt = create_table(table_content, constraints[table_name], dialect, db_name)
+        create_stmt = create_table(table_content, constraints[table_name], dialect)
         ddls.append(create_stmt)
         type_defs = type_defs + schema_type_defs[table_name]
-        foreign_key = foreign_key + add_foreign_key(table_content, dialect, db_name)
-        indexes = indexes + add_index(table_content, dialect, db_name)
+        foreign_key = foreign_key + add_foreign_key(table_content, dialect)
+        indexes = indexes + add_index(table_content, dialect)
 
     if not os.path.exists(os.path.join(ddl_dir, dialect)):
         os.makedirs(os.path.join(ddl_dir, dialect))
@@ -377,7 +377,9 @@ def dump_schema(schema: dict, constraints: dict, schema_type_defs: dict, dialect
     sql_writer(os.path.join(ddl_dir, dialect, f'{dialect}_idx.sql'), indexes)
 
 
-def drop_schema(db_name, dialect):
+def drop_schema(db_name, dialect, empty_db_flag: bool = False):
+    if empty_db_flag:
+        db_name = get_empty_db_name(db_name)
     if dialect == 'oracle':
         oracle_drop_db(db_name)
         return
@@ -391,12 +393,14 @@ def drop_schema(db_name, dialect):
         assert False
 
 
-def create_schema(db_name, dialect, schema=None):
+def create_schema(db_name, dialect, schema=None, empty_db_flag=False):
     if schema is None:
-        with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
+        with open(os.path.join(get_data_path(), db_name, 'schema.json'), 'r') as file:
             schema = json.loads(file.read())
-    with open(os.path.join(get_proj_root_path(), 'data', db_name, 'ddl', dialect, f'{dialect}_ddl.sql'), 'r') as file:
+    with open(os.path.join(get_data_path(), db_name, 'ddl', dialect, f'{dialect}_ddl.sql'), 'r') as file:
         sqls = file.read().split(';')
+    if empty_db_flag:
+        db_name = get_empty_db_name(db_name)
     for sql in sqls:
         if sql.strip() == '':
             continue
@@ -418,13 +422,13 @@ def create_schema(db_name, dialect, schema=None):
             table_name = ele['table']
             if dialect == 'oracle':
                 flag, res = oracle_sql_execute(db_name, f"SELECT * "
-                                                        f"FROM {get_table_col_name(table_name, 'oracle', db_name)};")
+                                                        f"FROM {get_table_col_name(table_name, 'oracle')};")
             elif dialect == 'mysql':
                 flag, res = mysql_sql_execute(db_name, f"SELECT * "
-                                                       f"FROM {get_table_col_name(table_name, 'mysql', db_name)};")
+                                                       f"FROM {get_table_col_name(table_name, 'mysql')};")
             elif dialect == 'pg':
                 flag, res = pg_sql_execute(db_name, f"SELECT * "
-                                                    f"FROM {get_table_col_name(table_name, 'pg', db_name)};")
+                                                    f"FROM {get_table_col_name(table_name, 'pg')};")
             else:
                 assert False
             flag1 = flag1 and flag
@@ -438,7 +442,7 @@ def create_schema(db_name, dialect, schema=None):
 
 
 def build_foreign_key(db_name, dialect) -> bool:
-    with open(os.path.join(get_proj_root_path(), 'data', db_name, 'ddl', dialect, f'{dialect}_fk.sql'), 'r') as file:
+    with open(os.path.join(get_data_path(), db_name, 'ddl', dialect, f'{dialect}_fk.sql'), 'r') as file:
         sqls = file.read().split(';')
     for sql in sqls:
         if sql.strip() == '':
@@ -459,7 +463,7 @@ def build_foreign_key(db_name, dialect) -> bool:
 
 
 def build_index(db_name, dialect) -> bool:
-    with open(os.path.join(get_proj_root_path(), 'data', db_name, 'ddl', dialect, f'{dialect}_idx.sql'), 'r') as file:
+    with open(os.path.join(get_data_path(), db_name, 'ddl', dialect, f'{dialect}_idx.sql'), 'r') as file:
         sqls = file.read().split(';')
     for sql in sqls:
         if sql.strip() == '':
@@ -479,9 +483,14 @@ def build_index(db_name, dialect) -> bool:
     return True
 
 
+max_oracle_sql = 4000
+max_mysql_sql = 50000
+max_pg_sql = 40000
+
+
 def build_insert(db_name: str, dialect: str, schema: dict):
-    if os.path.exists(os.path.join(get_proj_root_path(), 'data', db_name, 'data', f'{dialect}_data.sql')):
-        with open(os.path.join(get_proj_root_path(), 'data', db_name, 'data', f'{dialect}_data.sql'), 'r') as file:
+    if os.path.exists(os.path.join(get_data_path(), db_name, 'data', f'{dialect}_data.sql')):
+        with open(os.path.join(get_data_path(), db_name, 'data', f'{dialect}_data.sql'), 'r') as file:
             insert_sqls = str_split(file.read(), ';')
         for sql in tqdm(insert_sqls):
             if sql.strip() == '':
@@ -499,47 +508,100 @@ def build_insert(db_name: str, dialect: str, schema: dict):
                     print(f'{sql} may fail to execute')
                     return False
     else:
+        if dialect == 'mysql':
+            limit = max_mysql_sql
+        elif dialect == 'pg':
+            limit = max_pg_sql
+        elif dialect == 'oracle':
+            limit = max_oracle_sql
+        else:
+            assert False
         for table_name, table_content in schema.items():
             table_name = table_content['table']
-            with open(os.path.join(get_proj_root_path(), 'data', db_name, 'data', f'{table_name}_data.json'),
+            with open(os.path.join(get_data_path(), db_name, 'data', f'{table_name}.json'),
                       'r', encoding='utf-8') as file:
                 data = json.load(file)
             print(f'insert into table {table_name}')
+            first_row_flag = False
+            pos_key_map = {}
+
+            not_insert_flag = False
+            if dialect == 'oracle':
+                insert_sql = f"INSERT ALL\n"
+            else:
+                insert_sql = f"INSERT INTO {get_table_col_name(table_name, dialect)} VALUES "
             for row in tqdm(data):
                 value_str = ''
-                assert isinstance(row, dict)
                 # columns_str = ''
-                for key, value in row.items():
-                    for col in table_content['cols']:
-                        if col['col_name'] == key:
-                            value_rep = build_value(col['type'], value, dialect)
-                            if value_rep is None:
-                                continue
-                            if value_str != '':
-                                value_str = value_str + ', '
-                            value_str = value_str + value_rep
-                            break
+                t = 0
+                if not first_row_flag:
+                    for key in row:
+                        pos_key_map[key] = t
+                        t += 1
+                    first_row_flag = True
+                    continue
+                for col in table_content['cols']:
+                    assert col['col_name'] in pos_key_map
+                    value = row[pos_key_map[col['col_name']]]
+                    value_rep = build_value(col['type'], value, dialect)
+                    if value_rep is None:
+                        continue
+                    if value_str != '':
+                        value_str = value_str + ', '
+                    value_str = value_str + value_rep
                 if dialect == 'oracle':
-                    sql = f"INSERT INTO {get_table_col_name(table_name, dialect, db_name)} VALUES ({value_str});"
-                    flag, res = oracle_sql_execute(db_name, sql)
-                elif dialect == 'mysql':
-                    sql = f"INSERT INTO {get_table_col_name(table_name, dialect, db_name)} VALUES ({value_str});"
-                    flag, res = mysql_sql_execute(db_name, sql)
-                elif dialect == 'pg':
-                    sql = f"INSERT INTO {get_table_col_name(table_name, dialect, db_name)} VALUES ({value_str});"
-                    flag, res = pg_sql_execute(db_name, sql)
+                    try_all_sql = f"INSERT ALL INTO {get_table_col_name(table_name, dialect)} VALUES ({value_str}) SELECT 1 FROM dual;"
+                    if len(try_all_sql) > limit:
+                        ins_sql = f"INSERT INTO {get_table_col_name(table_name, dialect)} VALUES ({value_str});"
+                        flag, res = oracle_sql_execute(db_name, ins_sql)
+                        if not flag:
+                            print(f'{row} may fail to insert in {dialect}')
+                            print(ins_sql)
+                            print(res)
+                            return False
+                    else:
+                        if len(f"{insert_sql} INTO {get_table_col_name(table_name, dialect)} VALUES ({value_str}) SELECT 1 FROM dual;") < max_oracle_sql:
+                            insert_sql = f"{insert_sql} INTO {get_table_col_name(table_name, dialect)} VALUES ({value_str})"
+                        else:
+                            flag, res = oracle_sql_execute(db_name, insert_sql + ' SELECT 1 FROM dual')
+                            if not flag:
+                                print(f'{row} may fail to insert in {dialect}')
+                                print(insert_sql)
+                                print(res)
+                                return False
+                            insert_sql = f"INSERT ALL INTO {get_table_col_name(table_name, dialect)} VALUES ({value_str})"
+                        not_insert_flag = True
+                elif dialect == 'mysql' or dialect == 'pg':
+                    if not_insert_flag is False:
+                        new_insert_sql = f"{insert_sql} ({value_str})"
+                    else:
+                        new_insert_sql = f"{insert_sql}, ({value_str})"
+                    if len(new_insert_sql) < max_mysql_sql:
+                        insert_sql = new_insert_sql
+                    else:
+                        flag, res = sql_execute(dialect, db_name, insert_sql)
+                        if not flag:
+                            print(f'{row} may fail to insert in {dialect}')
+                            print(insert_sql)
+                            print(res)
+                            return False
+                        insert_sql = f"INSERT INTO {get_table_col_name(table_name, dialect)} VALUES ({value_str})"
+                    not_insert_flag = True
                 else:
                     assert False
+            if not_insert_flag:
+                if dialect == 'oracle':
+                    insert_sql = insert_sql + ' SELECT 1 FROM dual'
+                flag, res = sql_execute(dialect, db_name, insert_sql)
                 if not flag:
-                    print(f'{row} may fail to insert in {dialect}')
-                    print(sql)
+                    print(f'{insert_sql} may fail to insert in {dialect}')
                     print(res)
                     return False
     return True
 
 
 def schema_build(db_name, dialect):
-    with open(os.path.join(get_proj_root_path(), 'data', db_name, 'schema.json'), 'r') as file:
+    with open(os.path.join(get_data_path(), db_name, 'schema.json'), 'r') as file:
         schema = json.loads(file.read())
 
     add_constraints = {}
@@ -582,11 +644,23 @@ def build_db(db_name: str, dialect: str, only_create: bool = False, build_fk: bo
     print(f"{db_name} create successful")
 
 
-# mysql oracle bird not built
-db_names = ['bird', 'chinook', 'customer_order', 'hr_order_entry', 'sale_history', 'snap', 'tpcds', 'tpch']
-dialects = ['mysql', 'oracle', 'pg']
-#
-for db in db_names:
-    for d in dialects:
-        drop_schema(db, d)
-        build_db(db, d, True)
+def build_test_db(db_name, dialect):
+    schema, add_constraints, type_defs = schema_build(db_name, dialect)
+    dump_schema(schema, add_constraints, type_defs, dialect, db_name)
+    create_schema(db_name, dialect, schema, True)
+
+
+# # mysql oracle bird not built
+# db_names = ['bird']
+# dialects = ['mysql', 'oracle', 'pg']
+# #
+# for db in db_names:
+#     for d in dialects:
+#         drop_schema(db, d)
+#         build_db(db, d, True)
+
+db_id = 'dw'
+
+for dialect1 in ['mysql', 'oracle', 'pg']:
+    drop_schema(db_id, dialect1, True)
+    build_test_db(db_id, dialect1)
