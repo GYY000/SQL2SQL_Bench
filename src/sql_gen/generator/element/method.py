@@ -5,6 +5,7 @@
 # @Time: 2025/5/10 12:24
 from antlr_parser.Tree import TreeNode
 from antlr_parser.parse_tree import parse_element_tree, parse_tree
+from sql_gen.generator.ele_type.type_def import IntLiteralType, StringLiteralType
 from sql_gen.generator.element.Pattern import Pattern, Slot, ForSlot, ValueSlot
 from utils.tools import get_no_space_len
 
@@ -31,6 +32,8 @@ def parse_pattern_tree(point_type, pattern: Pattern, dialect) -> TreeNode:
         tree_node, _, _, _ = parse_element_tree(extended_pattern, dialect, 'ORDER_BY_CLAUSE')
     elif point_type == 'FUNCTION':
         tree_node, _, _, _ = parse_element_tree(extended_pattern, dialect, 'FUNCTION')
+    elif point_type == 'LITERAL':
+        tree_node, _, _, _ = parse_element_tree(extended_pattern, dialect, 'LITERAL')
     else:
         assert False
     if tree_node is None:
@@ -40,8 +43,35 @@ def parse_pattern_tree(point_type, pattern: Pattern, dialect) -> TreeNode:
     while len(tree_node.children) == 1:
         tree_node = tree_node.children[0]
     rep_value_with_slot(tree_node, slot_list, None)
-    print(tree_node.to_tree_rep())
     return tree_node
+
+
+def find_begin_node(begin_pos: int, begin_dis_to_node: dict[int, TreeNode]):
+    if begin_pos in begin_dis_to_node:
+        return None, begin_dis_to_node[begin_pos]
+    else:
+        max_pos_less_than_begin = -1
+        node = None
+        for key in begin_dis_to_node:
+            if key < begin_pos and key > max_pos_less_than_begin:
+                max_pos_less_than_begin = key
+                node = begin_dis_to_node[key]
+        assert node is not None
+        return max_pos_less_than_begin, node
+
+
+def find_end_node(end_pos: int, end_dis_to_node: dict[int, TreeNode]):
+    if end_pos in end_dis_to_node:
+        return None, end_dis_to_node[end_pos]
+    else:
+        min_pos_greater_than_end = 1000000000
+        node = None
+        for key in end_dis_to_node:
+            if key > end_pos and key < min_pos_greater_than_end:
+                min_pos_greater_than_end = key
+                node = end_dis_to_node[key]
+        assert node is not None
+        return min_pos_greater_than_end, node
 
 
 def rep_value_with_slot(root_node: TreeNode, slot_list: list, ancestor_node):
@@ -50,14 +80,35 @@ def rep_value_with_slot(root_node: TreeNode, slot_list: list, ancestor_node):
     mark_pos_node(root_node, 0, begin_dis_to_node, end_dis_to_node)
     rm_node_range = []
     slot_times = {}
-    for slot_info in slot_list:
+    for i, slot_info in enumerate(slot_list):
         if isinstance(slot_info['slot'], ValueSlot):
             begin_pos = slot_info['info']['pos'][0]
             end_pos = slot_info['info']['pos'][1]
-            begin_node = begin_dis_to_node[begin_pos]
+            node_begin_pos, begin_node = find_begin_node(begin_pos, begin_dis_to_node)
             begin_node = lift_node(begin_node, ancestor_node)
-            end_node = end_dis_to_node[end_pos]
+            node_end_pos, end_node = find_end_node(end_pos, end_dis_to_node)
             end_node = lift_node(end_node, ancestor_node)
+            now_slot = slot_info['slot']
+            assert isinstance(now_slot, ValueSlot)
+            if isinstance(now_slot.slot_type, IntLiteralType) or isinstance(now_slot.slot_type, StringLiteralType):
+                assert begin_node == end_node
+                assert isinstance(begin_node, TreeNode)
+                begin_node.ori_pattern_string = str(begin_node)
+                if begin_node.pos_to_slot is None:
+                    begin_node.pos_to_slot = []
+                if now_slot in slot_times:
+                    times = slot_times[now_slot] + 1
+                    slot_times[now_slot] = times
+                else:
+                    times = 0
+                    slot_times[now_slot] = times
+                begin_node.slot_times[now_slot] = times
+                begin_node.pos_to_slot.append({
+                    "slot": now_slot,
+                    "begin_pos": begin_pos - node_begin_pos,
+                    "end_pos": end_pos - node_begin_pos,
+                })
+                continue
             ancestor = get_closest_ancestor(begin_node, end_node, root_node)
             if slot_info['slot'] in slot_times:
                 times = slot_times[slot_info['slot']] + 1
@@ -111,19 +162,6 @@ def rep_value_with_slot(root_node: TreeNode, slot_list: list, ancestor_node):
         rm_nodes_in_range(root_node, begin_node, end_node)
 
 
-def lift_slot_nodes(root_node: TreeNode):
-    all_node_to_lift = []
-    dfs_get_slot_node_set(root_node, all_node_to_lift)
-    for node in all_node_to_lift:
-        lifted_node = lift_node(node)
-        lifted_node.slot = node.slot
-        lifted_node.slot_times = node.slot_times
-        lifted_node.for_slot_ancestor_id = node.for_slot_ancestor_id
-        lifted_node.for_slot_ancestor = node.for_slot_ancestor
-        lifted_node.for_loop_slot = node.for_loop_slot
-        lifted_node.for_loop_sub_trees = node.for_loop_sub_trees
-
-
 def dfs_get_slot_node_set(root_node: TreeNode, node_set: list[TreeNode]):
     if root_node.slot is not None:
         node_set.append(root_node)
@@ -168,7 +206,7 @@ def get_closest_ancestor(node1: TreeNode, node2: TreeNode, root_node: TreeNode):
 
 def mark_nodes(left_node: TreeNode, right_node: TreeNode, ancestor_node, slot: Slot, times: int):
     left_node.slot = slot
-    left_node.slot_times = times
+    left_node.slot_times[slot] = times
     if left_node == right_node:
         return
     left_i_node = left_node
@@ -180,18 +218,18 @@ def mark_nodes(left_node: TreeNode, right_node: TreeNode, ancestor_node, slot: S
         left_pos = left_pos + 1
         while left_pos < len(left_i_node.children):
             left_i_node.children[left_pos].slot = slot
-            left_i_node.children[left_pos].slot_times = times
+            left_i_node.children[left_pos].slot_times[slot] = times
             left_pos = left_pos + 1
         left_node = left_i_node
     right_i_node = right_node
     right_node.slot = slot
-    right_node.slot_times = times
+    right_node.slot_times[slot] = times
     while right_i_node.father != ancestor_node:
         right_i_node = right_i_node.father
         right_pos = 0
         while right_i_node.children[right_pos] != right_node:
             right_i_node.children[right_pos].slot = slot
-            right_i_node.children[right_pos].slot_times = times
+            right_i_node.children[right_pos].slot_times[slot] = times
             right_pos = right_pos + 1
         right_node = right_i_node
     flag = False
@@ -202,7 +240,7 @@ def mark_nodes(left_node: TreeNode, right_node: TreeNode, ancestor_node, slot: S
             break
         if flag:
             child.slot = slot
-            child.slot_times = times
+            child.slot_times[slot] = times
 
 
 def rm_nodes_in_range(root_node: TreeNode, left_node: TreeNode, right_node: TreeNode):

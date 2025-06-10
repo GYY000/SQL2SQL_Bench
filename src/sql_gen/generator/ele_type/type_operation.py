@@ -44,6 +44,10 @@ def gen_type_through_str(type_str, attr_container) -> BaseType:
         return FloatGeneralType(None, None, attr_container)
     elif type_str == 'QUERY':
         return QueryType(attr_container)
+    elif type_str == 'INT_LITERAL':
+        return IntLiteralType(attr_container)
+    elif type_str == 'STRING_LITERAL':
+        return StringLiteralType(attr_container)
     else:
         raise ValueError(f"Type {type_str} does not exist in this system")
 
@@ -55,6 +59,8 @@ def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
     type_defs = []
     if type_name == 'INT':
         final_type = IntType()
+    elif type_name == 'BIGINT':
+        final_type = BigIntType()
     elif type_name == 'BOOL':
         final_type = BoolType()
     elif type_name == 'DECIMAL':
@@ -79,6 +85,8 @@ def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
             final_type = DatetimeType()
     elif type_name == 'INTERVAL YEAR TO MONTH':
         final_type = IntervalYearMonthType()
+    elif type_name == 'FLOAT':
+        final_type = FloatType()
     elif type_name == 'TIMESTAMPTZ':
         if 'fraction' in type_def:
             final_type = TimestampTZType(type_def['fraction'])
@@ -94,9 +102,9 @@ def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
             values = values + f"'{value}'"
         final_type = EnumType(type_def['values'])
         if dialect == 'pg':
-            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'pg', db_name)} IN ({values}))"
+            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'pg')} IN ({values}))"
         elif dialect == 'oracle':
-            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'oracle', db_name)} IN ({values}))"
+            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'oracle')} IN ({values}))"
     elif type_name == 'NVARCHAR':
         final_type = NvarcharType(type_def['length'])
     elif type_name == 'CHAR':
@@ -124,6 +132,7 @@ def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
             type_def = f"CREATE TYPE {f'{col_name}_varray_type'} AS VARRAY({type_def['length']}) OF {ele_type};"
             type_defs.append(type_def)
     else:
+        print(type_name)
         assert False
     return final_type, add_constraint, type_defs
 

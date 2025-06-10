@@ -12,7 +12,7 @@ from sql_gen.generator.ele_type.type_def import BaseType
 from sql_gen.generator.ele_type.type_operation import load_col_type, build_value
 from utils.db_connector import oracle_sql_execute, mysql_sql_execute, pg_sql_execute, oracle_drop_db, pg_drop_db, \
     mysql_drop_db, sql_execute
-from utils.tools import str_split, get_table_col_name, get_data_path, get_empty_db_name
+from utils.tools import str_split, get_table_col_name, get_data_path, get_empty_db_name, load_db_config
 
 id_number = {}
 
@@ -483,14 +483,15 @@ def build_index(db_name, dialect) -> bool:
     return True
 
 
-max_oracle_sql = 4000
-max_mysql_sql = 50000
-max_pg_sql = 40000
+limit = load_db_config()
+max_oracle_sql = limit['max_len_oracle_sql']
+max_mysql_sql = limit['max_len_mysql_sql']
+max_pg_sql = limit['max_len_pg_sql']
 
 
 def build_insert(db_name: str, dialect: str, schema: dict):
-    if os.path.exists(os.path.join(get_data_path(), db_name, 'data', f'{dialect}_data.sql')):
-        with open(os.path.join(get_data_path(), db_name, 'data', f'{dialect}_data.sql'), 'r') as file:
+    if os.path.exists(os.path.join(get_data_path(), db_name, 'data', f'{dialect}_data_revised.sql')):
+        with open(os.path.join(get_data_path(), db_name, 'data', f'{dialect}_data_revised.sql'), 'r') as file:
             insert_sqls = str_split(file.read(), ';')
         for sql in tqdm(insert_sqls):
             if sql.strip() == '':
@@ -648,19 +649,3 @@ def build_test_db(db_name, dialect):
     schema, add_constraints, type_defs = schema_build(db_name, dialect)
     dump_schema(schema, add_constraints, type_defs, dialect, db_name)
     create_schema(db_name, dialect, schema, True)
-
-
-# # mysql oracle bird not built
-# db_names = ['bird']
-# dialects = ['mysql', 'oracle', 'pg']
-# #
-# for db in db_names:
-#     for d in dialects:
-#         drop_schema(db, d)
-#         build_db(db, d, True)
-
-db_id = 'dw'
-
-for dialect1 in ['mysql', 'oracle', 'pg']:
-    drop_schema(db_id, dialect1, True)
-    build_test_db(db_id, dialect1)

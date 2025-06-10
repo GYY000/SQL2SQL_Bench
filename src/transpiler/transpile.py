@@ -105,23 +105,23 @@ def model_translate(sql: str, src_dialect: str, tgt_dialect: str):
 
 
 def cracksql_translate(sql: str, src_dialect: str, tgt_dialect: str, db_name, db_para):
-    translated_sql, model_ans_list, used_pieces, lift_histories = trans_func(sql, src_dialect, tgt_dialect, db_name, 'moonshot-v1-128k', db_para)
-    print(translated_sql)
+    if src_dialect == 'pg':
+        db_used_name = 'Postgres Database Parameter'
+    elif src_dialect == 'mysql':
+        db_used_name = 'MySQL Database Parameter'
+    elif src_dialect == 'oracle':
+        db_used_name = 'Oracle Database Parameter'
+    else:
+        raise ValueError("Unsupported dialect")
+    db_para = {
+        db_used_name: db_para
+    }
+    translated_sql, model_ans_list, used_pieces, lift_histories = trans_func(sql, src_dialect, tgt_dialect, db_name,
+                                                                             'moonshot-v1-128k', db_para)
+    return translated_sql
 
 
 def transpile_pipeline(sql: str, db_name, src_dialect: str, tgt_dialect: str):
     flag, out_sql = model_translate(sql, src_dialect, tgt_dialect)
     if not flag:
         flag, out_sql = transfer_sql_sqline(sql, src_dialect, tgt_dialect)
-
-
-sql = """
-SELECT t1.customerid FROM customers AS t1 INNER JOIN yearmonth AS t2 ON t1.customerid = t2.customerid WHERE t1.segment = 'LAM' AND SUBSTR(t2.date , 1 , 4 ) = '2012' GROUP BY t1.customerid ORDER BY SUM( t2.consumption) ASC NULLS FIRST 
-"""
-
-db_parameter = {
-    "postgres Database Parameter": {
-        "datestyle": "MDY"
-    }
-}
-print(cracksql_translate(sql, 'pg', 'mysql', 'bird', db_parameter))

@@ -49,6 +49,18 @@ def load_config(config_file=None):
     }
 
 
+def load_db_config(config_file=None):
+    if config_file is None:
+        config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    return {
+        'max_len_oracle_sql': config.getint("DB_LIMIT", 'max_len_oracle_sql'),
+        'max_len_mysql_sql': config.getint("DB_LIMIT", 'max_len_mysql_sql'),
+        "max_len_pg_sql": config.getint("DB_LIMIT", 'max_len_pg_sql')
+    }
+
+
 def load_oracle_config(config_file=None):
     if config_file is None:
         config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')

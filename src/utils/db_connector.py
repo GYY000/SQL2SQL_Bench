@@ -8,8 +8,8 @@ from datetime import datetime
 from typing import List
 
 import mysql.connector
+import psycopg
 
-import psycopg2
 
 import oracledb
 
@@ -105,6 +105,10 @@ def mysql_drop_db(db_name: str):
 
 
 def mysql_db_connect(dbname):
+    if dbname in mysql_conn_map:
+        conn = mysql_conn_map[dbname]
+        if conn.is_connected():
+            return mysql_conn_map[dbname], mysql_cursor_map[dbname]
     try:
         # 建立连接
         connection = mysql.connector.connect(
@@ -148,10 +152,7 @@ def mysql_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=
     if emp_flag:
         db_name = get_empty_db_name(db_name)
     db_name = get_db_name('mysql', db_name)
-    if db_name not in mysql_conn_map:
-        mysql_db_connect(db_name)
-    connection = mysql_conn_map[db_name]
-    cursor = mysql_cursor_map[db_name]
+    connection, cursor = mysql_db_connect(db_name)
     try:
         if db_param is not None:
             for key, value in db_param:
@@ -212,10 +213,7 @@ def get_mysql_type(db_name: str, obj: str, is_table: bool, db_param: dict | None
     try:
         db_name = get_empty_db_name(db_name)
         db_name = get_db_name('mysql', db_name)
-        if db_name not in mysql_conn_map:
-            mysql_db_connect(db_name)
-        connection = mysql_conn_map[db_name]
-        cursor = mysql_cursor_map[db_name]
+        connection, cursor = mysql_db_connect(db_name)
         if db_param is not None:
             for key, value in db_param:
                 cursor.execute(f"SET SESSION {key} = '{value}'")
@@ -261,18 +259,18 @@ pg_cursor_map = {}
 
 def show_pg_databases():
     try:
-        connection = psycopg2.connect(
+        connection = psycopg.connect(
             host=pg_config['pg_host'],
             port=pg_config['pg_port'],
             user=pg_config['pg_user'],
             password=pg_config['pg_pwd'],
-            database='postgres'
+            dbname='postgres'
         )
         cursor = connection.cursor()
         cursor.execute("SELECT datname FROM pg_database;")
         databases = [db[0] for db in cursor.fetchall()]
         return databases
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, psycopg.Error) as error:
         print(f"Error while connecting to PostgreSQL: {error}")
         return None
 
@@ -280,12 +278,12 @@ def show_pg_databases():
 def pg_drop_db(db_name: str):
     try:
         db_name = get_db_name('pg', db_name)
-        connection = psycopg2.connect(
+        connection = psycopg.connect(
             host=pg_config['pg_host'],
             port=pg_config['pg_port'],
             user=pg_config['pg_user'],
             password=pg_config['pg_pwd'],
-            database='postgres'
+            dbname='postgres'
         )
         connection.autocommit = True
         cursor = connection.cursor()
@@ -296,19 +294,23 @@ def pg_drop_db(db_name: str):
         cursor.close()
         connection.close()
         print(f"Database '{db_name}' dropped successfully!")
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, psycopg.Error) as error:
         print(f"Error while connecting to PostgreSQL: {error}")
 
 
 def pg_db_connect(dbname):
+    if dbname in pg_conn_map:
+        conn = pg_conn_map[dbname]
+        if conn:
+            return pg_conn_map[dbname], pg_cursor_map[dbname]
     flag = False
     try:
-        connection = psycopg2.connect(
+        connection = psycopg.connect(
             host=pg_config['pg_host'],
             port=pg_config['pg_port'],
             user=pg_config['pg_user'],
             password=pg_config['pg_pwd'],
-            database='postgres'
+            dbname='postgres'
         )
         connection.autocommit = True
 
@@ -323,11 +325,11 @@ def pg_db_connect(dbname):
             print(f"Database '{dbname}' created successfully!")
             connection.commit()
             flag = True
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, psycopg.Error) as error:
         print(f"Error while connecting to PostgreSQL: {error}")
 
     try:
-        connection = psycopg2.connect(
+        connection = psycopg.connect(
             host=pg_config['pg_host'],
             port=pg_config['pg_port'],
             user=pg_config['pg_user'],
@@ -346,7 +348,7 @@ def pg_db_connect(dbname):
         if connection:
             return connection, cursor
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, psycopg.Error) as error:
         print(f"Error while connecting to PostgreSQL: {error}")
 
 
@@ -354,10 +356,7 @@ def pg_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=Fal
     if emp_flag:
         db_name = get_empty_db_name(db_name)
     db_name = get_db_name('pg', db_name)
-    if db_name not in pg_conn_map:
-        pg_db_connect(db_name)
-    connection = pg_conn_map[db_name]
-    cursor = pg_cursor_map[db_name]
+    connection, cursor = pg_db_connect(db_name)
     try:
         if db_param is not None:
             for key, value in db_param.items():
@@ -370,7 +369,7 @@ def pg_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=Fal
             rows = None
         connection.commit()
         return True, rows
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, psycopg.Error) as error:
         print(sql)
         connection.rollback()
         traceback.print_exc()
@@ -423,10 +422,7 @@ def get_pg_type(db_name: str, obj: str, is_table: bool, db_param: dict | None = 
 
     try:
         db_name = get_db_name('pg', db_name)
-        if db_name not in pg_conn_map:
-            pg_db_connect(db_name)
-        connection = pg_conn_map[db_name]
-        cursor = pg_cursor_map[db_name]
+        connection, cursor = pg_db_connect(db_name)
         if db_param is not None:
             for key, value in db_param.items():
                 cursor.execute(f"SET {key} = '{value}';")
@@ -442,8 +438,7 @@ def get_pg_type(db_name: str, obj: str, is_table: bool, db_param: dict | None = 
                 })
         connection.commit()
         return True, res
-    except (Exception, psycopg2.Error) as error:
-        raise error
+    except (Exception, psycopg.Error) as error:
         connection.rollback()
         return False, [f"Error while executing PostgreSQL query: {error}"]
 
@@ -487,6 +482,13 @@ def show_oracle_databases():
 
 
 def oracle_db_connect(db_name):
+    if db_name in oracle_conn_map:
+        db_conn = oracle_conn_map[db_name]
+        try:
+            db_conn.ping()
+            return db_conn, oracle_cursor_map[db_name]
+        except Exception:
+            pass
     connection = oracledb.connect(
         user=ora_config['oracle_sys_user'],
         password=ora_config['oracle_sys_pwd'],
@@ -555,10 +557,7 @@ def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False, db_param: di
         db_name = get_empty_db_name(db_name)
     db_name = get_db_name('oracle', db_name)
     if not sql_plus_flag:
-        if db_name not in oracle_conn_map:
-            oracle_db_connect(db_name)
-        connection = oracle_conn_map[db_name]
-        cursor = oracle_cursor_map[db_name]
+        connection, cursor = oracle_db_connect(db_name)
         try:
             if db_param is not None:
                 for key, value in db_param.items():
@@ -628,10 +627,7 @@ def get_oracle_type(db_name, obj: str, is_table: bool, db_param: dict | None = N
     try:
         db_name = get_empty_db_name(db_name)
         db_name = get_db_name('oracle', db_name)
-        if db_name not in oracle_conn_map:
-            oracle_db_connect(db_name)
-        connection = oracle_conn_map[db_name]
-        cursor = oracle_cursor_map[db_name]
+        connection, cursor = oracle_db_connect(db_name)
         if db_param is not None:
             for key, value in db_param.items():
                 cursor.execute(f"ALTER SESSION SET {key} = '{value}'")

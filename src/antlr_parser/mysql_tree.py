@@ -5,6 +5,7 @@
 # @Time: 2025/4/2 20:34
 from antlr_parser.Tree import TreeNode
 from antlr_parser.parse_tree import parse_tree
+from utils.tools import get_table_col_name
 
 
 # used for analyze mysql tree structure
@@ -68,12 +69,12 @@ def rename_column_mysql(select_element_node: TreeNode, name_dict: dict, extend_n
     name_dict[extend_name] = idx + 1
     if select_element_node.get_child_by_value('uid') is not None:
         uid_node = select_element_node.get_child_by_value('uid')
-        new_name_node = TreeNode(f"`{extend_name}_{idx}`", 'mysql', True)
+        new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True)
         assert isinstance(uid_node, TreeNode)
         uid_node.children = [new_name_node]
     else:
         select_element_node.add_child(TreeNode('AS', 'mysql', True))
-        select_element_node.add_child(TreeNode(f"`{extend_name}_{idx}`", 'mysql', True))
+        select_element_node.add_child(TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True))
     return f"{extend_name}_{idx}"
 
 
@@ -158,7 +159,7 @@ def analyze_mysql_table_source_item(table_source_item_node: TreeNode, dialect: s
                 table_name = extension_name
             table_source_item_node.add_child(TreeNode('AS', 'mysql', True))
             new_uid_node = TreeNode('uid', 'mysql', False)
-            new_uid_node.add_child(TreeNode('`' + table_name + '`', 'mysql', True))
+            new_uid_node.add_child(TreeNode(get_table_col_name(table_name, 'mysql').lower(), 'mysql', True))
             table_source_item_node.add_child(new_uid_node)
         rename_flag = False
         if table_source_item_node.get_child_by_value('uidList') is not None:
@@ -189,7 +190,7 @@ def analyze_mysql_table_source_item(table_source_item_node: TreeNode, dialect: s
                 assert isinstance(uid_node, TreeNode)
                 assert len(uid_node.children) == 1
                 assert isinstance(uid_node.children[0], TreeNode)
-                uid_node.children[0].value = '`' + extension_name + '`'
+                uid_node.children[0].value = get_table_col_name(extension_name, 'mysql').lower()
                 uid_node.children[0].is_terminal = True
             else:
                 name_dict[table_alias_name] = 1
@@ -201,7 +202,7 @@ def analyze_mysql_table_source_item(table_source_item_node: TreeNode, dialect: s
                 final_name = extension_name
                 table_source_item_node.add_child(TreeNode('AS', 'mysql', True))
                 new_uid_node = TreeNode('uid', 'mysql', False)
-                new_uid_node.add_child(TreeNode('`' + final_name + '`', 'mysql', True))
+                new_uid_node.add_child(TreeNode(get_table_col_name(final_name, 'mysql').lower(), 'mysql', True))
                 table_source_item_node.add_child(new_uid_node)
             else:
                 name_dict[table_name] = 1

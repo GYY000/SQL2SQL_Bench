@@ -6,10 +6,11 @@
 from typing import List
 from abc import ABC, abstractmethod
 
+from antlr_parser.Tree import TreeNode
 from sql_gen.generator.ele_type.type_def import ListType, BaseType, QueryType, TableType, OptionType, AliasType, \
-    AnyValueType
+    AnyValueType, StringGeneralType, NumberType
 from sql_gen.generator.element.Operand import Operand
-from sql_gen.generator.udfs.UdfFunction import getReturnType, execute
+from sql_gen.generator.udfs.UdfFunction import getReturnType, execute, fulfill_cond
 from utils.tools import get_no_space_len
 
 
@@ -40,9 +41,16 @@ class UdfFunction:
     def execute(self, slot_value_map: dict):
         args = []
         for slot in self.arg_slots:
-            assert isinstance(slot, ValueSlot)
-            args.append(slot.get_value(slot_value_map))
+            if isinstance(slot, ValueSlot):
+                args.append(slot.get_value(slot_value_map))
+            else:
+                assert isinstance(slot, StringLiteralSlot) or isinstance(slot, NumberLiteralSlot)
+                args.append(slot.get_op())
+
         return execute(self.func_name, *args)
+
+    def fulfill_cond(self, value: TreeNode):
+        return fulfill_cond(self.func_name, value)
 
     def __str__(self):
         params = ""
@@ -54,9 +62,9 @@ class UdfFunction:
 
     def is_fulfilled(self, slot_value_map: dict):
         for slot in self.arg_slots:
-            assert isinstance(slot, ValueSlot)
-            if slot not in slot_value_map:
-                return False
+            if isinstance(slot, ValueSlot):
+                if slot not in slot_value_map:
+                    return False
         return True
 
 
@@ -92,20 +100,7 @@ class ValueSlot(Slot):
 
     def extend(self):
         # ALIAS TABLE QUERY LIST OPTION ANY_VALUE
-        if isinstance(self.get_type(), ListType):
-            assert False
-        elif isinstance(self.get_type(), QueryType):
-            return f"SELECT 1 FROM tbl"
-        elif isinstance(self.get_type(), TableType):
-            return f"table_element"
-        elif isinstance(self.get_type(), AnyValueType):
-            return f"element"
-        elif isinstance(self.get_type(), OptionType):
-            return f"{self.name}"
-        elif isinstance(self.get_type(), AliasType):
-            return f"{self.name}"
-        else:
-            return f"element"
+        return self.get_type().gen_demo_value()
 
     def get_value(self, slot_value_map: dict):
         if not self.is_fulfilled(slot_value_map):
@@ -133,6 +128,9 @@ class StringLiteralSlot(Slot):
         # won't be used
         assert False
 
+    def get_op(self):
+        return Operand(self.literal, StringGeneralType())
+
 
 class NumberLiteralSlot(Slot):
     def __init__(self, num):
@@ -149,6 +147,9 @@ class NumberLiteralSlot(Slot):
         # won't be used
         assert False
 
+    def get_op(self):
+        return Operand(self.num, NumberType())
+
 
 class Pattern:
     def __init__(self):
@@ -163,6 +164,7 @@ class Pattern:
 
     def fulfill_pattern(self, alias_id_map, slot_value_map):
         res = ''
+        inside_quote = False
         for ele in self.elements:
             if isinstance(ele, Slot):
                 if isinstance(ele, ValueSlot):
@@ -174,20 +176,39 @@ class Pattern:
                             raise ValueError(f"Slot {ele.name} haven't been fulfilled "
                                              f"before construction please check the define order of the slots")
                     else:
-                        res = res + " " + ele.get_value(slot_value_map).str_value()
+                        if not inside_quote:
+                            res = res + " "
+                        res = res + ele.get_value(slot_value_map).str_value()
                 elif isinstance(ele, ForSlot):
                     res = res + "\n" + ele.fulfill(slot_value_map)
             else:
-                if res != '':
+                if res != '' and not inside_quote:
                     res = res + ' '
+                i = 0
+                while i < len(ele):
+                    char = ele[i]
+                    if char == '\'':
+                        inside_quote = not inside_quote
+                    if char == '\\':
+                        i = i + 1
+                    i = i + 1
                 res = res + ele
         return res
 
     def extend_pattern(self):
         res = ''
+        inside_quote = False
         slot_list = []
         for ele in self.elements:
             if isinstance(ele, str):
+                i = 0
+                while i < len(ele):
+                    char = ele[i]
+                    if char == '\'':
+                        inside_quote = not inside_quote
+                    if char == '\\':
+                        i = i + 1
+                    i = i + 1
                 res = res + ele
             elif isinstance(ele, ForSlot):
                 ori_len = get_no_space_len(res)
@@ -216,7 +237,10 @@ class Pattern:
                         "pos": [ori_len, ori_len + get_no_space_len(extended_ele) - 1]
                     }
                 })
-                res = res + " " + str(extended_ele)
+                if not inside_quote:
+                    res = res + " " + str(extended_ele)
+                else:
+                    res = res + extended_ele
         return res, slot_list
 
 

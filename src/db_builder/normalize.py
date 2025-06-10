@@ -369,12 +369,12 @@ def rep_quote_oracle(root_node: TreeNode, reserved_tgt_dialect: List[str], quote
             rep_quote_oracle(child, reserved_tgt_dialect, quote_type)
 
 
-def rep_reserved_keyword_quote(sql: str | None, tree_node: TreeNode | None, src_dialect, tgt_dialect):
+def rep_reserved_keyword_quote(sql: str | None, tree_node: TreeNode | None, src_dialect, tgt_dialect) -> str:
     assert not (sql is None and tree_node is None)
     if tree_node is None:
         tree_node, _, _, _ = parse_tree(sql, src_dialect)
         if tree_node is None:
-            raise ValueError("Parse tree is None.")
+            return None
         tree_node = TreeNode.make_g4_tree_by_node(tree_node, src_dialect)
 
     reserved_keywords = get_used_reserved_keyword_list()

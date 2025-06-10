@@ -44,6 +44,8 @@ def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, 
                 tree = parser.a_expr()
             elif element == 'ORDER_BY_CLAUSE':
                 tree = parser.sort_clause()
+            elif element == 'LITERAL':
+                tree = parser.aexprconst()
             else:
                 assert False
             return tree, None, None, None
@@ -64,6 +66,8 @@ def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, 
                 tree = parser.expression()
             elif element == 'ORDER_BY_CLAUSE':
                 tree = parser.orderByClause()
+            elif element == 'LITERAL':
+                tree = parser.expressionAtom()
             else:
                 assert False
             return tree, None, None, None
@@ -84,6 +88,8 @@ def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, 
                 tree = parser.expression()
             elif element == 'ORDER_BY_CLAUSE':
                 tree = parser.order_by_clause()
+            elif element == 'LITERAL':
+                tree = parser.constant()
             else:
                 assert False
             return tree, None, None, None
@@ -148,20 +154,20 @@ def parse_oracle_tree(src_sql: str):
         return None, -1, -1, ''
 
 
-def get_parser(dialect: str):
+def get_lexer_parser(dialect: str):
     input_stream = InputStream('')
     if dialect == 'pg':
         lexer = PostgreSQLLexer(input_stream)
         stream = CommonTokenStream(lexer)
-        return PostgreSQLParser(stream)
+        return lexer, PostgreSQLParser(stream)
     elif dialect == 'mysql':
         lexer = MySqlLexer(input_stream)
         stream = CommonTokenStream(lexer)
-        return MySqlParser(stream)
+        return lexer, MySqlParser(stream)
     elif dialect == 'oracle':
         lexer = PlSqlLexer(input_stream)
         stream = CommonTokenStream(lexer)
-        return PlSqlParser(stream)
+        return lexer, PlSqlParser(stream)
     else:
         raise ValueError(f"Only support {map_parser}")
 

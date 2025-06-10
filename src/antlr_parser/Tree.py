@@ -2,10 +2,11 @@ import sys
 
 from antlr4.tree.Tree import TerminalNodeImpl
 
-from antlr_parser.parse_tree import get_parser, parse_tree
+from antlr_parser.parse_tree import get_lexer_parser, parse_tree
 from utils.tools import self_split, remove_all_space
 
 parser_map = {}
+lexer_map = {}
 
 
 class TreeNode:
@@ -29,11 +30,14 @@ class TreeNode:
         self.is_terminal = is_terminal
         self.model_get = model_get
         self.slot = None
-        self.slot_times = None
+        self.slot_times = {}
         self.for_slot_ancestor_id = None
         self.for_slot_ancestor = None
         self.for_loop_slot = []
         self.for_loop_sub_trees = []
+        self.terminal_node_name = None
+        self.ori_pattern_string = None
+        self.pos_to_slot = []
 
     def to_tree_rep(self):
         if len(self.children) != 0:
@@ -185,13 +189,17 @@ class TreeNode:
     def make_g4_tree_by_node(antlr_node, dialect: str):
         if dialect in parser_map:
             parser = parser_map[dialect]
+            lexer = lexer_map[dialect]
         else:
-            parser = get_parser(dialect)
+            lexer, parser = get_lexer_parser(dialect)
             parser_map[dialect] = parser
+            lexer_map[dialect] = lexer
         if isinstance(antlr_node, TerminalNodeImpl):
             if antlr_node.getText() == '<EOF>':
                 return None
-            return TreeNode(antlr_node.getText(), dialect, True)
+            node = TreeNode(antlr_node.getText(), dialect, True)
+            node.terminal_node_name = lexer.symbolicNames[antlr_node.symbol.type]
+            return node
         else:
             if antlr_node.children is not None:
                 node = TreeNode(parser.ruleNames[antlr_node.getRuleIndex()], dialect, False)
