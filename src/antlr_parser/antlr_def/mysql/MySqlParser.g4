@@ -2114,7 +2114,6 @@ uid
     //| DOUBLE_QUOTE_ID
     //| REVERSE_QUOTE_ID
     | CHARSET_REVERSE_QOUTE_STRING
-    | STRING_LITERAL
     ;
 
 simpleId

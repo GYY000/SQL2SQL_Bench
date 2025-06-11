@@ -7389,16 +7389,7 @@ system_privilege
 
 constant
     : TIMESTAMP (quoted_string | bind_variable) (AT TIME ZONE quoted_string)?
-    | INTERVAL (quoted_string | bind_variable | general_element_part) (
-        YEAR
-        | MONTH
-        | DAY
-        | HOUR
-        | MINUTE
-        | SECOND
-    ) ('(' (UNSIGNED_INTEGER | bind_variable) (',' (UNSIGNED_INTEGER | bind_variable))? ')')? (
-        TO (DAY | HOUR | MINUTE | SECOND ('(' (UNSIGNED_INTEGER | bind_variable) ')')?)
-    )?
+    | INTERVAL (quoted_string | bind_variable | general_element_part) constant_interval_type
     | numeric
     | DATE quoted_string
     | quoted_string
@@ -7410,6 +7401,19 @@ constant
     | MINVALUE
     | MAXVALUE
     | DEFAULT
+    ;
+
+constant_interval_type
+    : (
+        YEAR
+        | MONTH
+        | DAY
+        | HOUR
+        | MINUTE
+        | SECOND
+    ) ('(' (UNSIGNED_INTEGER | bind_variable) (',' (UNSIGNED_INTEGER | bind_variable))? ')')? (
+        TO (YEAR | MONTH | DAY | HOUR | MINUTE | SECOND ('(' (UNSIGNED_INTEGER | bind_variable) ')')?)
+    )?
     ;
 
 numeric
