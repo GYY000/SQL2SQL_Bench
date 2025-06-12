@@ -2009,9 +2009,7 @@ aggregate_with_argtypes_list
     ;
 
 createfunc_opt_list
-    : createfunc_opt_item+ {
-                ParseRoutineBody(_localctx);
-            }
+    : createfunc_opt_item+ {self.ParseRoutineBody(_localctx)}
     //                    | createfunc_opt_list createfunc_opt_item
     ;
 
@@ -3195,8 +3193,7 @@ from_clause
     ;
 
 from_list
-    : non_ansi_join
-    | table_ref (COMMA table_ref)*
+    : table_ref (COMMA table_ref)*
     ;
 
 non_ansi_join

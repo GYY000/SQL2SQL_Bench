@@ -2,7 +2,6 @@
 from antlr4 import *
 from io import StringIO
 import sys
-from antlr_parser.pg_parser.PostgreSQLLexerBase import *
 if sys.version_info[1] > 5:
     from typing import TextIO
 else:
@@ -2623,7 +2622,7 @@ def serializedATN():
         0,7,664,0,2,3,0,1,688,4,6,0,0,4,0,0,2,1,0,1,692,5,1,694,6
     ]
 
-class PostgreSQLLexer(PostgreSQLLexerBase):
+class PostgreSQLLexer(Lexer):
 
     atn = ATNDeserializer().deserialize(serializedATN())
 
@@ -3726,6 +3725,10 @@ class PostgreSQLLexer(PostgreSQLLexerBase):
         self._actions = None
         self._predicates = None
 
+
+    # This field stores the tags which are used to detect the end of a dollar-quoted string literal.
+
+
     def action(self, localctx:RuleContext, ruleIndex:int, actionIndex:int):
         if self._actions is None:
             actions = dict()
@@ -3747,7 +3750,6 @@ class PostgreSQLLexer(PostgreSQLLexerBase):
     def Operator_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 0:
             self.HandleLessLessGreaterGreater()
-               
      
 
     def BeginDollarStringConstant_action(self, localctx:RuleContext , actionIndex:int):
@@ -3763,16 +3765,17 @@ class PostgreSQLLexer(PostgreSQLLexerBase):
     def UnterminatedBlockComment_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 3:
             self.UnterminatedBlockCommentDebugAssert()
-               
      
 
     def AfterEscapeStringConstantMode_NotContinued_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 4:
             pass
+     
 
     def AfterEscapeStringConstantWithNewlineMode_NotContinued_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 5:
             pass
+     
 
     def EndDollarStringConstant_action(self, localctx:RuleContext , actionIndex:int):
         if actionIndex == 6:

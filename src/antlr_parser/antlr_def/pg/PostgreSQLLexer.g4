@@ -46,8 +46,7 @@ options {
 @header {
 }
 @members {
-/* This field stores the tags which are used to detect the end of a dollar-quoted string literal.
- */
+# This field stores the tags which are used to detect the end of a dollar-quoted string literal.
 }
 //
 
@@ -127,16 +126,14 @@ Operator:
     (
         (
             OperatorCharacter
-            | ('+' | '-' {checkLA('-')}?)+ (OperatorCharacter | '/' {checkLA('*')}?)
-            | '/'        {checkLA('*')}?
+            | ('+' | '-' {self.checkLA('-')}?)+ (OperatorCharacter | '/' {self.checkLA('*')}?)
+            | '/'        {self.checkLA('*')}?
         )+
         | // special handling for the single-character operators + and -
         [+-]
     )
     //TODO somehow rewrite this part without using Actions
-    {
-    HandleLessLessGreaterGreater();
-   }
+    {self.HandleLessLessGreaterGreater()}
 ;
 /* This rule handles operators which end with + or -, and sets the token type to Operator. It is comprised of four
  * parts, in order:
@@ -150,9 +147,9 @@ Operator:
  */
 
 OperatorEndingWithPlusMinus:
-    (OperatorCharacterNotAllowPlusMinusAtEnd | '-' {checkLA('-')}? | '/' {checkLA('*')}?)* OperatorCharacterAllowPlusMinusAtEnd Operator? (
+    (OperatorCharacterNotAllowPlusMinusAtEnd | '-' {self.checkLA('-')}? | '/' {self.checkLA('*')}?)* OperatorCharacterAllowPlusMinusAtEnd Operator? (
         '+'
-        | '-' {checkLA('-')}?
+        | '-' {self.checkLA('-')}?
     )+        -> type (Operator)
 ;
 // Each of the following fragment rules omits the +, -, and / characters, which must always be handled in a special way
@@ -1425,10 +1422,10 @@ fragment IdentifierStartChar options {
     | // these are the valid characters from 0x80 to 0xFF
     [\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]
     |                               // these are the letters above 0xFF which only need a single UTF-16 code unit
-    [\u0100-\uD7FF\uE000-\uFFFF]    {charIsLetter()}?
+    [\u0100-\uD7FF\uE000-\uFFFF]    {self.charIsLetter()}?
     |                               // letters which require multiple UTF-16 code units
     [\uD800-\uDBFF] [\uDC00-\uDFFF] {
-    CheckIfUtf32Letter()
+    self.CheckIfUtf32Letter()
    }?
 ;
 
@@ -1502,7 +1499,7 @@ UnicodeEscapeStringConstant: UnterminatedUnicodeEscapeStringConstant '\'';
 UnterminatedUnicodeEscapeStringConstant: 'U' '&' UnterminatedStringConstant;
 // Dollar-quoted String Constants (4.1.2.4)
 
-BeginDollarStringConstant: '$' Tag? '$' {pushTag();} -> pushMode (DollarQuotedStringMode);
+BeginDollarStringConstant: '$' Tag? '$' {self.pushTag()} -> pushMode (DollarQuotedStringMode);
 /* "The tag, if any, of a dollar-quoted string follows the same rules as an
  * unquoted identifier, except that it cannot contain a dollar sign."
  */
@@ -1529,7 +1526,7 @@ InvalidUnterminatedHexadecimalStringConstant: 'X' UnterminatedStringConstant;
 
 Integral: Digits;
 
-NumericFail: Digits '..' {HandleNumericFail();};
+NumericFail: Digits '..' {self.HandleNumericFail()};
 
 Numeric:
     Digits '.' Digits? /*? replaced with + to solve problem with DOT_DOT .. but this surely must be rewriten */ (
@@ -1576,9 +1573,7 @@ UnterminatedBlockComment:
     // Handle the case of / or * characters at the end of the file, or a nested unterminated block comment
     ('/'+ | '*'+ | '/'* UnterminatedBlockComment)?
     // Optional assertion to make sure this rule is working as intended
-    {
-            UnterminatedBlockCommentDebugAssert();
-   }
+    {self.UnterminatedBlockCommentDebugAssert()}
 ;
 //
 
@@ -1650,7 +1645,7 @@ AfterEscapeStringConstantMode_Newline:
 ;
 
 AfterEscapeStringConstantMode_NotContinued:
-     {} // intentionally empty
+     {pass} // intentionally empty
      -> skip, popMode
 ;
 
@@ -1666,7 +1661,7 @@ AfterEscapeStringConstantWithNewlineMode_Continued:
 ;
 
 AfterEscapeStringConstantWithNewlineMode_NotContinued:
-     {} // intentionally empty
+     {pass} // intentionally empty
      -> skip, popMode
 ;
 
@@ -1680,4 +1675,4 @@ DollarText:
     '$' ~ '$'*
 ;
 
-EndDollarStringConstant: ('$' Tag? '$') {isTag()}? {popTag();} -> popMode;
+EndDollarStringConstant: ('$' Tag? '$') {self.isTag()}? {self.popTag()} -> popMode;

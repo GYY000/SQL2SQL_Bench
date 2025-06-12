@@ -1,5 +1,10 @@
 from antlr4 import *
-from antlr_parser.pg_parser.PostgreSQLParser import PostgreSQLParser
+from antlr4.CommonTokenStream import CommonTokenStream
+
+from antlr_parser.pg_parser_bat.LexerDispatchingErrorListener import LexerDispatchingErrorListener
+from antlr_parser.pg_parser_bat.ParserDispatchingErrorListener import ParserDispatchingErrorListener
+from PostgreSQLLexer import PostgreSQLLexer
+from PostgreSQLParser import PostgreSQLParser
 
 
 class PostgreSQLParserBase(Parser):
