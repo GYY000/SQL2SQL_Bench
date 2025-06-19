@@ -1263,7 +1263,7 @@ FILESIZE_LITERAL: DEC_DIGIT+ ('K' | 'M' | 'G' | 'T');
 // Literal Primitives
 
 START_NATIONAL_STRING_LITERAL : 'N' SQUOTA_STRING;
-STRING_LITERAL                : DQUOTA_STRING | SQUOTA_STRING | BQUOTA_STRING;
+STRING_LITERAL                : DQUOTA_STRING | SQUOTA_STRING;
 DECIMAL_LITERAL               : DEC_DIGIT+;
 HEXADECIMAL_LITERAL           : 'X'SQUOTA_STRING | '0X' HEX_DIGIT+;
 
@@ -1342,7 +1342,7 @@ fragment EXPONENT_NUM_PART : 'E' [-+]? DEC_DIGIT+;
 fragment ID_LITERAL        : [A-Z_$0-9\u0080-\uFFFF]*? [A-Z_$\u0080-\uFFFF]+? [A-Z_$0-9\u0080-\uFFFF]*;
 fragment DQUOTA_STRING     : '"' ( '\\' . | '""' | ~('"' | '\\'))* '"';
 fragment SQUOTA_STRING     : '\'' ('\\' . | '\'\'' | ~('\'' | '\\'))* '\'';
-fragment BQUOTA_STRING     : '`' ( ~'`' | '``')* '`';
+fragment BQUOTA_STRING     : '`' ( '``' | ~'`' )* '`';
 fragment HEX_DIGIT         : [0-9A-F];
 fragment DEC_DIGIT         : [0-9];
 fragment BIT_STRING_L      : 'B' '\'' [01]+ '\'';
