@@ -2458,6 +2458,7 @@ SOLIDUS         : '/';
 AT_SIGN         : '@';
 ASSIGN_OP       : ':=';
 HASH_OP         : '#';
+BAR_BAR         : '||';
 
 SQ: '\'';
 

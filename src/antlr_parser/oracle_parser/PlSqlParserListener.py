@@ -10637,6 +10637,15 @@ class PlSqlParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by PlSqlParser#base_constant_interval_type.
+    def enterBase_constant_interval_type(self, ctx:PlSqlParser.Base_constant_interval_typeContext):
+        pass
+
+    # Exit a parse tree produced by PlSqlParser#base_constant_interval_type.
+    def exitBase_constant_interval_type(self, ctx:PlSqlParser.Base_constant_interval_typeContext):
+        pass
+
+
     # Enter a parse tree produced by PlSqlParser#numeric.
     def enterNumeric(self, ctx:PlSqlParser.NumericContext):
         pass

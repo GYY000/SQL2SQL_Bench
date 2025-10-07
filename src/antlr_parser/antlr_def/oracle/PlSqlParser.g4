@@ -6404,7 +6404,7 @@ concatenation
     | concatenation op = DOUBLE_ASTERISK concatenation
     | concatenation op = (ASTERISK | SOLIDUS | MOD) concatenation
     | concatenation op = (PLUS_SIGN | MINUS_SIGN) concatenation
-    | concatenation BAR BAR concatenation
+    | concatenation BAR_BAR concatenation
     | concatenation COLLATE column_collation_name
     ;
 
@@ -7405,15 +7405,19 @@ constant
 
 constant_interval_type
     : (
-        YEAR
-        | MONTH
-        | DAY
-        | HOUR
-        | MINUTE
-        | SECOND
+        base_constant_interval_type
     ) ('(' (UNSIGNED_INTEGER | bind_variable) (',' (UNSIGNED_INTEGER | bind_variable))? ')')? (
-        TO (YEAR | MONTH | DAY | HOUR | MINUTE | SECOND ('(' (UNSIGNED_INTEGER | bind_variable) ')')?)
+        TO (base_constant_interval_type ('(' (UNSIGNED_INTEGER | bind_variable) ')')?)
     )?
+    ;
+
+base_constant_interval_type
+    : YEAR
+    | MONTH
+    | DAY
+    | HOUR
+    | MINUTE
+    | SECOND
     ;
 
 numeric
