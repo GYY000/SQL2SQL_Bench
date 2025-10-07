@@ -29,6 +29,7 @@ def general_element_only_oracle(expression_node: TreeNode):
     while node.value != 'general_element':
         if len(node.children) != 1:
             return False
+        node = node.children[0]
     if node.value == 'general_element':
         return True
     else:
@@ -38,8 +39,10 @@ def general_element_only_oracle(expression_node: TreeNode):
 def rename_column_oracle(select_element_node: TreeNode, name_dict: dict, extend_name=None):
     if extend_name is None:
         extend_name = 'col'
-    idx = name_dict.get(extend_name.upper(), 1)
-    name_dict[extend_name.upper()] = idx + 1
+    idx = 0
+    while f"{extend_name.lower()}_{idx}" in name_dict:
+        idx += 1
+    name_dict[f"{extend_name.lower()}_{idx}"] = 1
     if select_element_node.get_child_by_value('column_alias') is not None:
         uid_node = select_element_node.get_child_by_value('identifier')
         if uid_node is None:
@@ -89,25 +92,56 @@ def analyze_table_refs_oracle(table_refs: list):
 
 def analyze_table_ref_aux(table_ref_aux_node: TreeNode, name_dict: dict):
     table_ref_aux_internal_node = table_ref_aux_node.get_child_by_value('table_ref_aux_internal')
-    rename_flag = True
+    rename_flag = False
     extension_name = None
+    table_flag = False
+    table_name = None
     if table_ref_aux_node.get_child_by_value('table_alias') is not None:
         extension_name = str(table_ref_aux_node.get_child_by_value('table_alias')).strip('"')
-        if extension_name.upper() not in name_dict:
+        if extension_name.upper() in name_dict:
+            rename_flag = True
+        else:
             name_dict[extension_name.upper()] = 1
-            rename_flag = False
-    else:
-        if table_ref_aux_internal_node.get_child_by_value('dml_table_expression_clause') is not None:
-            dml_table_node = table_ref_aux_internal_node.get_child_by_value('dml_table_expression_clause')
-            if dml_table_node.get_child_by_value('tableview_name') is not None:
-                tableview_name_node = dml_table_node.get_child_by_value('tableview_name')
+    if table_ref_aux_internal_node.get_child_by_value('dml_table_expression_clause') is not None:
+        dml_table_node = table_ref_aux_internal_node.get_child_by_value('dml_table_expression_clause')
+        if dml_table_node.get_child_by_value('tableview_name') is not None:
+            tableview_name_node = dml_table_node.get_child_by_value('tableview_name')
+            if len(tableview_name_node.get_children_by_path('id_expression')) > 0:
+                id_expression_node = tableview_name_node.get_children_by_path('id_expression')[-1]
+                table_name = str(id_expression_node).strip('"')
+            else:
                 if tableview_name_node.get_child_by_value('identifier') is not None:
                     identifier_node = tableview_name_node.get_child_by_value('identifier')
                     if identifier_node.get_child_by_value('id_expression') is not None:
-                        extension_name = str(identifier_node.get_child_by_value('id_expression')).strip('"')
-                        if extension_name.upper() not in name_dict:
-                            name_dict[extension_name.upper()] = 1
-                            rename_flag = False
+                        table_name = str(identifier_node.get_child_by_value('id_expression')).strip('"')
+            assert table_name is not None
+            if extension_name is None and table_name.upper() in name_dict:
+                extension_name = table_name
+                rename_flag = True
+            table_flag = True
+    if table_ref_aux_internal_node.get_child_by_value('dml_table_expression_clause') is not None:
+        dml_table_node = table_ref_aux_internal_node.get_child_by_value('dml_table_expression_clause')
+        if dml_table_node.get_child_by_value('select_statement') is not None:
+            assert isinstance(dml_table_node, TreeNode)
+            subquery_node = dml_table_node.get_children_by_path(
+                ['select_statement', 'select_only_statement', 'subquery'])
+            assert len(subquery_node) == 1
+            subquery_node = subquery_node[0]
+            query_block_node = fetch_main_select_from_subquery_oracle(subquery_node)
+            selected_list_nodes = query_block_node.get_child_by_value('selected_list')
+            assert selected_list_nodes is not None
+            if selected_list_nodes.get_child_by_value('*') is not None:
+                print('* is not Support yet')
+                assert False
+            select_elements = selected_list_nodes.get_children_by_value('select_list_elements')
+            col_rename_dict = {}
+            for i in range(len(select_elements)):
+                expr_node = select_elements[i].get_child_by_value('expression')
+                if expr_node is None:
+                    continue
+                if not general_element_only_oracle(expr_node):
+                    if select_elements[i].get_child_by_value('column_alias') is None:
+                        rename_column_oracle(select_elements[i], col_rename_dict)
     if rename_flag:
         if extension_name is None:
             extension_name = 'table'
@@ -123,11 +157,19 @@ def analyze_table_ref_aux(table_ref_aux_node: TreeNode, name_dict: dict):
             new_node = TreeNode('table_alias', 'oracle', False)
             new_node.add_child(TreeNode(f"{get_table_col_name(extension_name, 'oracle').lower()}", 'oracle', True))
             table_ref_aux_node.add_child(new_node)
-    return {
-        "type": "other",
-        "name": extension_name,
-        "content": table_ref_aux_node
-    }
+    if table_flag:
+        return {
+            "type": "table",
+            "name": table_name,
+            'alias': extension_name,
+            "column_names": None
+        }
+    else:
+        return {
+            "type": "other",
+            "name": extension_name,
+            "content": table_ref_aux_node
+        }
 
 
 def parse_oracle_group_by(group_by_elements_nodes: list):

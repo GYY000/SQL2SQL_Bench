@@ -2,8 +2,8 @@ import sys
 
 from antlr4.tree.Tree import TerminalNodeImpl
 
-from antlr_parser.parse_tree import get_lexer_parser, parse_tree
-from utils.tools import self_split, remove_all_space
+from antlr_parser.parse_tree import get_lexer_parser
+from utils.tools import self_split
 
 parser_map = {}
 lexer_map = {}
@@ -55,33 +55,34 @@ class TreeNode:
         return self.value
 
     def __str__(self):
-        if self.get_value_rep() == '<EOF>':
+        if self.value == '<EOF>':
             return ''
         res = ''
         flag = False
         flag_paren = True
         if self.is_terminal:
-            res = self.get_value_rep()
+            res = self.value
             return res
         if self.dialect == 'mysql':
-            if self.get_value_rep() in ['comparisonOperator', 'logicalOperator', 'bitOperator', 'multOperator',
+            if self.value in ['comparisonOperator', 'logicalOperator', 'bitOperator', 'multOperator',
                                         'jsonOperator']:
                 for child in self.children:
                     sub_str = str(child)
                     res = res + sub_str.strip()
                 return res
-            if (self.get_value_rep() == 'functionCall' and len(self.children) != 0
-                    and (self.children[0].get_value_rep() == 'scalarFunctionName' or self.children[
-                        0].get_value_rep() == 'fullId')):
+            if (self.value == 'functionCall' and len(self.children) != 0
+                    and (self.children[0].value == 'scalarFunctionName' or self.children[
+                        0].value == 'fullId')):
                 flag_paren = False
-            elif (self.get_value_rep() == 'specificFunction' or self.get_value_rep() == 'passwordFunctionClause' or
-                  self.get_value_rep() == 'aggregateWindowedFunction' or self.get_value_rep() == 'nonAggregateWindowedFunction'
-                  or self.get_value_rep() == 'dataType'):
+            elif (self.value == 'specificFunction' or self.value == 'passwordFunctionClause' or
+                  self.value == 'aggregateWindowedFunction' or
+                  self.value == 'nonAggregateWindowedFunction'
+                  or self.value == 'dataType'):
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
-                    if child.is_terminal and child.get_value_rep() == '(':
-                        res = res + child.get_value_rep()
+                    if child.is_terminal and child.value == '(':
+                        res = res + child.value
                         flag = True
                     else:
                         sub_str = str(child)
@@ -95,15 +96,15 @@ class TreeNode:
                                 flag = True
                 return res
         elif self.dialect == 'pg':
-            if ((self.get_value_rep() == 'func_application' or self.get_value_rep() == 'func_expr_common_subexpr')
+            if ((self.value == 'func_application' or self.value == 'func_expr_common_subexpr')
                     and len(self.children) != 0):
                 flag_paren = False
-            if self.father is not None and self.father.get_value_rep() == 'simpletypename':
+            if self.father is not None and self.father.value == 'simpletypename':
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
-                    if child.is_terminal and child.get_value_rep() == '(':
-                        res = res + child.get_value_rep()
+                    if child.is_terminal and child.value == '(':
+                        res = res + child.value
                         flag = True
                     else:
                         sub_str = str(child)
@@ -117,18 +118,19 @@ class TreeNode:
                                 flag = True
                 return res
         elif self.dialect == 'oracle':
-            if self.get_value_rep() in ['relational_operator']:
+            if self.value in ['relational_operator']:
                 for child in self.children:
                     sub_str = str(child)
                     res = res + sub_str.strip()
                 return res
-            if (self.get_value_rep() == 'string_function' or self.get_value_rep() == 'json_function'
-                    or self.get_value_rep() == 'other_function' or self.get_value_rep() == 'numeric_function' or self.get_value_rep() == 'datatype'):
+            if (self.value == 'string_function' or self.value == 'json_function'
+                    or self.value == 'other_function' or
+                    self.value == 'numeric_function' or self.value == 'datatype'):
                 flag_paren = False
             if not flag_paren:
                 for child in self.children:
-                    if child.is_terminal and child.get_value_rep() == '(':
-                        res = res + child.get_value_rep()
+                    if child.is_terminal and child.value == '(':
+                        res = res + child.value
                         flag = True
                     else:
                         sub_str = str(child)
@@ -147,9 +149,9 @@ class TreeNode:
                     flag = False
                 if sub_str != '':
                     if (flag and not res.endswith('.')
-                            and not child.get_value_rep() == 'function_argument'
-                            and not child.get_value_rep() == 'function_argument_analytic'
-                            and not child.get_value_rep() == 'function_argument_modeling'):
+                            and not child.value == 'function_argument'
+                            and not child.value == 'function_argument_analytic'
+                            and not child.value == 'function_argument_modeling'):
                         res = res + " " + sub_str.strip()
                     else:
                         res = res + sub_str
@@ -307,7 +309,7 @@ class TreeNode:
     def get_children_by_value(self, value: str):
         res = []
         for child in self.children:
-            if child.get_value_rep() == value:
+            if child.value.lower() == value.lower():
                 res.append(child)
         return res
 
@@ -321,8 +323,6 @@ class TreeNode:
 
     @staticmethod
     def locate_node(root_node, column: int, ori_sql: str):
-        # print("column", column)
-        # print("ori_sql", ori_sql)
         node_str = str(root_node)
         node_res = ''
         for split_piece in node_str.split():
@@ -339,7 +339,7 @@ class TreeNode:
         else:
             res = []
             for child in self.children:
-                if child.get_value_rep() == path[0]:
+                if child.value == path[0]:
                     res = res + child.get_children_by_path(path[1:])
             return res
 

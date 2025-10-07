@@ -11,6 +11,7 @@ from antlr_parser.mysql_parser.MySqlLexer import MySqlLexer
 
 from antlr_parser.oracle_parser.PlSqlParser import PlSqlParser
 from antlr_parser.oracle_parser.PlSqlLexer import PlSqlLexer
+from sql_gen.generator.point_type.TranPointType import TranPointType
 
 map_parser = ["postgres", "mysql", "oracle"]
 
@@ -31,7 +32,7 @@ def parse_tree(src_sql: str, dialect: str) -> (str, int, int, str):
         raise ValueError("use one of" + str(map_parser) + " as argument")
 
 
-def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, int, str):
+def parse_element_tree(function_expr: str, dialect: str, point_type: TranPointType) -> (str, int, int, str):
     if dialect == 'pg':
         try:
             input_stream = InputStream(function_expr)
@@ -40,14 +41,11 @@ def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, 
             stream = CommonTokenStream(lexer)
             parser = PostgreSQLParser(stream)
             parser.addErrorListener(CustomErrorListener())
-            if element == 'FUNCTION':
-                tree = parser.a_expr()
-            elif element == 'ORDER_BY_CLAUSE':
-                tree = parser.sort_clause()
-            elif element == 'LITERAL':
-                tree = parser.aexprconst()
-            else:
-                assert False
+            if not hasattr(parser, point_type.parsing_rule_name(dialect)):
+                raise AttributeError(f"{parser.__class__.__name__} "
+                                     f"has no method named {point_type.parsing_rule_name(dialect)}")
+            method = getattr(parser, point_type.parsing_rule_name(dialect))
+            tree = method()
             return tree, None, None, None
         except SelfParseError as e:
             return None, e.line, e.column, e.msg
@@ -62,14 +60,11 @@ def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, 
             stream = CommonTokenStream(lexer)
             parser = MySqlParser(stream)
             parser.addErrorListener(CustomErrorListener())
-            if element == 'FUNCTION':
-                tree = parser.expression()
-            elif element == 'ORDER_BY_CLAUSE':
-                tree = parser.orderByClause()
-            elif element == 'LITERAL':
-                tree = parser.expressionAtom()
-            else:
-                assert False
+            if not hasattr(parser, point_type.parsing_rule_name(dialect)):
+                raise AttributeError(f"{parser.__class__.__name__} "
+                                     f"has no method named {point_type.parsing_rule_name(dialect)}")
+            method = getattr(parser, point_type.parsing_rule_name(dialect))
+            tree = method()
             return tree, None, None, None
         except SelfParseError as e:
             return None, e.line, e.column, e.msg
@@ -84,14 +79,11 @@ def parse_element_tree(function_expr: str, dialect: str, element) -> (str, int, 
             stream = CommonTokenStream(lexer)
             parser = PlSqlParser(stream)
             parser.addErrorListener(CustomErrorListener())
-            if element == 'FUNCTION':
-                tree = parser.expression()
-            elif element == 'ORDER_BY_CLAUSE':
-                tree = parser.order_by_clause()
-            elif element == 'LITERAL':
-                tree = parser.constant()
-            else:
-                assert False
+            if not hasattr(parser, point_type.parsing_rule_name(dialect)):
+                raise AttributeError(f"{parser.__class__.__name__} "
+                                     f"has no method named {point_type.parsing_rule_name(dialect)}")
+            method = getattr(parser, point_type.parsing_rule_name(dialect))
+            tree = method()
             return tree, None, None, None
         except SelfParseError as e:
             return None, e.line, e.column, e.msg

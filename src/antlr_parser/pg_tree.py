@@ -20,7 +20,9 @@ def get_pg_main_select_node_from_select_stmt(select_stmt_node: TreeNode):
 
 
 def fetch_main_select_from_select_stmt_pg(select_stmt_node: TreeNode):
-    "can be both selectstmt node or select_with_parens or selct_no_parens"
+    """
+    can be both selectstmt node or select_with_parens or selct_no_parens
+    """
     while True:
         if select_stmt_node.value != 'select_no_parens':
             while select_stmt_node.get_child_by_value('select_no_parens') is None:
@@ -30,8 +32,8 @@ def fetch_main_select_from_select_stmt_pg(select_stmt_node: TreeNode):
             select_stmt_node = select_stmt_node.get_child_by_value('select_no_parens')
         select_clause_node = select_stmt_node.get_child_by_value('select_clause')
         assert isinstance(select_clause_node, TreeNode)
-        simple_select_intersect_node = select_clause_node.get_child_by_value('simple_select_intersect')
-        simple_select_primary_node = simple_select_intersect_node.get_child_by_value('simple_select_pramary')
+        simple_select_intersect_node = select_clause_node.get_children_by_value('simple_select_intersect')[0]
+        simple_select_primary_node = simple_select_intersect_node.get_children_by_value('simple_select_pramary')[0]
         assert isinstance(simple_select_primary_node, TreeNode)
         if simple_select_primary_node.get_child_by_value('select_with_parens') is not None:
             select_stmt_node = simple_select_primary_node.get_child_by_value('select_with_parens')
@@ -54,6 +56,7 @@ def fetch_all_simple_select_from_select_stmt_pg(select_stmt_node: TreeNode):
             select_stmt_node = select_stmt_node.get_child_by_value('select_with_parens')
             assert select_stmt_node.get_child_by_value('select_no_parens') is not None
             select_stmt_node = select_stmt_node.get_child_by_value('select_no_parens')
+        select_stmt_node = select_stmt_node.get_child_by_value('select_no_parens')
     select_clause_node = select_stmt_node.get_child_by_value('select_clause')
     return dfs_select_clause(select_clause_node)
 
@@ -93,7 +96,7 @@ def dfs_simple_select_primary(simple_select_primary_node: TreeNode) -> list:
 
 
 def only_column_ref_pg(a_expr_node: TreeNode):
-    while a_expr_node.value != 'column_ref':
+    while a_expr_node.value != 'columnref':
         if len(a_expr_node.children) != 1:
             return False
         a_expr_node = a_expr_node.children[0]
@@ -103,21 +106,23 @@ def only_column_ref_pg(a_expr_node: TreeNode):
 def rename_column_pg(target_el_node: TreeNode, name_dict: dict, extend_name=None):
     if extend_name is None:
         extend_name = 'col'
-    idx = name_dict.get(extend_name, 1)
-    name_dict[extend_name] = idx + 1
+    idx = 0
+    while f"{extend_name.lower()}_{idx}" in name_dict:
+        idx += 1
+    name_dict[f"{extend_name.lower()}_{idx}"] = 1
     if target_el_node.get_child_by_value('collable') is not None:
         uid_node = target_el_node.get_child_by_value('collable')
-        new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True)
+        new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'pg', True)
         assert isinstance(uid_node, TreeNode)
         uid_node.children = [new_name_node]
     elif target_el_node.get_child_by_value('identifier') is not None:
         uid_node = target_el_node.get_child_by_value('identifier')
-        new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True)
+        new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'pg', True)
         assert isinstance(uid_node, TreeNode)
         uid_node.children = [new_name_node]
     else:
-        target_el_node.add_child(TreeNode('AS', 'mysql', True))
-        target_el_node.add_child(TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True))
+        target_el_node.add_child(TreeNode('AS', 'pg', True))
+        target_el_node.add_child(TreeNode(f"{extend_name.lower()}_{idx}", 'pg', True))
     return f"{extend_name}_{idx}"
 
 
@@ -239,7 +244,7 @@ def analyze_table_ref(table_ref: TreeNode, name_dict: dict):
             name_dict[table_name] = 1
         if table_name is not None:
             pass
-        return [
+        res = [
             {
                 "type": "table",
                 "name": ori_table_name,
@@ -302,7 +307,6 @@ def rename_table(father_node: TreeNode, son_node: TreeNode | None, name_dict, va
     if father_node.get_child_by_value('opt_alias_clause') is None:
         assert son_node is not None
         table_alias_node = TreeNode('table_alias_clause', 'pg', False)
-        table_alias_node.add_child(TreeNode('AS', 'pg', True))
         table_alias_node.add_child(TreeNode(f"{get_table_col_name(value, 'pg').lower()}", 'pg', True))
         opt_alias_node = TreeNode('opt_alias_clause', 'pg', False)
         opt_alias_node.add_child(table_alias_node)
@@ -315,28 +319,28 @@ def rename_table(father_node: TreeNode, son_node: TreeNode | None, name_dict, va
         return value
 
 
-
 def rename_sql_pg(select_stmt_node: TreeNode):
     name_dict = {}
     res = []
     select_main_node = fetch_main_select_from_select_stmt_pg(select_stmt_node)
     target_list_node = select_main_node.get_child_by_value('target_list')
-    if target_list_node is not None:
+    if target_list_node is None:
         target_list_node = select_main_node.get_children_by_path(['opt_target_list', 'target_list'])
-        assert target_list_node is not None
+        assert len(target_list_node) == 1
+        target_list_node = target_list_node[0]
     select_elements = target_list_node.get_children_by_value('target_el')
     for i in range(len(select_elements)):
         if select_elements[i].get_child_by_value('*') is not None:
-            print('* is not Support yet')
-            assert False
+            continue
         a_expr_node = select_elements[i].get_child_by_value('a_expr')
         assert a_expr_node is not None
-        if select_elements[i].get_child_by_value('AS') is not None:
+        if select_elements[i].get_child_by_value('collabel') is not None or select_elements[i].get_child_by_value(
+                'identifier') is not None:
             col_name = select_elements[i].get_child_by_value('collabel')
             if col_name is None:
                 col_name = select_elements[i].get_child_by_value('identifier')
             col_name = str(col_name).strip('"')
-            if col_name in dict:
+            if col_name in name_dict:
                 col_name = rename_column_pg(select_elements[i], name_dict, col_name)
             else:
                 name_dict[col_name] = 1
@@ -345,11 +349,13 @@ def rename_sql_pg(select_stmt_node: TreeNode):
                 col_name = rename_column_pg(select_elements[i], name_dict)
             else:
                 column_ref_node = a_expr_node.get_node_until('columnref')
+                assert len(column_ref_node) == 1
+                column_ref_node = column_ref_node[0]
                 if column_ref_node.get_child_by_value('indirection') is None:
                     col_name = column_ref_node.get_child_by_value('colid')
                     assert col_name is not None
                     col_name = str(col_name).strip('"')
-                    if col_name in dict:
+                    if col_name in name_dict:
                         col_name = rename_column_pg(select_elements[i], name_dict, col_name)
                     else:
                         name_dict[col_name] = 1
@@ -358,8 +364,7 @@ def rename_sql_pg(select_stmt_node: TreeNode):
                     indirection_els = indirection_node.get_children_by_value('indirection_el')
                     used_name = indirection_els[-1]
                     if used_name.get_child_by_value('*') is not None:
-                        print('* is not Support yet')
-                        assert False
+                        raise ValueError('* is not Support yet')
                     else:
                         col_name = used_name.get_child_by_value('attr_name')
                         if col_name is None:
@@ -367,12 +372,13 @@ def rename_sql_pg(select_stmt_node: TreeNode):
                             col_name = rename_column_pg(select_elements[i], name_dict, extend_name='array')
                         else:
                             col_name = str(col_name).strip('"')
-                            if col_name in dict:
+                            if col_name in name_dict:
                                 col_name = rename_column_pg(select_elements[i], name_dict, col_name)
                             else:
                                 name_dict[col_name] = 1
         res.append(col_name)
     return res
+
 
 def parse_pg_group_by(group_list_node: TreeNode) -> list:
     group_by_item_nodes = group_list_node.get_children_by_value('group_by_item')
@@ -409,8 +415,8 @@ def parse_pg_group_by(group_list_node: TreeNode) -> list:
             res = []
             for item_node in group_by_list_node.get_children_by_value('group_by_item'):
                 assert item_node.get_child_by_value('group_expr_list') is not None
-                expr_list = group_by_item.get_child_by_value('group_expr_list').get_child_by_value('expr_list')
-                for a_expr in expr_list.get_child_by_value('a_expr'):
+                expr_list = item_node.get_child_by_value('group_expr_list').get_child_by_value('expr_list')
+                for a_expr in expr_list.get_children_by_value('a_expr'):
                     res.append(a_expr)
             return res
         else:
