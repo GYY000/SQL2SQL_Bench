@@ -5372,6 +5372,15 @@ class MySqlParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by MySqlParser#typeConstExpressionAtom.
+    def enterTypeConstExpressionAtom(self, ctx:MySqlParser.TypeConstExpressionAtomContext):
+        pass
+
+    # Exit a parse tree produced by MySqlParser#typeConstExpressionAtom.
+    def exitTypeConstExpressionAtom(self, ctx:MySqlParser.TypeConstExpressionAtomContext):
+        pass
+
+
     # Enter a parse tree produced by MySqlParser#jsonExpressionAtom.
     def enterJsonExpressionAtom(self, ctx:MySqlParser.JsonExpressionAtomContext):
         pass

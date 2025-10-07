@@ -1,4 +1,4 @@
-# Generated from /data/Coding/LLM4DB/antlr_gram/mysql/MySqlParser.g4 by ANTLR 4.13.1
+# Generated from D://Coding//SQL2SQL_Bench//src//antlr_parser//antlr_def//new_mysql//mysql//MySqlParser.g4 by ANTLR 4.13.1
 from antlr4 import *
 if "." in __name__:
     from .MySqlParser import MySqlParser
@@ -5378,6 +5378,15 @@ class MySqlParserListener(ParseTreeListener):
 
     # Exit a parse tree produced by MySqlParser#intervalExpressionAtom.
     def exitIntervalExpressionAtom(self, ctx:MySqlParser.IntervalExpressionAtomContext):
+        pass
+
+
+    # Enter a parse tree produced by MySqlParser#typeConstExpressionAtom.
+    def enterTypeConstExpressionAtom(self, ctx:MySqlParser.TypeConstExpressionAtomContext):
+        pass
+
+    # Exit a parse tree produced by MySqlParser#typeConstExpressionAtom.
+    def exitTypeConstExpressionAtom(self, ctx:MySqlParser.TypeConstExpressionAtomContext):
         pass
 
 

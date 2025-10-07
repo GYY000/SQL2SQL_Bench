@@ -4,7 +4,6 @@
 # @Author: 10379
 # @Time: 2025/4/2 20:34
 from antlr_parser.Tree import TreeNode
-from antlr_parser.parse_tree import parse_tree
 from utils.tools import get_table_col_name
 
 
@@ -44,7 +43,7 @@ def fetch_main_select_from_select_stmt_mysql(select_statement_node: TreeNode):
 def fetch_all_simple_select_from_select_stmt_mysql(select_statement_node: TreeNode):
     node = select_statement_node
     nodes = node.find_all_nodes_of_values(['querySpecification', 'queryExpression',
-                                           'querySpecificationNointo', 'queryExpressionNointo'])
+                                           'querySpecificationNointo', 'queryExpressionNointo', 'unionStatement'])
     res = []
     for node in nodes:
         if node.value == 'querySpecificationNointo' or node.value == 'querySpecification':
@@ -52,11 +51,17 @@ def fetch_all_simple_select_from_select_stmt_mysql(select_statement_node: TreeNo
         elif node.value == 'queryExpressionNointo':
             while node.get_child_by_value('querySpecificationNointo') is None:
                 node = node.get_child_by_value('queryExpressionNointo')
-            res.append(node.get_child_by_value('querySpecificationNointo'))
+            node = node.get_child_by_value('querySpecificationNointo')
+            res.append(node)
         elif node.value == 'queryExpression':
             while node.get_child_by_value('querySpecification') is None:
                 node = node.get_child_by_value('queryExpression')
             node = node.get_child_by_value('querySpecification')
+            res.append(node)
+        elif node.value == 'unionStatement':
+            while node.get_child_by_value('querySpecificationNointo') is None:
+                node = node.get_child_by_value('queryExpressionNointo')
+            node = node.get_child_by_value('querySpecificationNointo')
             res.append(node)
         assert node.value == 'querySpecificationNointo' or node.value == 'querySpecification'
     return res
@@ -65,8 +70,10 @@ def fetch_all_simple_select_from_select_stmt_mysql(select_statement_node: TreeNo
 def rename_column_mysql(select_element_node: TreeNode, name_dict: dict, extend_name=None):
     if extend_name is None:
         extend_name = 'col'
-    idx = name_dict.get(extend_name, 1)
-    name_dict[extend_name] = idx + 1
+    idx = 0
+    while f"{extend_name.lower()}_{idx}" in name_dict:
+        idx += 1
+    name_dict[f"{extend_name.lower()}_{idx}"] = 1
     if select_element_node.get_child_by_value('uid') is not None:
         uid_node = select_element_node.get_child_by_value('uid')
         new_name_node = TreeNode(f"{extend_name.lower()}_{idx}", 'mysql', True)
@@ -107,11 +114,18 @@ def rename_sql_mysql(select_stmt_node: TreeNode):
         else:
             if select_element_node.get_child_by_value('uid') is not None:
                 col_name = str(select_element_node.get_child_by_value('uid')).strip('`')
+            elif select_element_node.get_child_by_value('fullId') is not None:
+                raise ValueError('* is not Support yet')
             else:
                 full_name_node = select_element_node.get_child_by_value('fullColumnName')
+                if full_name_node is None:
+                    assert False
                 dotted_ids = full_name_node.get_children_by_value('dottedId')
-                dotted_id_node = dotted_ids[-1]
-                col_name = str(dotted_id_node).strip('.').strip('`')
+                if len(dotted_ids) > 0:
+                    dotted_id_node = dotted_ids[-1]
+                    col_name = str(dotted_id_node).strip('.').strip('`')
+                else:
+                    col_name = str(full_name_node).strip('`')
             if col_name in name_dict:
                 col_name = rename_column_mysql(select_element_node, name_dict, col_name)
             else:
@@ -145,7 +159,10 @@ def analyze_mysql_table_source_item(table_source_item_node: TreeNode, dialect: s
     if table_source_item_node.get_child_by_value('tableSources') is not None:
         return analyze_mysql_table_sources(table_source_item_node.get_child_by_value('tableSources'), dialect,
                                            name_dict)
-    elif table_source_item_node.get_child_by_value('selectStatement') is not None:
+    elif table_source_item_node.get_child_by_value('dmlStatement') is not None:
+        dml_statement_node = table_source_item_node.get_child_by_value('dmlStatement')
+        assert isinstance(dml_statement_node, TreeNode)
+        assert dml_statement_node.get_child_by_value('selectStatement') is not None
         if table_source_item_node.get_child_by_value('uid') is not None:
             table_name = str(table_source_item_node.get_child_by_value('uid')).strip('`')
         else:
@@ -157,7 +174,6 @@ def analyze_mysql_table_source_item(table_source_item_node: TreeNode, dialect: s
             else:
                 name_dict[extension_name] = 1
                 table_name = extension_name
-            table_source_item_node.add_child(TreeNode('AS', 'mysql', True))
             new_uid_node = TreeNode('uid', 'mysql', False)
             new_uid_node.add_child(TreeNode(get_table_col_name(table_name, 'mysql').lower(), 'mysql', True))
             table_source_item_node.add_child(new_uid_node)
@@ -165,12 +181,12 @@ def analyze_mysql_table_source_item(table_source_item_node: TreeNode, dialect: s
         if table_source_item_node.get_child_by_value('uidList') is not None:
             column_names = get_names_from_uid_lists(table_source_item_node.get_child_by_value('uidList'))
         else:
-            column_names = rename_sql_mysql(table_source_item_node.get_child_by_value('selectStatement'))
+            column_names = rename_sql_mysql(dml_statement_node.get_child_by_value('selectStatement'))
         return [{
             "type": "subquery",
             "name": table_name,
             "column_names": column_names,
-            "sub_query_node": table_source_item_node.get_child_by_value('selectStatement'),
+            "sub_query_node": dml_statement_node.get_child_by_value('selectStatement'),
             "lateral": lateral_flag,  # if it's a lateral subquery
             "rename_flag": rename_flag
         }]
@@ -200,7 +216,6 @@ def analyze_mysql_table_source_item(table_source_item_node: TreeNode, dialect: s
                 extension_name = table_name + '_' + str(name_dict[table_name])
                 name_dict[table_name] += 1
                 final_name = extension_name
-                table_source_item_node.add_child(TreeNode('AS', 'mysql', True))
                 new_uid_node = TreeNode('uid', 'mysql', False)
                 new_uid_node.add_child(TreeNode(get_table_col_name(final_name, 'mysql').lower(), 'mysql', True))
                 table_source_item_node.add_child(new_uid_node)

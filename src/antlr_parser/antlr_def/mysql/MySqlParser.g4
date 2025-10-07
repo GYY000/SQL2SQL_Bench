@@ -859,8 +859,8 @@ replaceStatement
     ;
 
 selectStatement
-    : querySpecification lockClause? # simpleSelect
-    | queryExpression lockClause?    # parenthesisSelect
+    : (querySpecificationNointo | querySpecification) lockClause? # simpleSelect
+    | (queryExpression | queryExpressionNointo)  lockClause?    # parenthesisSelect
     | (querySpecificationNointo | queryExpressionNointo) unionStatement+ (
         (UNION | INTERSECT | EXCEPT) unionType = (ALL | DISTINCT)? (querySpecification | queryExpression)
     )? orderByClause? limitClause? lockClause?                                                                                               # unionSelect
@@ -1009,12 +1009,12 @@ queryExpressionNointo
     ;
 
 querySpecification
-    : SELECT selectSpec* selectElements selectIntoExpression? fromClause groupByClause? havingClause? windowClause? orderByClause? limitClause?
-    | SELECT selectSpec* selectElements fromClause groupByClause? havingClause? windowClause? orderByClause? limitClause? selectIntoExpression?
+    : SELECT selectSpec* selectElements selectIntoExpression fromClause groupByClause? havingClause? windowClause? orderByClause? limitClause?
+    | SELECT selectSpec* selectElements fromClause groupByClause? havingClause? windowClause? orderByClause? limitClause? selectIntoExpression
     ;
 
 querySpecificationNointo
-    : SELECT selectSpec* selectElements fromClause groupByClause? havingClause? windowClause? orderByClause? limitClause? unionStatement?
+    : SELECT selectSpec* selectElements fromClause groupByClause? havingClause? windowClause? orderByClause? limitClause?
     ;
 
 unionParenthesis
@@ -2345,7 +2345,7 @@ functionCall
     : specificFunction                         # specificFunctionCall
     | aggregateWindowedFunction                # aggregateFunctionCall
     | nonAggregateWindowedFunction             # nonAggregateFunctionCall
-    | scalarFunctionName '(' functionArgs? ')' # scalarFunctionCall
+    | scalarFunctionName '(' functionArgs? ')' overClause? # scalarFunctionCall
     | fullId '(' functionArgs? ')'             # udfFunctionCall
     | passwordFunctionClause                   # passwordFunctionCall
     ;
@@ -2543,6 +2543,7 @@ expressionAtom
     : constant                                                  # constantExpressionAtom
     | fullColumnName                                            # fullColumnNameExpressionAtom
     | functionCall                                              # functionCallExpressionAtom
+    | dataType stringLiteral                                    # typeConstExpressionAtom
     | expressionAtom COLLATE collationName                      # collateExpressionAtom
     | mysqlVariable                                             # mysqlVariableExpressionAtom
     | unaryOperator expressionAtom                              # unaryExpressionAtom
