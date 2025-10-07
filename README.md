@@ -1,3 +1,7 @@
 # SQL2SQL_Bench
 
-## 转换点组织形式
+<p align="center">
+    <img src="figures/system-overview.pdf" width="1000px">
+</p>
+
+## Installation
