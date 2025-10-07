@@ -1,21 +1,22 @@
+import decimal
 import json
 import os.path
 import re
 import subprocess
 import traceback
 from datetime import datetime
+from decimal import Decimal
 
 from typing import List
 
 import mysql.connector
 import psycopg
 
-
 import oracledb
 
 from sql_gen.generator.ele_type.type_operation import load_col_type
 from utils.tools import get_proj_root_path, load_mysql_config, load_pg_config, load_oracle_config, get_db_ids, \
-    get_empty_db_name
+    get_empty_db_name, get_all_db_name
 
 mysql_conn_map = {}
 mysql_cursor_map = {}
@@ -42,28 +43,144 @@ database_mapping = {
 }
 
 
+def convert_decimal_to_float(obj):
+    """递归地将对象中的 Decimal 转换为 float"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, list):
+        return [convert_decimal_to_float(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_decimal_to_float(item) for item in obj)
+    elif isinstance(obj, dict):
+        return {key: convert_decimal_to_float(value) for key, value in obj.items()}
+    else:
+        return obj
+
+
 def get_db_name(dialect, db_name):
-    db_ids = get_db_ids()
+    db_ids = get_db_ids() + [get_all_db_name(dialect)]
     if db_name not in database_mapping:
         for db_id in db_ids:
             if db_id == db_name:
-                return db_id
+                return db_name
             elif db_name == get_empty_db_name(db_id):
-                return db_id
+                return db_name
         assert False
     else:
         return database_mapping[db_name][dialect]
 
 
-def sql_execute(dialect: str, db_name: str, sql: str, db_parameter: dict | None = None):
+def sql_execute(dialect: str, db_name: str, sql: str, db_parameter: dict | None = None, emp_flag=False,
+                restart_flag=False):
     if dialect == 'pg':
-        return pg_sql_execute(db_name, sql, db_parameter)
+        return pg_sql_execute(db_name, sql, db_parameter, emp_flag, restart_flag)
     elif dialect == 'mysql':
-        return mysql_sql_execute(db_name, sql, db_parameter)
+        return mysql_sql_execute(db_name, sql, db_parameter, emp_flag, restart_flag)
     elif dialect == 'oracle':
-        return oracle_sql_execute(db_name, sql, False, db_parameter)
+        return oracle_sql_execute(db_name, sql, False, db_parameter, emp_flag, restart_flag)
     else:
         raise ValueError(f"{dialect} is not supported")
+
+
+def sql_dependent_execute(dialect: str, dbname: str, sql: str, db_param: dict | None = None):
+    if dialect == 'mysql':
+        return mysql_dependent_execute(dbname, sql, db_param)
+    elif dialect == 'pg':
+        return pg_dependent_execute(dbname, sql, db_param)
+    elif dialect == 'oracle':
+        return oracle_dependent_execute(dbname, sql, db_param)
+    else:
+        raise ValueError(f"{dialect} is not supported")
+
+
+def mysql_dependent_execute(dbname: str, sql: str, db_param: dict | None = None):
+    try:
+        connection = mysql.connector.connect(
+            host=mysql_config['mysql_host'],
+            port=mysql_config['mysql_port'],
+            user=mysql_config['mysql_user'],
+            password=mysql_config['mysql_pwd'],
+            database=dbname
+        )
+        cursor = connection.cursor()
+        cursor.execute('SET NAMES utf8mb4 COLLATE utf8mb4_bin')
+        if db_param is not None:
+            for key, value in db_param.items():
+                cursor.execute(f"SET SESSION {key} = '{value}'")
+            connection.commit()
+        cursor.execute(sql.strip().strip(';'))
+        rows = cursor.fetchall()
+        connection.commit()
+        return True, rows
+    except mysql.connector.Error as e:
+        print(sql)
+        print(f"Error while executing MySQL SQL: {e}")
+        return False, f"Error while executing MySQL SQL: {e}"
+
+
+def pg_dependent_execute(dbname: str, sql: str, db_param: dict | None = None):
+    try:
+        connection = psycopg.connect(
+            host=pg_config['pg_host'],
+            port=pg_config['pg_port'],
+            user=pg_config['pg_user'],
+            password=pg_config['pg_pwd'],
+            dbname=dbname
+        )
+        cursor = connection.cursor()
+        pg_conn_map[dbname] = connection
+        pg_cursor_map[dbname] = cursor
+        cursor.execute("SET lc_messages TO 'en_US.UTF-8';")
+        if db_param is not None:
+            for key, value in db_param.items():
+                cursor.execute(f"SET {key} = '{value}';")
+            connection.commit()
+        cursor.execute(sql.strip().strip(';'))
+        if cursor.description:
+            rows = cursor.fetchall()
+        else:
+            rows = None
+        connection.commit()
+        return True, rows
+    except (Exception, psycopg.Error) as error:
+        print(sql)
+        traceback.print_exc()
+        return False, f"Error while executing PostgreSQL query: {error}"
+
+
+def oracle_dependent_execute(db_name: str, sql: str, db_param: dict | None = None):
+    connection = oracledb.connect(
+        user=db_name,
+        password=ora_config['usr_default_pwd'],
+        host=ora_config['oracle_host'],
+        port=ora_config['oracle_port'],
+        service_name=ora_config['oracle_sid']
+    )
+    connection.outputtypehandler = output_type_handler
+    cursor = connection.cursor()
+    sql = sql.strip().strip(';')
+    db_name = get_db_name('oracle', db_name)
+    try:
+        if db_param is not None:
+            for key, value in db_param.items():
+                cursor.execute(f"ALTER SESSION SET {key} = '{value}'")
+            connection.commit()
+        cursor.execute(sql)
+        if sql.startswith('INSERT') or sql.startswith('CREATE'):
+            connection.commit()
+            return True, []
+        elif "SELECT" in sql.upper() and not 'EXPLAIN PLAN FOR' in sql:
+            result = cursor.fetchall()
+            return True, result
+        else:
+            connection.commit()
+            return True, []
+    except Exception as e:
+        # Handle the exception, log the error, and optionally raise
+        error_message = str(e)
+        print(sql)
+        print(f"Error executing SQL on database {db_name}: {error_message}")
+        return False, error_message
 
 
 def show_mysql_databases():
@@ -104,13 +221,12 @@ def mysql_drop_db(db_name: str):
         print(f"error raised: {err}")
 
 
-def mysql_db_connect(dbname):
-    if dbname in mysql_conn_map:
+def mysql_db_connect(dbname, restart_flag=False):
+    if not restart_flag and dbname in mysql_conn_map:
         conn = mysql_conn_map[dbname]
         if conn.is_connected():
             return mysql_conn_map[dbname], mysql_cursor_map[dbname]
     try:
-        # 建立连接
         connection = mysql.connector.connect(
             host=mysql_config['mysql_host'],
             port=mysql_config['mysql_port'],
@@ -123,7 +239,7 @@ def mysql_db_connect(dbname):
 
         if dbname not in databases:
             print(f"Database '{dbname}' don't exist, start creating")
-            cursor.execute(f"CREATE DATABASE `{dbname}`")
+            cursor.execute(f"CREATE DATABASE `{dbname}` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin")
             print(f"Database '{dbname}' create successfully!")
             connection.commit()
         cursor.close()
@@ -148,19 +264,22 @@ def mysql_db_connect(dbname):
         print(f"Error while connecting to MySQL: {e}")
 
 
-def mysql_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=False):
+def mysql_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=False, restart_flag=False):
     if emp_flag:
         db_name = get_empty_db_name(db_name)
     db_name = get_db_name('mysql', db_name)
-    connection, cursor = mysql_db_connect(db_name)
+    connection, cursor = mysql_db_connect(db_name, restart_flag)
     try:
+        cursor.execute('SET NAMES utf8mb4 COLLATE utf8mb4_bin')
+        cursor.execute('SET sql_mode = \'PAD_CHAR_TO_FULL_LENGTH\';')
         if db_param is not None:
-            for key, value in db_param:
+            for key, value in db_param.items():
                 cursor.execute(f"SET SESSION {key} = '{value}'")
             connection.commit()
         cursor.execute(sql.strip().strip(';'))
         rows = cursor.fetchall()
         connection.commit()
+        rows = convert_decimal_to_float(rows)
         return True, rows
     except mysql.connector.Error as e:
         connection.rollback()
@@ -204,7 +323,7 @@ def get_mysql_type(db_name: str, obj: str, is_table: bool, db_param: dict | None
             res = []
             for col in schema[table_name]['cols']:
                 col_name = col['col']
-                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'mysql', db_name)
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'mysql', db_name, table_name)
                 res.append({
                     "col": col_name.lower(),
                     "type": col_type
@@ -227,8 +346,6 @@ def get_mysql_type(db_name: str, obj: str, is_table: bool, db_param: dict | None
             col_name = column[0]
             col_type_code = column[1]
             col_type = get_mysql_type_by_oid(col_type_code)
-            if col_type == 'LONGLONG':
-                pass
             res.append({
                 "col": col_name.lower(),
                 "type": col_type
@@ -298,8 +415,8 @@ def pg_drop_db(db_name: str):
         print(f"Error while connecting to PostgreSQL: {error}")
 
 
-def pg_db_connect(dbname):
-    if dbname in pg_conn_map:
+def pg_db_connect(dbname, restart_flag=False):
+    if not restart_flag and dbname in pg_conn_map:
         conn = pg_conn_map[dbname]
         if conn:
             return pg_conn_map[dbname], pg_cursor_map[dbname]
@@ -352,11 +469,11 @@ def pg_db_connect(dbname):
         print(f"Error while connecting to PostgreSQL: {error}")
 
 
-def pg_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=False):
+def pg_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=False, restart_flag=False):
     if emp_flag:
         db_name = get_empty_db_name(db_name)
     db_name = get_db_name('pg', db_name)
-    connection, cursor = pg_db_connect(db_name)
+    connection, cursor = pg_db_connect(db_name, restart_flag)
     try:
         if db_param is not None:
             for key, value in db_param.items():
@@ -368,6 +485,7 @@ def pg_sql_execute(db_name: str, sql, db_param: dict | None = None, emp_flag=Fal
         else:
             rows = None
         connection.commit()
+        rows = convert_decimal_to_float(rows)
         return True, rows
     except (Exception, psycopg.Error) as error:
         print(sql)
@@ -413,14 +531,14 @@ def get_pg_type(db_name: str, obj: str, is_table: bool, db_param: dict | None = 
             res = []
             for col in schema[table_name]['cols']:
                 col_name = col['col']
-                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'pg', db_name)
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'pg', db_name, table_name)
                 res.append({
                     "col": col_name.lower(),
                     "type": col_type
                 })
             return True, res
-
     try:
+        db_name = get_empty_db_name(db_name)
         db_name = get_db_name('pg', db_name)
         connection, cursor = pg_db_connect(db_name)
         if db_param is not None:
@@ -439,6 +557,8 @@ def get_pg_type(db_name: str, obj: str, is_table: bool, db_param: dict | None = 
         connection.commit()
         return True, res
     except (Exception, psycopg.Error) as error:
+        print(obj)
+        print(f"Error while executing PostgreSQL query: {error}")
         connection.rollback()
         return False, [f"Error while executing PostgreSQL query: {error}"]
 
@@ -481,8 +601,18 @@ def show_oracle_databases():
         return None
 
 
-def oracle_db_connect(db_name):
-    if db_name in oracle_conn_map:
+def output_type_handler(cursor, name, default_type, length, precision, scale):
+    if default_type == oracledb.DB_TYPE_DATE:
+        return cursor.var(
+            oracledb.DB_TYPE_DATE,
+            arraysize=cursor.arraysize,
+            outconverter=lambda x: x.date() if x else None
+        )
+    return None
+
+
+def oracle_db_connect(db_name, restart_flag: bool):
+    if not restart_flag and db_name in oracle_conn_map:
         db_conn = oracle_conn_map[db_name]
         try:
             db_conn.ping()
@@ -496,6 +626,7 @@ def oracle_db_connect(db_name):
         port=ora_config['oracle_port'],
         service_name=ora_config['oracle_sid']
     )
+    connection.autocommit = True
     cursor = connection.cursor()
     cursor.execute(f"SELECT USERNAME FROM DBA_USERS")
     users = [user[0] for user in cursor.fetchall()]
@@ -524,6 +655,7 @@ def oracle_db_connect(db_name):
     cursor = connection.cursor()
     oracle_cursor_map[db_name] = cursor
     oracle_conn_map[db_name] = connection
+    connection.outputtypehandler = output_type_handler
     return connection, cursor
 
 
@@ -551,13 +683,14 @@ def oracle_drop_db(db_name):
     return True
 
 
-def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False, db_param: dict | None = None, emp_flag=False):
+def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False, db_param: dict | None = None, emp_flag=False,
+                       restart_flag=False):
     sql = sql.strip().strip(';')
     if emp_flag:
         db_name = get_empty_db_name(db_name)
     db_name = get_db_name('oracle', db_name)
     if not sql_plus_flag:
-        connection, cursor = oracle_db_connect(db_name)
+        connection, cursor = oracle_db_connect(db_name, restart_flag)
         try:
             if db_param is not None:
                 for key, value in db_param.items():
@@ -567,7 +700,7 @@ def oracle_sql_execute(db_name: str, sql: str, sql_plus_flag=False, db_param: di
             if sql.startswith('INSERT') or sql.startswith('CREATE'):
                 connection.commit()
                 return True, []
-            elif "SELECT" in sql.upper():
+            elif "SELECT" in sql.upper() and not 'EXPLAIN PLAN FOR' in sql:
                 result = cursor.fetchall()
                 return True, result
             else:
@@ -618,7 +751,7 @@ def get_oracle_type(db_name, obj: str, is_table: bool, db_param: dict | None = N
             res = []
             for col in schema[table_name]['cols']:
                 col_name = col['col']
-                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'oracle', db_name)
+                col_type, _, _ = load_col_type(col['type'], col['col_name'], 'oracle', db_name, table_name)
                 res.append({
                     "col": col_name.lower(),
                     "type": col_type
@@ -627,7 +760,7 @@ def get_oracle_type(db_name, obj: str, is_table: bool, db_param: dict | None = N
     try:
         db_name = get_empty_db_name(db_name)
         db_name = get_db_name('oracle', db_name)
-        connection, cursor = oracle_db_connect(db_name)
+        connection, cursor = oracle_db_connect(db_name, False)
         if db_param is not None:
             for key, value in db_param.items():
                 cursor.execute(f"ALTER SESSION SET {key} = '{value}'")
@@ -654,7 +787,7 @@ def get_oracle_type(db_name, obj: str, is_table: bool, db_param: dict | None = N
 
 def oracle_test(ddls: list[str], sql: str):
     test_db_name = 'test'
-    oracle_db_connect(test_db_name)
+    oracle_db_connect(test_db_name, True)
     for ddl in ddls:
         if ddl.strip() == '':
             continue
@@ -662,3 +795,9 @@ def oracle_test(ddls: list[str], sql: str):
     flag, res = oracle_sql_execute(test_db_name, sql)
     oracle_drop_db(test_db_name)
     return flag, res
+
+# print(show_mysql_databases())
+
+# mysql_drop_db('bird')
+
+# mysql_sql_execute('bird', 'PURGE BINARY LOGS TO \'mysql-bin.000071\';')

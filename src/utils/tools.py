@@ -10,8 +10,12 @@ import platform
 from typing import List
 
 
-def get_data_path():
-    return os.path.join('/home/gyy/data/database_data')
+def get_data_path(config_file=None):
+    if config_file is None:
+        config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    return config.get("FILE_PATH", 'data_path')
 
 
 def dialect_judge(dialect: str):
@@ -45,7 +49,22 @@ def load_config(config_file=None):
         "moonshot_api_base": config.get("API", 'moonshot_api_base'),
         "moonshot_api_key": config.get("API", 'moonshot_api_key'),
         "llama3.1_api_base": config.get("API", 'llama3.1_api_base'),
-        "llama3.2_api_base": config.get("API", 'llama3.2_api_base')
+        "volcano_api_base": config.get("API", 'volcano_api_base'),
+        "volcano_api_key": config.get("API", 'volcano_api_key'),
+        "bailian_api_base": config.get("API", 'bailian_api_base'),
+        "bailian_api_key": config.get("API", 'bailian_api_key'),
+        "deepseek_api_base": config.get("API", 'deepseek_api_base'),
+        "deepseek_api_key": config.get("API", 'deepseek_api_key'),
+    }
+
+
+def load_gen_param(config_file=None):
+    if config_file is None:
+        config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    return {
+        'using_new_sql_pos': config.getfloat("PARAMETER", 'using_new_sql_pos'),
     }
 
 
@@ -313,7 +332,7 @@ def gen_interval(dialect, units: list, values: list, sign=False):
 
 
 def get_no_space_len(string: str):
-    splits = string.split()
+    splits = self_split(string)
     length = 0
     for split in splits:
         length = length + len(split)
@@ -343,9 +362,6 @@ def get_table_col_name(name: str, dialect: str):
         elif ' ' in name or '-' in name:
             name = f"\"{name}\""
     elif dialect == 'mysql':
-        if name == 'cross':
-            print(name.upper() in reserved_keywords['mysql'])
-            print(reserved_keywords['mysql'])
         if name.upper() in reserved_keywords['mysql']:
             name = f"`{name}`"
         elif ' ' in name or '-' in name:
@@ -360,24 +376,71 @@ def get_table_col_name(name: str, dialect: str):
     return name
 
 
+def get_all_db_name(dialect: str):
+    return 'all_db_final'
+
+
 def get_db_ids():
     return [
-        'chinook',
+        # 'chinook',
         'bird',
         'hr_order_entry',
-        'sale_history',
-        'customer_order',
-        'snap',
+        # 'sale_history',
+        # 'customer_order',
+        # 'snap',
         'tpch',
         'tpcds',
-        'csail_stata_cinder',
-        'csail_stata_glance',
-        'csail_stata_neutron',
-        'csail_stata_nova',
+        # 'csail_stata_cinder',
+        # 'csail_stata_glance',
+        # 'csail_stata_neutron',
+        # 'csail_stata_nova',
         'dw',
-        'keystone'
+        # 'keystone'
     ]
+
+
+def get_schema_path(db_id: str):
+    if db_id not in get_db_ids():
+        return None
+    return os.path.join(get_data_path(), db_id)
 
 
 def get_empty_db_name(db_name):
     return f'emp_{db_name}'
+
+
+def no_space_and_case_insensitive_str(string_value: str):
+    splits = string_value.split()
+    result = ''
+    for item in splits:
+        result = result + item
+    return result.lower()
+
+
+def no_space_and_case_insensitive_str_eq(str1: str, str2: str):
+    return no_space_and_case_insensitive_str(str1) == no_space_and_case_insensitive_str(str2)
+
+
+def get_sql_folder_path(db_name: str):
+    return os.path.join(get_proj_root_path(), 'SQL', db_name)
+
+
+def scale_name_into_length(s: str, max_length: int = 30) -> str:
+    parts = s.split('_')
+    num_underscores = len(parts) - 1
+    original_lengths = [len(p) for p in parts]
+    total_chars = sum(original_lengths) + num_underscores  # 包括下划线的总长度
+    if total_chars <= max_length:
+        return s
+    available_letters_length = max_length - num_underscores
+    total_letters = sum(original_lengths)
+    scaled_lengths = [
+        max(1, int(round((length / total_letters) * available_letters_length)))
+        for length in original_lengths
+    ]
+    while sum(scaled_lengths) > available_letters_length:
+        idx = scaled_lengths.index(max(scaled_lengths))
+        if scaled_lengths[idx] > 1:
+            scaled_lengths[idx] -= 1
+    result_parts = [part[:scaled_lengths[i]] for i, part in enumerate(parts)]
+    return '_'.join(result_parts)
