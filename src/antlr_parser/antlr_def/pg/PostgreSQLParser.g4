@@ -26,7 +26,7 @@ parser grammar PostgreSQLParser;
 
 options {
     tokenVocab = PostgreSQLLexer;
-    //superClass = PostgreSQLParserBase;
+    superClass = PostgreSQLParserBase;
 }
 
 @header {
@@ -3719,10 +3719,10 @@ c_expr
     | PARAM opt_indirection                                            # c_expr_expr
     | GROUPING OPEN_PAREN expr_list CLOSE_PAREN                        # c_expr_expr
     | /*22*/ UNIQUE select_with_parens                                 # c_expr_expr
-    | columnref                                                        # c_expr_expr
+    | columnref bracket?                                               # c_expr_expr
     | aexprconst                                                       # c_expr_expr
     | plsqlvariablename                                                # c_expr_expr
-    | OPEN_PAREN a_expr_in_parens = a_expr CLOSE_PAREN opt_indirection # c_expr_expr
+    | OPEN_PAREN a_expr_in_parens = a_expr CLOSE_PAREN bracket? opt_indirection # c_expr_expr
     | case_expr                                                        # c_expr_case
     | func_expr                                                        # c_expr_expr
     | select_with_parens indirection?                                  # c_expr_expr
@@ -4074,8 +4074,12 @@ columnref
 
 indirection_el
     : DOT (attr_name | STAR)
-    | OPEN_BRACKET (a_expr | opt_slice_bound COLON opt_slice_bound) CLOSE_BRACKET
     ;
+
+bracket
+    : OPEN_BRACKET (a_expr | opt_slice_bound COLOsimple_select_pramaryN opt_slice_bound) CLOSE_BRACKET
+    ;
+
 
 opt_slice_bound
     : a_expr

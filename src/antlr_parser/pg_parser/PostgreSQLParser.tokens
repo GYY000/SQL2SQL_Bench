@@ -677,6 +677,7 @@ AfterEscapeStringConstantWithNewlineMode_NotContinued=676
 DollarText=677
 EndDollarStringConstant=678
 AfterEscapeStringConstantWithNewlineMode_Continued=679
+COLOsimple_select_pramaryN=680
 '$'=1
 '('=2
 ')'=3

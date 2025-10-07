@@ -39,7 +39,7 @@ lexer grammar PostgreSQLLexer;
  */
 
 options {
-    //superClass = PostgreSQLLexerBase;
+    superClass = PostgreSQLLexerBase;
     caseInsensitive = true;
 }
 
@@ -1531,9 +1531,9 @@ NumericFail: Digits '..' {self.HandleNumericFail()};
 Numeric:
     Digits '.' Digits? /*? replaced with + to solve problem with DOT_DOT .. but this surely must be rewriten */ (
         'E' [+-]? Digits
-    )?
-    | '.' Digits ('E' [+-]? Digits)?
-    | Digits 'E' [+-]? Digits
+    )? ('D' | 'F')?
+    | '.' Digits ('E' [+-]? Digits)? ('D' | 'F')?
+    | Digits 'E' [+-]? Digits ('D' | 'F')?
 ;
 
 fragment Digits: [0-9]+;

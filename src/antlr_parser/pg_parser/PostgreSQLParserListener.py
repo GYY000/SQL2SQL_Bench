@@ -5995,6 +5995,15 @@ class PostgreSQLParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by PostgreSQLParser#bracket.
+    def enterBracket(self, ctx:PostgreSQLParser.BracketContext):
+        pass
+
+    # Exit a parse tree produced by PostgreSQLParser#bracket.
+    def exitBracket(self, ctx:PostgreSQLParser.BracketContext):
+        pass
+
+
     # Enter a parse tree produced by PostgreSQLParser#opt_slice_bound.
     def enterOpt_slice_bound(self, ctx:PostgreSQLParser.Opt_slice_boundContext):
         pass

@@ -1,18 +1,10 @@
 from antlr4 import *
 from antlr4.CommonTokenStream import CommonTokenStream
 
-from antlr_parser.pg_parser_bat.LexerDispatchingErrorListener import LexerDispatchingErrorListener
-from antlr_parser.pg_parser_bat.ParserDispatchingErrorListener import ParserDispatchingErrorListener
-from PostgreSQLLexer import PostgreSQLLexer
-from PostgreSQLParser import PostgreSQLParser
-
 
 class PostgreSQLParserBase(Parser):
 
-    def __init__(self, input_stream: TokenStream):
-        super().__init__(input_stream)
-
-    def parse_routine_body(self, _localctx: PostgreSQLParser.Createfunc_opt_listContext):
+    def parse_routine_body(self, _localctx):
         lang = None
         for coi in _localctx.createfunc_opt_item():
             if coi.LANGUAGE() is not None:
@@ -55,7 +47,7 @@ class PostgreSQLParserBase(Parser):
             i += 1
         return ''.join(r)
 
-    def get_routine_body_string(self, rule: PostgreSQLParser.SconstContext) -> str:
+    def get_routine_body_string(self, rule) -> str:
         anysconst = rule.anysconst()
         string_constant = anysconst.StringConstant()
         if string_constant is not None:
