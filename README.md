@@ -63,6 +63,48 @@ oracle_user = your oracle user
 
 ### Step 2: Generate SQL with certain translation points
 
+Fill the configuration file in 'src/sql_gen/generate_config.json' to specify the parameters for SQL generation.
+
+We offer two generation mode: **specified** and **random**.
+
+- In **specified** mode, you can specify the translation points to be added in the SQL you want to generate. The generator will generate SQL queries with the specified translation points.
+
+- In **random** mode, you can specify the number of translation points to be added in the SQL you want to generate. The generator will randomly select translation points from the collected translation points and generate SQL queries with the selected translation points.
+
+Here are two examples of configuration file:
+
+```json
+{
+  "mode": "specified",
+  "src_dialect": "mysql",
+  "tgt_dialect": "pg",
+  "points": [
+    {
+      "point": "point_name",
+      "num": "The number of this point"
+    }
+  ],
+  "output_path": "The path to save the generated SQL files"
+}
+```
+
+```json
+{
+  "mode": "random",
+  "src_dialect": "mysql",
+  "tgt_dialect": "pg",
+  "point_num": "The point number to generate",
+  "output_path": "The path to save the generated SQL files"
+}
+```
+
+Run the python script to install the database:
+
+```bash
+cd src
+python -m sql_gen.generate.py
+```
+
 ### Step 3: Transpile SQL to target dialects using different dialect translators
 
 ### Step 4: Verify the correctness of the translated SQLs
@@ -83,7 +125,7 @@ oracle_user = your oracle user
 
 The results in `exp_data/individual` exhibit the experiment result of the individual point dataset.
 
-The results in `exp_data/sql_len` exhibit the experiment result of each translator on SQL queries with varying length of additional segments (100, 200, 300, 400, and 500 tokens, respectively). Specifically, each experiment corresponds to a separate file named according to the length of segments, e.g., sql_len_100.json, sql_len_200.json, up to sql_len_500.json.
+The results in `exp_data/sql_len` exhibit the experiment result of each translator on SQL queries with varying length of additional segments (0, 100, 200, 300, 400, respectively). Specifically, each experiment corresponds to a separate file named according to the length of segments, e.g., sql_add_len_0.json, sql_add_len_100.json, sql_add_len_200.json, up to sql_add_len_400.json.
 
 The results in `exp_data/multi-point` exhibit the experiment result of each translator on SQL queries with varying number of translation points (2 to 3, 4 to 5, 6 to 7, 8 to 9, and 10 to 11, respectively). Specifically, each experiment corresponds to a separate file named according to the length of segments, e.g., sql_points_2_3.json, sql_points_4_5.json, up to sql_points_10_11.json.
 
