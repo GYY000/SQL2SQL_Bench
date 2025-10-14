@@ -1,8 +1,13 @@
-# SQL2SQL_Bench
+# SQL2SQLBench
+
+SQL2SQLBench is a benchmark to test SQL dialect translators, and it is generally composed of three components (i.e., Dataset Construction, SQL Pair Generator, SQL Equivalence Verifier). We develop SQL2SQLBench to .
+
+## System Overview
 
 <p align="center">
     <img src="figures/system-overview.svg" width="1000px">
 </p>
+
 
 ## Installation
 
@@ -17,10 +22,10 @@ conda activate sql2sqlbench-py310
 
 ## Quick Start
 
-To get started with *SQL2SQL_Bench*, follow these steps:
+To get started with *SQL2SQLBench*, follow these steps:
 
-### Step 1: Set up SQL2SQL_Bench
-First, download the data used in our paper in Google Drive: **tbd** and write the file path to `data_path` in `src/config.ini`.
+### Step 1: Set up SQL2SQLBench
+First, download the data used in our paper in [Google Drive](tbd), and write the file path to `data_path` in `src/config.ini`.
 
 ```ini
 [FILE_PATH]
@@ -60,17 +65,54 @@ oracle_user = your oracle user
 
 ### Step 3: Transpile SQL to target dialects using different dialect translators
 
-### Step 4: Verify the correctness and efficiency of the translated SQL
+### Step 4: Verify the correctness of the translated SQLs
 
 ## Code Structure
 - `conv_point/`: The collected translation points.
+- `sql/`: The collected real-world SQL queries.
 - `exp_data/`: The experiment data.
-- `src/`: The source code of *SQL2SQL_Bench*.
-  - `antlr_parser`: The antlr parser and their syntax definition file used by *SQL2SQL_Bench*.
-  - `db_builder`: .
-  - `models`: .
-  - `sql_gen`: .
-  - `transpiler`: .
-  - `utils`: .
-  - `verification`: .
+- `src/`: The source code of *SQL2SQLBench*.
+  - `antlr_parser`: The antlr parser and their syntax definition file used by *SQL2SQLBench*.
+  - `db_builder`: The building script of the database employed in the *SQL2SQLBench*.
+  - `sql_gen`: The generator of *SQL2SQLBench*.
+  - `transpiler`: The running script of each dialect translator tested in the *SQL2SQLBench*.
+  - `verification`: The verifier offered by *SQL2SQLBench*.
   - `config.ini`: The configuration file for *SQL2SQL_Bench*.
+
+## Results
+
+The results in `exp_data/individual` exhibit the experiment result of the individual point dataset.
+
+The results in `exp_data/sql_len` exhibit the experiment result of each translator on SQL queries with varying length of additional segments (100, 200, 300, 400, and 500 tokens, respectively). Specifically, each experiment corresponds to a separate file named according to the length of segments, e.g., sql_len_100.json, sql_len_200.json, up to sql_len_500.json.
+
+The results in `exp_data/multi-point` exhibit the experiment result of each translator on SQL queries with varying number of translation points (2 to 3, 4 to 5, 6 to 7, 8 to 9, and 10 to 11, respectively). Specifically, each experiment corresponds to a separate file named according to the length of segments, e.g., sql_points_2_3.json, sql_points_4_5.json, up to sql_points_10_11.json.
+
+All data is stored in format:
+```json
+{
+    "{SrcDialect}": "{SrcSQL}",
+    "{TgtDialect}": "{TgtSQL}",
+    "points": [
+      {
+        "point": "point name",
+        "num": number of point
+      },
+      ...
+    ],
+    "tables": [
+      "table used in the query"
+    ],
+    "exp_res": {
+      "{Translator Name}": {
+        "tran_res": "the translation result",
+        "verify_res": "the verification result"
+      },
+      ...
+    }
+}
+```
+
+
+
+
+
