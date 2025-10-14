@@ -6,11 +6,13 @@
 from typing import List
 
 from sql_gen.generator.ele_type.type_def import BaseType
-from sql_gen.generator.element.Pattern import Pattern, ValueSlot
+from sql_gen.generator.element.Pattern import Pattern
+from sql_gen.generator.point_type.TranPointType import TranPointType
 
 
 class Point:
-    def __init__(self, name: str, src_dialect, tgt_dialect, src_pattern: Pattern, tgt_pattern: Pattern, slots: List, point_type: str,
+    def __init__(self, name: str, src_dialect, tgt_dialect, src_pattern: Pattern, tgt_pattern: Pattern, slots: List,
+                 point_type: TranPointType,
                  return_type: BaseType | None, predicate: str | None, tag: dict | None):
         self.point_name = name
         self.src_dialect = src_dialect

@@ -79,13 +79,24 @@ def type_mapping(dialect: str, op_type: str) -> BaseType:
             return JsonType()
         elif op_type == 'xml':
             return XmlType()
+        elif op_type == 'bpchar':
+            return StringGeneralType()
         else:
-            raise ValueError(f"PG Type {op_type} is not supported yet")
+            return NoneType()
+            # raise ValueError(f"PG Type {op_type} is not supported yet")
     elif dialect == 'oracle':
         if op_type == 'NUMBER':
             return NumberType()
-        if op_type == 'CHAR':
+        if op_type == 'CHAR' or op_type == 'VARCHAR':
             return StringGeneralType()
+        if op_type == 'DATE':
+            return DateType()
+        if op_type == 'TIMESTAMP':
+            return TimestampType()
+        if op_type == 'BINARY_DOUBLE':
+            return DoubleType()
+        if op_type == 'XMLTYPE':
+            return XmlType()
         raise ValueError(f"Oracle Type {op_type} is not supported yet")
     else:
         raise ValueError(f"dialect {dialect} is not supported")

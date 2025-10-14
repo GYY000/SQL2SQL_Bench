@@ -4,55 +4,64 @@
 # @Author: 10379
 # @Time: 2025/3/24 19:59
 
-import json
 import os
-from datetime import datetime
 
 from sql_gen.generator.ele_type.type_def import *
-from utils.tools import get_proj_root_path, get_table_col_name
+from utils.tools import get_proj_root_path, get_table_col_name, scale_name_into_length
 
 
 def gen_type_through_str(type_str, attr_container) -> BaseType:
     if type_str == 'ANY_VALUE':
-        return AnyValueType(attr_container)
+        return AnyValueType(attr_container=attr_container)
     elif type_str == 'INT':
-        return IntType(attr_container)
+        return IntType(attr_container=attr_container)
     elif type_str == 'STRING':
-        return StringGeneralType(attr_container)
+        return StringGeneralType(attr_container=attr_container)
     elif type_str == 'BOOL':
-        return BoolType(attr_container)
+        return BoolType(attr_container=attr_container)
     elif type_str == 'ALIAS':
-        assert attr_container is None
-        return AliasType()
+        return AliasType(attr_container=attr_container)
+    elif type_str == 'ARRAY':
+        return ArrayType(attr_container=attr_container)
     elif type_str == 'DATE':
-        return DateType(attr_container)
+        return DateType(attr_container=attr_container)
     elif type_str == 'TABLE':
-        return TableType(attr_container)
+        return TableType(attr_container=attr_container)
     elif type_str == 'TIMESTAMP':
-        return TimestampType(None, attr_container)
+        return TimestampType(None, attr_container=attr_container)
     elif type_str == 'INTERVAL':
-        return IntervalType(None, attr_container)
+        return IntervalType(None, attr_container=attr_container)
     elif type_str == 'POINT':
-        return PointType(attr_container)
+        return PointType(attr_container=attr_container)
     elif type_str == 'XML':
-        return XmlType(attr_container)
+        return XmlType(attr_container=attr_container)
     elif type_str == 'NUMBER':
-        return NumberType(None, None, attr_container)
+        return NumberType(None, None, attr_container=attr_container)
     elif type_str == 'NVARCHAR':
-        return NvarcharType(4000, attr_container)
+        return NvarcharType(4000, attr_container=attr_container)
     elif type_str == 'FLOAT':
-        return FloatGeneralType(None, None, attr_container)
+        return FloatGeneralType(None, None, attr_container=attr_container)
     elif type_str == 'QUERY':
-        return QueryType(attr_container)
+        return QueryType(attr_container=attr_container)
     elif type_str == 'INT_LITERAL':
-        return IntLiteralType(attr_container)
+        return IntLiteralType(attr_container=attr_container)
     elif type_str == 'STRING_LITERAL':
-        return StringLiteralType(attr_container)
+        return StringLiteralType(attr_container=attr_container)
+    elif type_str == 'WORD_LITERAL':
+        return WordLiteralType(attr_container=attr_container)
+    elif type_str == 'FLOAT_LITERAL':
+        return FloatLiteralType(attr_container=attr_container)
+    elif type_str == 'ARRAY[STRING]':
+        return ArrayType(StringGeneralType(), attr_container=attr_container)
+    elif type_str == 'ORDER_BY_ELEMENT':
+        return OrderByElementType(attr_container=attr_container)
+    elif type_str == 'WINDOW_DEFINITION':
+        return WindowDefinitionType(attr_container=attr_container)
     else:
         raise ValueError(f"Type {type_str} does not exist in this system")
 
 
-def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
+def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str, table_name: str):
     # col_name are used for build VARRAY Type for Oracle
     type_name = type_def['type_name']
     add_constraint = None
@@ -101,10 +110,11 @@ def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
                 values = values + ', '
             values = values + f"'{value}'"
         final_type = EnumType(type_def['values'])
+        constraint_name = scale_name_into_length(f"{table_name}_{col_name}_check", 20)
         if dialect == 'pg':
-            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'pg')} IN ({values}))"
+            add_constraint = f"CONSTRAINT {constraint_name} CHECK({get_table_col_name(col_name, 'pg')} IN ({values}))"
         elif dialect == 'oracle':
-            add_constraint = f"CONSTRAINT {col_name}_check CHECK({get_table_col_name(col_name, 'oracle')} IN ({values}))"
+            add_constraint = f"CONSTRAINT {constraint_name} CHECK({get_table_col_name(col_name, 'oracle')} IN ({values}))"
     elif type_name == 'NVARCHAR':
         final_type = NvarcharType(type_def['length'])
     elif type_name == 'CHAR':
@@ -125,11 +135,12 @@ def load_col_type(type_def: dict, col_name: str, dialect: str, db_name: str):
         final_type = BlobType()
     elif type_name == 'ARRAY':
         ele_type, ele_constraint, ele_type_defs = load_col_type(type_def['ele_type'], 'sub' + col_name, dialect,
-                                                                db_name)
+                                                                db_name, table_name)
         final_type = ArrayType(ele_type, col_name, type_def['length'])
         type_defs = type_defs + ele_type_defs
         if dialect == 'oracle':
-            type_def = f"CREATE TYPE {f'{col_name}_varray_type'} AS VARRAY({type_def['length']}) OF {ele_type};"
+            type_def = (f"CREATE TYPE {scale_name_into_length(f'{col_name}_varray_type')} AS "
+                        f"VARRAY({type_def['length']}) OF {ele_type.get_type_name('oracle')};")
             type_defs.append(type_def)
     else:
         print(type_name)
@@ -185,6 +196,8 @@ def type_statistic():
 
 def build_value(built_in_type: BaseType, value, dialect: str) -> str | None:
     if built_in_type is None:
+        return None
+    if built_in_type.get_type_name(dialect) is None:
         return None
     if value is None:
         return 'NULL'

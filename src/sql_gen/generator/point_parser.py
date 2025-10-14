@@ -4,14 +4,17 @@
 # @Author: 10379
 # @Time: 2024/12/25 12:40
 import json
+import traceback
 from typing import List, Dict
 
 from sql_gen.generator.ele_type.Attribute import AttributeContainer
-from sql_gen.generator.ele_type.type_def import OptionType, ListType, BaseType
+from sql_gen.generator.ele_type.type_def import OptionType, ListType, BaseType, DateType, TimestampType, IntType, \
+    StringGeneralType, BoolType, AnyValueType, JsonType, BlobType, IntervalType, ArrayType
 from sql_gen.generator.ele_type.type_operation import gen_type_through_str
 from sql_gen.generator.element.Pattern import Pattern, ForSlot, UdfFunction, ValueSlot, StringLiteralSlot, \
-    NumberLiteralSlot
+    NumberLiteralSlot, Slot, ListLiteralSlot
 from sql_gen.generator.element.Point import Point
+from sql_gen.generator.point_type.TranPointType import gen_point_type
 from utils.tools import get_proj_root_path
 
 
@@ -89,23 +92,55 @@ def parse_point(point: Dict) -> Point:
     src_dialect = point['Dialect']['Src']
     tgt_dialect = point['Dialect']['Tgt']
     for key, value in point.items():
-        assert key in ['Dialect', 'Desc', 'Return', 'SrcPattern', 'TgtPattern', 'Type', 'Condition']
+        assert key in ['Dialect', 'Desc', 'Return', 'SrcPattern', 'TgtPattern', 'Type', 'Condition', 'Tag']
     # print(point)
     src_pattern = point['SrcPattern']
     tgt_pattern = point['TgtPattern']
     point_type = point['Type']
     return_type = None
     predicate = None
-    if point_type == 'FUNCTION' or point_type == 'AGGREGATE_FUNCTION':
+    tag = None
+    if point_type == 'EXPRESSION' or point_type == 'LITERAL':
         assert 'Return' in point
         return_type = point['Return']
+        if return_type == 'DATE':
+            return_type = DateType()
+        elif return_type == 'TIMESTAMP':
+            return_type = TimestampType()
+        elif return_type == 'NUMBER':
+            return_type = IntType()
+        elif return_type == 'STRING':
+            return_type = StringGeneralType()
+        elif return_type == 'BOOL':
+            return_type = BoolType()
+        elif return_type == 'ANY_VALUE':
+            return_type = AnyValueType()
+        elif return_type == 'JSON':
+            return_type = JsonType()
+        elif return_type == 'INT':
+            return_type = IntType()
+        elif return_type == 'BOOL':
+            return_type = BoolType()
+        elif return_type == 'BINARY':
+            return_type = BlobType()
+        elif return_type == 'INTERVAL':
+            return_type = IntervalType()
+        elif return_type == 'ARRAY':
+            return_type = ArrayType(AnyValueType())
+        else:
+            print(f"type {return_type} is not support yet")
+            traceback.print_exc()
+            assert False
     if 'Condition' in point:
         predicate = point['Condition']
+    if 'Tag' in point:
+        tag = point['Tag']
     slot_defs = [[]]
+    point_type = gen_point_type(point_type)
     src_pattern, _ = parse_pattern(src_pattern, 0, src_dialect, slot_defs)
     tgt_pattern, _ = parse_pattern(tgt_pattern, 0, tgt_dialect, slot_defs)
-
-    return Point(src_dialect, tgt_dialect, src_pattern, tgt_pattern, slot_defs[0], point_type, return_type, predicate)
+    return Point(point['Desc'], src_dialect, tgt_dialect, src_pattern, tgt_pattern, slot_defs[0], point_type,
+                 return_type, predicate, tag)
 
 
 def parse_pattern(pattern_str: str, index_begin: int, dialect: str, slot_defs) -> tuple[Pattern, int]:
@@ -123,7 +158,18 @@ def parse_pattern(pattern_str: str, index_begin: int, dialect: str, slot_defs) -
                 pattern.add_keyword(cur_str)
                 cur_str = ''
             slot, i = parse_slot(pattern_str, i, dialect, slot_defs)
-            pattern.add_slot(slot)
+            if isinstance(slot.slot_type, ListType):
+                sub_ele_type = slot.slot_type.element_type
+                sub_ele = ValueSlot(f"sub_ele_{slot.name}", sub_ele_type)
+                sub_value_slots = [sub_ele]
+                slots = [slot]
+                strip_str = ','
+                ele_pattern = Pattern()
+                ele_pattern.add_slot(sub_ele)
+                used_slot = ForSlot(ele_pattern, sub_value_slots, slots, strip_str)
+            else:
+                used_slot = slot
+            pattern.add_slot(used_slot)
         elif token == '{':
             if cur_str != '':
                 pattern.add_keyword(cur_str)
@@ -248,6 +294,43 @@ def parse_slot(pattern_str: str, index_begin: int, dialect: str,
 function_name = set()
 
 
+def parse_arg(pattern_str: str, index_begin: int, dialect: str, slot_defs: List) -> tuple[Slot, int]:
+    if pattern_str[index_begin] == '\'':
+        cur_str = ''
+        i = index_begin + 1
+        while pattern_str[i] != '\'':
+            if pattern_str[i] == '\\' and pattern_str[i + 1] == '\'':
+                cur_str = cur_str + '\''
+                i = i + 2
+            else:
+                cur_str = cur_str + pattern_str[i]
+                i = i + 1
+        i = i + 1
+        return StringLiteralSlot(cur_str), i
+    elif pattern_str[index_begin].isdigit():
+        num = 0
+        i = index_begin
+        while pattern_str[i].isdigit():
+            num = num * 10 + int(pattern_str[i])
+            i = i + 1
+        val = 0.1
+        if pattern_str[i] == '.':
+            i = i + 1
+            while pattern_str[i].isdigit():
+                num = num + int(pattern_str[i]) * val
+                val = val * 0.1
+                i = i + 1
+        return NumberLiteralSlot(num), i
+    elif pattern_str[index_begin] == '<':
+        return parse_slot(pattern_str, index_begin, dialect, slot_defs)
+    else:
+        assert pattern_str[index_begin] == '['
+        i = index_begin + 1
+        assert pattern_str[i] == ']'
+        return ListLiteralSlot(), i + 1
+
+
+
 def parse_function(pattern_str: str, index_begin: int, dialect: str, slot_defs: List) -> tuple[UdfFunction, int]:
     assert pattern_str[index_begin] == '@'
     name = ''
@@ -262,34 +345,36 @@ def parse_function(pattern_str: str, index_begin: int, dialect: str, slot_defs: 
     while pattern_str[i].isspace():
         i = i + 1
     while pattern_str[i] != ')':
-        if pattern_str[i] == '\'':
-            cur_str = ''
-            i = i + 1
-            while pattern_str[i] != '\'':
-                if pattern_str[i] == '\\' and pattern_str[i + 1] == '\'':
-                    cur_str = cur_str + '\''
-                    i = i + 2
-                else:
-                    cur_str = cur_str + pattern_str[i]
-                    i = i + 1
-            i = i + 1
-            slots.append(StringLiteralSlot(cur_str))
-        elif pattern_str[i].isdigit():
-            num = 0
-            while pattern_str[i].isdigit():
-                num = num * 10 + int(pattern_str[i])
-                i = i + 1
-            val = 0.1
-            if pattern_str == '.':
-                while pattern_str[i].isdigit():
-                    num = num + int(pattern_str[i]) * val
-                    val = val * 0.1
-                    i = i + 1
-            i = i + 1
-            slots.append(NumberLiteralSlot(num))
-        else:
-            slot, i = parse_slot(pattern_str, i, dialect, slot_defs)
-            slots.append(slot)
+        slot, i = parse_arg(pattern_str, i, dialect, slot_defs)
+        slots.append(slot)
+        # if pattern_str[i] == '\'':
+        #     cur_str = ''
+        #     i = i + 1
+        #     while pattern_str[i] != '\'':
+        #         if pattern_str[i] == '\\' and pattern_str[i + 1] == '\'':
+        #             cur_str = cur_str + '\''
+        #             i = i + 2
+        #         else:
+        #             cur_str = cur_str + pattern_str[i]
+        #             i = i + 1
+        #     i = i + 1
+        #     slots.append(StringLiteralSlot(cur_str))
+        # elif pattern_str[i].isdigit():
+        #     num = 0
+        #     while pattern_str[i].isdigit():
+        #         num = num * 10 + int(pattern_str[i])
+        #         i = i + 1
+        #     val = 0.1
+        #     if pattern_str == '.':
+        #         while pattern_str[i].isdigit():
+        #             num = num + int(pattern_str[i]) * val
+        #             val = val * 0.1
+        #             i = i + 1
+        #     i = i + 1
+        #     slots.append(NumberLiteralSlot(num))
+        # else:
+        #     slot, i = parse_slot(pattern_str, i, dialect, slot_defs)
+        #     slots.append(slot)
         while pattern_str[i].isspace():
             i = i + 1
         if pattern_str[i] == ',':
@@ -349,11 +434,10 @@ def parse_type(pattern_str: str, index_begin: int) -> tuple[BaseType, int]:
                 in_paren = True
             type_name = type_name + pattern_str[i]
             i = i + 1
-        attr_container = None
+        attr_container = AttributeContainer()
         if i < len(pattern_str) and pattern_str[i] == ',':
             i = i + 1
             attr_container, i = parse_attributes(pattern_str, i)
-
         return gen_type_through_str(type_name.strip(), attr_container), i
 
 

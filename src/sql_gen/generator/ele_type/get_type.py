@@ -8,7 +8,6 @@ from typing import Dict
 from antlr_parser.Tree import TreeNode
 from antlr_parser.get_structure import get_pg_select_primary
 from antlr_parser.parse_tree import parse_tree
-from sql_gen.generator.element.Operand import Operand
 from utils.db_connector import *
 from utils.tools import dialect_judge, add_quote
 
@@ -18,11 +17,11 @@ def get_type(obj: str, dialect: str, db_name, is_table: bool) -> tuple[bool, lis
     dialect_type = dialect_judge(dialect)
     match dialect_type:
         case 'mysql':
-            return get_mysql_type(obj, db_name, is_table)
+            return get_mysql_type(db_name, obj, is_table)
         case 'postgres':
-            return get_pg_type(obj, db_name, is_table)
+            return get_pg_type(db_name, obj, is_table)
         case 'oracle':
-            return get_oracle_type(obj, db_name, is_table)
+            return get_oracle_type(db_name, obj, is_table)
         case _:
             assert False
 
@@ -35,11 +34,11 @@ def get_cte_type(cte: str, recursive: bool, db_name: str, dialect: str):
         sql = f"WITH cte {cte} SELECT * FROM cte"
     match dialect_type:
         case 'mysql':
-            return get_mysql_type(sql, db_name, False)
+            return get_mysql_type(db_name, sql, False)
         case 'postgres':
-            return get_pg_type(sql, db_name, False)
+            return get_pg_type(db_name, sql, False)
         case 'oracle':
-            return get_oracle_type(sql, db_name, False)
+            return get_oracle_type(db_name, sql, False)
         case _:
             assert False
 
@@ -112,12 +111,12 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
             assert isinstance(select_elements_node, TreeNode)
             select_elements_node.value = ' * '
             select_elements_node.is_terminal = True
-            flag, res = get_mysql_type(str(clone_node), db_name, False)
+            flag, res = get_mysql_type(db_name, str(clone_node), False)
             if not flag:
                 raise ValueError(f"can't get types of {str(clone_node)}")
             normal_ops = []
             for ele in res:
-                normal_ops.append(Operand(add_quote('mysql', ele['col']), ele['type'], 'mysql'))
+                normal_ops.append(Operand(add_quote('mysql', ele['col']), ele['type']))
             return normal_ops, [], None
         else:
             assert isinstance(group_by_node, TreeNode)
@@ -139,7 +138,7 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
                 new_str = new_str + str(node)
             select_elements_node.value = ' ' + new_str + ' '
             select_elements_node.is_terminal = True
-            flag, res = get_mysql_type(str(clone_node), db_name, False)
+            flag, res = get_mysql_type(db_name, str(clone_node), False)
             if not flag:
                 raise ValueError(f"can't get types of {str(clone_node)} db: {db_name}")
             else:
@@ -147,7 +146,7 @@ def get_mysql_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
                     type = col['type']
                     normal_nodes.append(Operand(str(node), type, 'mysql'))
             select_elements_node.value = ' * '
-            flag, res = get_mysql_type(str(clone_node), db_name, False)
+            flag, res = get_mysql_type(db_name, str(clone_node), False)
             if not flag:
                 raise ValueError(f"can't get types of {str(clone_node)} reason: {res}")
             for ele in res:
@@ -210,7 +209,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
     assert isinstance(tgt_node, TreeNode)
     tgt_node.is_terminal = True
     tgt_node.value = '*'
-    flag, res = get_pg_type(str(clone_node), db_name, False)
+    flag, res = get_pg_type(db_name, str(clone_node), False)
     if not flag:
         raise ValueError(f"can't get types of {str(clone_node)}")
     normal_ops = []
@@ -235,7 +234,7 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
         select_elements_node.is_terminal = True
         clone_node.rm_child_by_value('group_clause')
         clone_node.rm_child_by_value('having_clause')
-        flag, res = get_pg_type(str(clone_node), db_name, False)
+        flag, res = get_pg_type(db_name, str(clone_node), False)
         group_by_ops = []
         if not flag:
             raise ValueError(f"can't get types of {str(clone_node)}")
@@ -250,3 +249,14 @@ def get_pg_usable_cols(db_name, node: TreeNode) -> tuple[List, List, object]:
 
 def get_oracle_usable_cols(db_name: str, node: TreeNode):
     return [], [], None
+
+
+# print(";".join(['a', 'b']))
+# sql = (
+#     "SELECT `chainid` FROM `gasstations`")
+# print(get_mysql_type(sql, 'bird', False))
+# dialect = 'mysql'
+# cols, _, _ = get_usable_cols('bird', sql, 'mysql')
+#
+# for col in cols:
+#     print(col)

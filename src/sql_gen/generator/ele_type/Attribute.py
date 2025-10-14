@@ -16,6 +16,12 @@ class AttributeContainer:
                 return True
         return False
 
+    def has_date(self):
+        for attr in self.attributes:
+            if attr == 'DATE':
+                return True
+        return False
+
     def has_literal(self):
         for attr in self.attributes:
             if attr == 'LITERAL':
@@ -28,6 +34,12 @@ class AttributeContainer:
                 return True
         return False
 
+    def has_strict(self):
+        for attr in self.attributes:
+            if attr == 'STRICT':
+                return True
+        return False
+
     def has_group_by(self):
         for attr in self.attributes:
             if attr == 'GROUP_BY':
@@ -36,18 +48,18 @@ class AttributeContainer:
 
     def has_range(self):
         for attr in self.attributes:
-            if attr['attr_name'] == 'range':
+            if isinstance(attr, dict) and attr['attr_name'] == 'range':
                 return True
         return False
 
     def get_range(self):
         for attr in self.attributes:
-            if attr['attr_name'] == 'range':
+            if isinstance(attr, dict) and attr['attr_name'] == 'range':
                 return attr
         return None
 
     def add_attribute(self, attr_name: str | dict):
-        if attr_name in ['LITERAL', 'COLUMN', 'GROUP_BY', 'NUMBER']:
+        if attr_name in ['LITERAL', 'COLUMN', 'GROUP_BY', 'NUMBER', 'STRICT', 'DATE']:
             self.attributes.append(attr_name)
         else:
             # range attribute
@@ -138,3 +150,25 @@ class AttributeContainer:
                     'margin_right': margin_right,
                     'num_highest': num_highest
                 })
+
+    def get_int_allowed_range(self):
+        if self.get_range() is not None:
+            range_attr = self.get_range()
+            range = range_attr['ranges'][0]
+            min_value = None
+            max_value = None
+            if 'margin_left' in range:
+                min_value = range['num_lowest']
+                if not range['margin_left']:
+                    min_value += 1
+            if 'margin_right' in range:
+                max_value = range['num_highest']
+                if not range['margin_right']:
+                    max_value -= 1
+            if min_value is None:
+                min_value = max_value - 1000
+            if max_value is None:
+                max_value = min_value + 1000
+            return min_value, max_value
+        else:
+            return None, None

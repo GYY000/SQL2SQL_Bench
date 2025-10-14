@@ -6,7 +6,6 @@
 import json
 import os
 
-from sql_gen.generator.point_parser import parse_point
 from utils.tools import get_proj_root_path
 
 categories = [
@@ -94,20 +93,28 @@ def load_point_by_name(src_dialect, tgt_dialect, point_name):
                 return point
     raise ValueError(f"Point {point_name} not found")
 
-# point_types = set()
-# fields = set()
-# return_fields = set()
-# type_fields = set()
-#
-# for src_dialect in dialects:
-#     for tgt_dialect in dialects:
-#         if src_dialect == tgt_dialect:
-#             continue
-#         points = load_translation_point(src_dialect, tgt_dialect)
-#         for category, values in points.items():
-#             for point in values:
-#                 return_fields.add(point['Return'])
-#                 type_fields.add(point['Type'])
-#
-# print(return_fields)
-# print(type_fields)
+
+def load_db_param_point():
+    point_path = os.path.join(get_proj_root_path(), 'conv_point')
+    points = []
+    for src_dialect in dialects:
+        for tgt_dialect in dialects:
+            if src_dialect == tgt_dialect:
+                continue
+            for category in categories:
+                category_path = os.path.join(point_path, category)
+                category_points = load_translation_point_folder(category_path, src_dialect, tgt_dialect)
+                for point in category_points:
+                    if "Tag" in point and 'DB PARAMETER' in point['Tag']:
+                        points.append(point)
+    return points
+
+
+def load_points_by_req(point_requirement: list[dict], src_dialect, tgt_dialect) -> list:
+    all_points = load_translation_point(src_dialect, tgt_dialect)
+    for point_dict in point_requirement:
+        for category, category_points in all_points.items():
+            for sub_point in category_points:
+                if sub_point['Desc'] == point_dict['point']:
+                    point_dict['point'] = sub_point
+    return point_requirement
