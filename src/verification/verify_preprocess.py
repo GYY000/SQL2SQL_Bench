@@ -23,9 +23,9 @@ def rep_non_deterministic_function_list(sql: str, dialect: str):
     non_deterministic_function_key_list = {
         "mysql": [
             ['CURDATE()', 'CURDATE( )', 'CURRENT_DATE()', 'CURRENT_DATE( )', 'CURRENT_DATE'],
+            ['CURRENT_TIMESTAMP()', 'CURRENT_TIMESTAMP( )', 'CURRENT_TIMESTAMP', 'NOW()', 'NOW( )'],
             ['CURTIME()', 'CURRENT_TIME()', 'CURRENT_TIME', 'CURTIME( )', 'CURRENT_TIME( )'],
             ['SYSDATE()', 'SYSDATE( )'],
-            ['CURRENT_TIMESTAMP()', 'CURRENT_TIMESTAMP( )', 'CURRENT_TIMESTAMP', 'NOW()', 'NOW( )'],
             ['UTC_DATE()', 'UTC_DATE( )'],
             ['UTC_TIME()', 'UTC_TIME( )'],
             ['UTC_TIMESTAMP()', 'UTC_TIMESTAMP( )'],
@@ -46,8 +46,8 @@ def rep_non_deterministic_function_list(sql: str, dialect: str):
     non_deterministic_function_value_list = {
         "mysql": [
             "DATE '2000-01-02'",
-            'CAST(\'00:30:21\' AS TIME)',
             'TIMESTAMP \'2000-01-02 00:30:26\'',
+            'CAST(\'00:30:21\' AS TIME)',
             'CAST(\'2000-01-02 00:30:21\' AS DATETIME)',
             'DATE \'2000-01-01\'',
             'CAST(\'16:30:21\' AS TIME)',

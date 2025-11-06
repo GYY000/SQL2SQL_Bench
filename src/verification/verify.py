@@ -292,8 +292,13 @@ def execution_verify(sql1: str, sql_res, res_sql: str, res_sql_res, db_id: str, 
         flag2 = True
     else:
         flag2, res2 = sql_dependent_execute(dialect, db_id, res_sql, db_param.get(dialect, {}))
+
     if not flag1:
         return False, res1, res1, res2
+    print(dialect)
+    print(res_sql)
+    if not flag2:
+        print(res2)
     assert flag2
     if len(res1) == 0 and len(res2) == 0:
         return True, 'No result', res1, res2
