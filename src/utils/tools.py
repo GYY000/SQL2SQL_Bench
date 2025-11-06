@@ -7,6 +7,7 @@ import configparser
 import json
 import os
 import platform
+import sys
 from typing import List
 
 
@@ -377,7 +378,18 @@ def get_table_col_name(name: str, dialect: str):
 
 
 def get_all_db_name(dialect: str):
-    return 'all_db_final'
+    config_file = os.path.join(get_proj_root_path(), 'src', 'config.ini')
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    if dialect == 'mysql':
+        return config.get("MYSQL_CONN", 'db_name')
+    elif dialect == 'pg':
+        return config.get("PG_CONN", 'db_name')
+    elif dialect == 'oracle':
+        return config.get("ORACLE_CONN", 'db_name')
+    else:
+        assert False
 
 
 def get_db_ids():
@@ -444,3 +456,9 @@ def scale_name_into_length(s: str, max_length: int = 30) -> str:
             scaled_lengths[idx] -= 1
     result_parts = [part[:scaled_lengths[i]] for i, part in enumerate(parts)]
     return '_'.join(result_parts)
+
+
+def print_error(message):
+    RED = '\033[31m'
+    RESET = '\033[0m'
+    print(f"{RED}{message}{RESET}", file=sys.stderr)

@@ -130,7 +130,7 @@ def locate_function(error_info: str, dialect: str, sql: str, kb_name: str):
             error_lines = error_info.split('\n')
             flag = False
             for i in range(len(error_lines)):
-                if error_lines[i].strip().startswith(sql):
+                if error_lines[i].strip().startswith(sql.strip(';').strip()):
                     flag = True
                     break
             msg = ''

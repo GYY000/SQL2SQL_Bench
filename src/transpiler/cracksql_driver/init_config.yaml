@@ -19,7 +19,30 @@ LLM_MODELS:
     path: "./local_models/gpt-4o"           # Local model path. Please replace with the actual path of the local model.
     description: "OpenAI LLM模型，用于生成文本"  # Model description
     temperature: 1                        # Temperature for text generation
-
+  - name: "deepseek-reasoner"                          # Model name
+    deployment_type: "cloud"                # Deployment type: cloud or local
+    category: "llm"                         # Model category
+    api_base: "https://api.deepseek.com"   # API base URL
+    api_key: "sk-4fe17992557a4749af346ea9c605773c"          # Replace with your actual API key
+    path: "./local_models/gpt-4o"           # Local model path. Please replace with the actual path of the local model.
+    description: "OpenAI LLM模型，用于生成文本"  # Model description
+    temperature: 1                        # Temperature for text generation
+  - name: "deepseek-r1-250528"                          # Model name
+    deployment_type: "cloud"                # Deployment type: cloud or local
+    category: "llm"                         # Model category
+    api_base: "https://ark.cn-beijing.volces.com/api/v3"   # API base URL
+    api_key: "4d35816f-a4b0-4d97-af9a-b287eeac6849"          # Replace with your actual API key
+    path: "./local_models/gpt-4o"           # Local model path. Please replace with the actual path of the local model.
+    description: "OpenAI LLM模型，用于生成文本"  # Model description
+    temperature: 1                        # Temperature for text generation
+  - name: "deepseek-r1-distill-llama-70b"                          # Model name
+    deployment_type: "cloud"                # Deployment type: cloud or local
+    category: "llm"                         # Model category
+    api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"   # API base URL
+    api_key: "sk-8ac3594cd96b4c98bd33b578136575d0"          # Replace with your actual API key
+    path: "./local_models/gpt-4o"           # Local model path. Please replace with the actual path of the local model.
+    description: "OpenAI LLM模型，用于生成文本"  # Model description
+    temperature: 1                        # Temperature for text generation
 
 # Embedding model configuration
 EMBEDDING_MODELS:

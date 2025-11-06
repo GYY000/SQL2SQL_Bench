@@ -496,13 +496,21 @@ def verify_sql(sql, res_sql, res_sql_res, db_id, db_param, dialect, tables: list
                         all_table_schema[table_name] = {}
                     all_table_schema[table_name][ori_dialect] = table_ddl
     if verify_res['execution']:
-        rewrite_sql = rewrite_dialect_specific_func(sql, dialect)
-        # rewrite_for_specific function might be wrong for syntax error
-        if rewrite_sql is not None:
-            sql = rewrite_sql
-        rewrite_res_sql = rewrite_dialect_specific_func(res_sql, dialect)
-        if rewrite_res_sql is not None:
-            res_sql = rewrite_res_sql
+        ori_sql = sql
+        try:
+            rewrite_sql = rewrite_dialect_specific_func(sql, dialect)
+            # rewrite_for_specific function might be wrong for syntax error
+            if rewrite_sql is not None:
+                sql = ori_sql
+        except Exception:
+            sql = sql
+        ori_res_sql = res_sql
+        try:
+            rewrite_res_sql = rewrite_dialect_specific_func(res_sql, dialect)
+            if rewrite_res_sql is not None:
+                res_sql = rewrite_res_sql
+        except Exception:
+            res_sql = ori_res_sql
         schema = ''
         for table in tables:
             for ddl in all_table_schema[table][dialect]:

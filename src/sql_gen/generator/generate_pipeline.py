@@ -11,8 +11,7 @@ import traceback
 from antlr_parser.general_tree_analysis import fetch_all_table_in_sql
 from sql_gen.generator.add_point import generate_sql_with_point
 from sql_gen.generator.element.Point import Point
-from sql_gen.generator.method import fetch_fulfilled_sqls
-from sql_gen.generator.point_loader import load_points_by_req, load_point_by_name, load_db_param_point
+from sql_gen.generator.point_loader import load_points_by_req, load_point_by_name
 from sql_gen.generator.point_parser import parse_point
 from sql_gen.generator.point_type.TranPointType import OrderByClauseType, ReservedKeywordType
 from sql_gen.generator.rewriter import rewrite_sql
@@ -38,7 +37,7 @@ def fetch_db_param_by_point(points: list[dict], src_dialect, tgt_dialect):
 
 
 def generate_sql_by_points(points: list[dict], aggressive_flag: bool, execution_env: ExecutionEnv,
-                           cur_sql: dict | None = None, only_cur_sql_mode = False):
+                           cur_sql: dict | None = None, only_cur_sql_mode=False):
     already_build_items_map = CISpacelessSet()
     while True:
         to_add_point = fetch_point_to_add(points)
@@ -132,7 +131,8 @@ def generate_equivalent_sql_pair(src_dialect: str, tgt_dialect: str, point_requi
                             flag = execution_env.add_param(key, value)
                             if not flag:
                                 raise ValueError('DB Parameter conflict')
-            sql_pair = generate_sql_by_points(point_req_list, aggressive_flag, execution_env, cur_sql, only_cur_sql_mode)
+            sql_pair = generate_sql_by_points(point_req_list, aggressive_flag, execution_env, cur_sql,
+                                              only_cur_sql_mode)
             if sql_pair is None:
                 continue
             parsed_points = []
@@ -196,6 +196,3 @@ def fetch_point_to_add(points: list[dict]):
     else:
         to_add_point['num'] -= 1
     return to_add_point['point']
-
-#
-# print(generate_equivalent_sql_pair('mysql', 'oracle', None, point='TIMESTAMPDIFF_MINUTE'))

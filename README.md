@@ -107,7 +107,58 @@ python -m sql_gen.generate.py
 
 ### Step 3: Transpile SQL to target dialects using different dialect translators
 
+You can run the translation script for any SQL like this
+
+```python
+from transpiler.transpile import model_translate, cracksql_translate, transfer_sql_sqline, translate_sqlglot, ora2pg_tran
+from verification.verify import post_process_for_reserved_keyword
+
+sql = ''
+src_dialect = ''
+tgt_dialect = ''
+database_param = {
+    "dialect": {
+        "param_name": "param_value"
+    }
+}
+
+id = '' # used for parallel translation
+
+model_translate(sql, src_dialect, tgt_dialect, 'model_id', database_param, id)
+cracksql_translate(sql, src_dialect, tgt_dialect, 'db_name', 'model_id', id)
+# SQLines
+flag, res = transfer_sql_sqline(sql, src_dialect, tgt_dialect, id)
+sqlines_res = post_process_for_reserved_keyword(res, src_dialect, tgt_dialect)
+# sqlglot
+flag, res = translate_sqlglot(sql, src_dialect, tgt_dialect)
+sqlglot_res = post_process_for_reserved_keyword(res, src_dialect, tgt_dialect)
+# ora2pg
+res = ora2pg_tran(sql, src_dialect, tgt_dialect, 'db_name', id)
+ora2pg_res = post_process_for_reserved_keyword(res, src_dialect, tgt_dialect)
+```
+
 ### Step 4: Verify the correctness of the translated SQLs
+
+You can verify two SQL using verify_sql function in verification.verify like this
+
+```python
+from verification.verify import verify_sql, has_outer_most_order_by
+
+sql = 'SELECT id FROM card'
+sql2 = 'SELECT DISTINCT id FROM card'
+database_id = 'your database name'
+database_param = {
+    "dialect": {
+        "param_name": "param_value"
+    }
+}
+
+dialect = 'mysql'
+tables = ['card'] # tables used in the SQL
+order_mode = has_outer_most_order_by(sql, dialect)
+
+verify_sql(sql, sql2, None, database_id, database_param, dialect, tables, order_mode)
+```
 
 ## Code Structure
 - `conv_point/`: The collected translation points.

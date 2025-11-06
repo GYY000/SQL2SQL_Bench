@@ -1725,6 +1725,8 @@ class PgMySQLOrderBy(UdfFunction):
             nulls_last_flag = False
             asc_flag = True
             desc_flag = False
+            if isinstance(op, Operand):
+                op = op.value
             assert isinstance(op, TreeNode)
             expression_node = op.get_child_by_value('a_expr')
             asc_node = op.get_child_by_value('opt_asc_desc')

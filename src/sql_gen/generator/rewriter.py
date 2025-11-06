@@ -531,18 +531,29 @@ def clone_node_mapping(node: TreeNode, node_map: dict):
         return clone_node
 
 
-def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point]):
+def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point], extra_db_param: dict = None):
     execution_env = ExecutionEnv(src_dialect, get_all_db_name(src_dialect))
     sql_tree_node, _, _, _ = parse_tree(sql, src_dialect)
     src_pattern_trees = []
     keyword_points = []
     pattern_tree_to_map = {}
     for point in points:
+        assert isinstance(point, Point)
+        if point.tag is not None and 'DB PARAMETER' in point.tag:
+            for key, value in point.tag['DB PARAMETER'].items():
+                flag = execution_env.add_param(key, value)
+                if not flag:
+                    raise ValueError('DB Parameter conflict')
         pattern_tree = parse_pattern_tree(point.point_type, point.src_pattern, src_dialect)
         src_pattern_trees.append(pattern_tree)
         pattern_tree_to_map[id(pattern_tree)] = point.point_type
+    if extra_db_param is not None:
+        for dialect, dialect_params in extra_db_param.items():
+            flag = execution_env.add_param(dialect, dialect_params)
+            if not flag:
+                raise ValueError('DB Parameter conflict')
     if sql_tree_node is None:
-        return None, 0
+        return None, 0, []
     sql_root_node = TreeNode.make_g4_tree_by_node(sql_tree_node, src_dialect)
     node_map = {}
     _ = clone_node_mapping(sql_root_node, node_map)
@@ -552,7 +563,6 @@ def rewrite_sql(src_dialect, tgt_dialect, sql, points: List[Point]):
                                                               alias_id_map, execution_env, node_map,
                                                               pattern_tree_to_map, tgt_dialect)
     return str(sql_root_node), all_rewrite_token, all_rewrite_points
-
 
 # with open('/home/gyy/SQL2SQL_Bench/src/sql_gen/generator/sql.json', 'r') as f:
 #     sqls = json.load(f)

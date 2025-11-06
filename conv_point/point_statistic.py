@@ -9,8 +9,8 @@ import os
 from utils.tools import get_proj_root_path
 
 category_paths = [
-    "function_operator",
     "functional_keyword",
+    "function_operator",
     "literal",
     "object_name"
 ]
