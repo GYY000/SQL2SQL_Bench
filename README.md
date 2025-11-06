@@ -1,6 +1,6 @@
 # SQL2SQLBench
 
-SQL2SQLBench is a benchmark to test SQL dialect translators, and it is generally composed of three components (i.e., Dataset Construction, SQL Pair Generator, SQL Equivalence Verifier). We develop SQL2SQLBench to .
+SQL2SQLBench is a benchmark to test SQL dialect translators, and it is generally composed of three components (i.e., Dataset Construction, SQL Pair Generator, SQL Equivalence Verifier). We develop SQL2SQLBench to test the performance of existing dialect translators.
 
 ## System Overview
 
