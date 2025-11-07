@@ -25,7 +25,7 @@ conda activate sql2sqlbench-py310
 To get started with *SQL2SQLBench*, follow these steps:
 
 ### Step 1: Set up SQL2SQLBench
-First, download the data used in our paper in [Google Drive](tbd), and write the file path to `data_path` in `src/config.ini`.
+First, download the data used in our paper in [Cloud](https://cloud.tsinghua.edu.cn/d/635afccb90404071a5c8/), and write the file path to `data_path` in `src/config.ini`.
 
 ```ini
 [FILE_PATH]
